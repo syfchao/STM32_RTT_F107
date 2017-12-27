@@ -53,7 +53,7 @@ extern int lwip_system_init(void);
 #include "Flash_24L512.h"
 #endif
 #include "ds1302z_rtc.h"
-
+#include "usart5.h"
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
 /*****************************************************************************/
@@ -251,7 +251,7 @@ void rt_init_thread_entry(void* parameter)
 	
 	TIM2_Int_Init(14999,7199);    //心跳包超时事件定时器初始化
 	cpu_usage_init();
-
+	WIFI_Reset();
 	sysDirDetection();
 	
 }
