@@ -141,14 +141,14 @@ int connect_client_socket(int fd_sock)				//通过有线的方式连接服务器
 	memset(&(serv_addr.sin_zero),0,8);
 
 	if(-1==connect(fd_sock,(struct sockaddr *)&serv_addr,sizeof(struct sockaddr))){
-		showdisconnected();
+		//showdisconnected();
 		printmsg(ECU_DBG_CLIENT,"Failed to connect to EMA");
 		closesocket(fd_sock);
 		return -1;
 	}
 	else{
-		showconnected();
-		writeconnecttime();
+		//showconnected();
+		//writeconnecttime();
 		printmsg(ECU_DBG_CLIENT,"Connect to EMA Client successfully");
 		return 1;
 	}
