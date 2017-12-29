@@ -49,7 +49,7 @@
 /*****************************************************************************/
 #define ARRAYNUM 6
 #define MAXBUFFER (MAXINVERTERCOUNT*RECORDLENGTH+RECORDTAIL+18)
-#define FIRST_TIME_CMD_NUM 11
+#define FIRST_TIME_CMD_NUM 6
 
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
@@ -112,8 +112,7 @@ int first_time_info(const char *recvbuffer, char *sendbuffer)
 {
 	static int command_id = 0;
 	int functions[FIRST_TIME_CMD_NUM] = {
-			A102, A106, A113, A114, A117,
-			A120, A121, A124, A126, A130, A131,
+			A102, A106, A117,A126, A130, A131,
 	};
 	printdecmsg(ECU_DBG_CONTROL_CLIENT,"first_time_info",(command_id));
 	printdecmsg(ECU_DBG_CONTROL_CLIENT,"first_time_info A",functions[(command_id)]+100);
