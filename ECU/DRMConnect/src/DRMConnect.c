@@ -10,8 +10,8 @@
 #define DRM0_IN1_GPIO                   GPIOB
 #define DRM0_IN1_PIN                    (GPIO_Pin_8)
 
-#define DRM0_IN2_RCC                    RCC_APB2Periph_GPIOB
-#define DRM0_IN2_GPIO                   GPIOB
+#define DRM0_IN2_RCC                    RCC_APB2Periph_GPIOA
+#define DRM0_IN2_GPIO                   GPIOA
 #define DRM0_IN2_PIN                    (GPIO_Pin_5)
 
 #define DRM0_IN1					GPIO_ReadInputDataBit(DRM0_IN1_GPIO,DRM0_IN1_PIN)
