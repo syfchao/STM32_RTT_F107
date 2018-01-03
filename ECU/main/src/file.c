@@ -402,7 +402,7 @@ int get_id_from_file(inverter_info *firstinverter)
 	{
 		while(NULL != fgets(data,200,fp))
 		{
-			print2msg(ECU_DBG_MAIN,"ID",data);
+			//print2msg(ECU_DBG_MAIN,"ID",data);
 			memset(list,0,sizeof(list));
 			splitString(data,list);
 			//判断是否存在该逆变器
@@ -494,13 +494,6 @@ int get_id_from_file(inverter_info *firstinverter)
 
 	inverter = firstinverter;
 	printmsg(ECU_DBG_MAIN,"--------------");
-	for(i=1; i<=num; i++,inverter++)
-	{
-		if(inverter->shortaddr == 0)
-		{
-			printmsg(ECU_DBG_MAIN,inverter->id);
-		}
-	}
 	
 	return num;
 }
