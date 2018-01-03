@@ -199,7 +199,7 @@ void WIFI_GetEvent(void)
 		if(eStateMachine == EN_RECV_ST_GET_SCOKET_HEAD)
 		{
 			while(pos < Cur)
-      {
+      		{
 				if(1 == pos)   //'a'
 				{
 						TIM3_Int_Init(499,7199);
@@ -428,7 +428,7 @@ void WIFI_GetEvent(void)
 					//SEGGER_RTT_printf(0, "LENGTH11111 : %d\n",PackLen);
 					//计算长度
 					eStateMachine = EN_RECV_ST_GET_A_DATA;
-					delayMS(100);
+					delayMS(30);
 					TIM3_Int_Init(499,7199);//10Khz的计数频率，计数到5000为500ms 打开定时器
 
 					break;
@@ -440,6 +440,7 @@ void WIFI_GetEvent(void)
 		//Continue to receive data
 		if(eStateMachine == EN_RECV_ST_GET_A_DATA)
 		{
+			TIM3_Int_Deinit();
 			pos = 0;
 			while(pos < Cur)
       		{
@@ -447,6 +448,7 @@ void WIFI_GetEvent(void)
 				if((PackLen - 3) == pos)   //接收数据长度结束
 				{
 					eStateMachine = EN_RECV_ST_GET_A_END;
+					TIM3_Int_Init(499,7199);
 					break;
 				}
 				pos++;
@@ -584,12 +586,14 @@ void WIFI_GetEvent(void)
 		//Continue to receive data
 		if(eStateMachine == EN_RECV_ST_GET_B_DATA)
 		{
+			TIM3_Int_Deinit();
 			pos = 0;
 			while(pos <= Cur)
       {
 				if(PackLen == pos)   //接收数据长度结束
 				{
 					eStateMachine = EN_RECV_ST_GET_B_END;
+					TIM3_Int_Init(499,7199);
 					break;
 				}
 				pos++;
@@ -623,9 +627,9 @@ void WIFI_GetEvent(void)
 		{
 			//SEGGER_RTT_printf(0, "EN_RECV_ST_GET_C_HEAD\n");
 			// check for the start character(SYNC_CHARACTER)
-			// also check it's not arriving the end of valid data
-      		while(pos < Cur)
-      		{
+      // also check it's not arriving the end of valid data
+      while(pos < Cur)
+      {
 
 				if(10 == pos)   //'A'
 				{
@@ -696,12 +700,14 @@ void WIFI_GetEvent(void)
 		//Continue to receive data
 		if(eStateMachine == EN_RECV_ST_GET_C_DATA)
 		{
+			TIM3_Int_Deinit();
 			pos = 0;
 			while(pos <= Cur)
       {
 				if((PackLen-3) == pos)   //接收数据长度结束
 				{
 					eStateMachine = EN_RECV_ST_GET_C_END;
+					TIM3_Int_Init(499,7199);
 					break;
 				}
 				pos++;
