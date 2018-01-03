@@ -475,7 +475,7 @@ int get_id_from_file(inverter_info *firstinverter)
 			
 			inverter++;
 			num++;
-			if(num >= 50)
+			if(num >= MAXINVERTERCOUNT)
 			{
 				break;
 			}

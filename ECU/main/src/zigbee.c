@@ -1693,6 +1693,7 @@ int getalldata(inverter_info *firstinverter,int time_linux)		//»ñÈ¡Ã¿¸öÄæ±äÆ÷µÄÊ
 			break;
 	}
 	//calibration_time_broadcast(firstinverter, time_linux); 	//YC1000²¹±¨£º¹ã²¥Ğ£×¼Ê±¼ä
+	process_all(firstinverter);
 	for(j=0; j<5; j++)
 	{
 		out_flag = 0;
@@ -1725,7 +1726,6 @@ int getalldata(inverter_info *firstinverter,int time_linux)		//»ñÈ¡Ã¿¸öÄæ±äÆ÷µÄÊ
 			
 			if((0 == curinverter->inverterstatus.dataflag) && (0 != curinverter->shortaddr))
 			{
-				process_all(firstinverter);
 				if(1 != curinverter->inverterstatus.bindflag)
 				{
 					if(1 == zb_turnoff_limited_rptid(curinverter->shortaddr,curinverter))

@@ -18,8 +18,8 @@ int phone_add_inverter(int num,const char *uidstring)
 	int i = 0;
 	char buff[25] = { '\0' };
 	char *allbuff = NULL;
-	allbuff = malloc(2048);
-	memset(allbuff,0x00,2048);
+	allbuff = malloc(2500);
+	memset(allbuff,0x00,2500);
 	for(i = 0; i < num; i++)
 	{
 		memset(buff,'\0',25);
