@@ -175,7 +175,4 @@
 // <bool name="RT_USING_BSP_CMSIS" description="Using CMSIS in BSP" default="true" />
 // #define RT_USING_BSP_CMSIS
 
-
-//#define EEPROM
-
 #endif

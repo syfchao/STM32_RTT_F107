@@ -255,6 +255,9 @@ int zb_get_reply(char *data,inverter_info *inverter)			//¶ÁÈ¡Äæ±äÆ÷µÄ·µ»ØÖ¡
 
 }
 
+/*------------------------------------------------------------------*/
+/*-------------------Ô¶³ÌÉý¼¶Ïà¹Ø²Ù×÷-------------------------*/
+/*------------------------------------------------------------------*/
 int zb_get_reply_update_start(char *data,inverter_info *inverter)			//¶ÁÈ¡Äæ±äÆ÷Ô¶³Ì¸üÐÂµÄUpdate_start·µ»ØÖ¡£¬ZK£¬·µ»ØÏìÓ¦Ê±¼ä¶¨Îª10Ãë
 {
 	int i;
@@ -347,21 +350,6 @@ int zb_get_reply_from_module(char *data)			//¶ÁÈ¡zigbeeÄ£¿éµÄ·µ»ØÖ¡
 	}	
 }
 
-int zb_get_id(char *data)			//»ñÈ¡Äæ±äÆ÷ID
-{
-	int size;
-
-	if(selectZigbee(30) <= 0){
-		printmsg(ECU_DBG_MAIN,"Get id time out");
-		return -1;
-	}
-	else{
-		size = ZIGBEE_SERIAL.read(&ZIGBEE_SERIAL,0, data, 255);
-		printhexmsg(ECU_DBG_MAIN,"Reply", data, size);
-		return size;
-	}
-}
-
 int zb_turnoff_limited_rptid(int short_addr,inverter_info *inverter)			//¹Ø±ÕÏÞ¶¨µ¥¸öÄæ±äÆ÷ÉÏ±¨ID¹¦ÄÜ
 {
 	unsigned char sendbuff[256] = {'\0'};
@@ -409,39 +397,6 @@ int zb_turnoff_limited_rptid(int short_addr,inverter_info *inverter)			//¹Ø±ÕÏÞ¶
 	else
 		return -1;
 
-}
-
-int zb_turnoff_rptid(int short_addr)			//¹Ø±Õµ¥¸öÄæ±äÆ÷ÉÏ±¨ID¹¦ÄÜ
-{
-	unsigned char sendbuff[256] = {'\0'};
-	int i=0;
-	int check=0;
-	printmsg(ECU_DBG_MAIN,"Turn off report id");
-
-	sendbuff[0]  = 0xAA;
-	sendbuff[1]  = 0xAA;
-	sendbuff[2]  = 0xAA;
-	sendbuff[3]  = 0xAA;
-	sendbuff[4]  = 0x08;
-	sendbuff[5]  = short_addr>>8;
-	sendbuff[6]  = short_addr;
-	sendbuff[7]  = 0x08;//panid
-	sendbuff[8]  = 0x88;
-	sendbuff[9]  = 0x19;
-	sendbuff[10] = 0x00;
-	sendbuff[11] = 0x00;
-	for(i=4;i<12;i++)
-		check=check+sendbuff[i];
-	sendbuff[12] = check/256;
-	sendbuff[13] = check%256;
-	sendbuff[14] = 0x00;
-
-	ZIGBEE_SERIAL.write(&ZIGBEE_SERIAL, 0, sendbuff, 15);
-//	ret = zb_get_reply(data);
-//	if((11 == ret)&&(0xA5 == data[2])&&(0xA5 == data[3]))
-		return 1;
-//	else
-//		return -1;
 }
 
 int zb_get_inverter_shortaddress_single(inverter_info *inverter)			//»ñÈ¡µ¥Ì¨Ö¸¶¨Äæ±äÆ÷¶ÌµØÖ·£¬ZK
@@ -497,69 +452,6 @@ int zb_get_inverter_shortaddress_single(inverter_info *inverter)			//»ñÈ¡µ¥Ì¨Ö¸¶
 	else
 		return -1;
 
-}
-
-//×éÍø(ÁîÄæ±äÆ÷ÉÏ±¨ID,²¢¶Ô´æÔÚÓÚID±íÖÐµÄÄæ±äÆ÷½øÐÐ°ó¶¨)
-int zb_turnon_limited_rtpid(inverter_info *firstinverter)
-{
-	
-	return 0;
-}
-
-int zb_turnon_rtpid(inverter_info *firstinverter)			//¿ªÆôÄæ±äÆ÷×Ô¶¯ÉÏ±¨ID
-{
-	char sendbuff[256] = {'\0'};
-	char data[256];
-	int i, count=0;
-	int short_addr;
-	char inverterid[256] = {'\0'};
-	int check=0;
-	printmsg(ECU_DBG_MAIN,"Turn on report id");
-
-	sendbuff[0]  = 0xAA;
-	sendbuff[1]  = 0xAA;
-	sendbuff[2]  = 0xAA;
-	sendbuff[3]  = 0xAA;
-	sendbuff[4]  = 0x02;
-	sendbuff[5]  = 0x00;
-	sendbuff[6]  = 0x00;
-	sendbuff[7]  = 0x00;
-	sendbuff[8]  = 0x00;
-	sendbuff[9]  = 0x00;
-	sendbuff[10] = 0x00;
-	sendbuff[11] = 0x00;
-	for(i=4;i<12;i++)
-		check=check+sendbuff[i];
-	sendbuff[12] = check/256;
-	sendbuff[13] = check%256;
-	sendbuff[14] = 0x00;
-
-	ZIGBEE_SERIAL.write(&ZIGBEE_SERIAL, 0, sendbuff, 15);
-
-	for(i = 0;i<60;i++)
-	{
-		rt_hw_s_delay(5);//ÉÏ±¨Ê±¼äÎª10·ÖÖÓ
-		rt_memset(data, '\0', sizeof(data));
-		if((11 == zb_get_id(data)) && (0xFF == data[2]) && (0xFF == data[3]))
-		{
-			short_addr = data[0] * 256 + data[1];
-			for(i=0; i<6; i++){
-				inverterid[2*i] = (data[i+4]>>4) + 0x30;
-				inverterid[2*i+1] = (data[i+4]&0x0f) + 0x30;
-			}
-			print2msg(ECU_DBG_MAIN,"inverterid",inverterid);
-//			save_inverter_id(inverterid,short_addr);  //±£´æÄæ±äÆ÷ÒÔ¼°¶ÌµØÖ·
-			rt_hw_s_delay(5);
-			zb_turnoff_rptid(short_addr);
-			rt_memset(inverterid, '\0', sizeof(inverterid));
-		}else
-		{
-			rt_hw_s_delay(5);
-		}
-	}
-	
-//	count=get_id_from_db(firstinverter);
-	return count;
 }
 
 int zb_change_inverter_panid_broadcast(void)	//¹ã²¥¸Ä±äÄæ±äÆ÷µÄPANID£¬ZK
@@ -1012,47 +904,6 @@ int zb_test_communication(void)		//zigbee²âÊÔÍ¨ÐÅÓÐÃ»ÓÐ¶Ï¿ª
 
 }
 
-int zb_set_protect_parameter(inverter_info *inverter, char *protect_parameter)		//²ÎÊýÐÞ¸ÄCCÖ¸Áî
-{
-	int i=0, ret;
-	char sendbuff[256];
-	char data[256];
-	
-	clear_zbmodem();			//·¢ËÍÊý¾ÝÇ°,Çå¿Õ»º³åÇø
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0x10;
-	sendbuff[i++] = 0xCC;
-	sendbuff[i++] = protect_parameter[0];
-	sendbuff[i++] = protect_parameter[1];
-	sendbuff[i++] = protect_parameter[2];
-	sendbuff[i++] = protect_parameter[3];
-	sendbuff[i++] = protect_parameter[4];
-	sendbuff[i++] = protect_parameter[5];
-	sendbuff[i++] = protect_parameter[6];
-	sendbuff[i++] = protect_parameter[7];
-	sendbuff[i++] = protect_parameter[8];
-	sendbuff[i++] = protect_parameter[9];
-	sendbuff[i++] = protect_parameter[10];
-	sendbuff[i++] = protect_parameter[11];
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0xFE;
-	sendbuff[i++] = 0xFE;
-	
-	print2msg(ECU_DBG_MAIN,inverter->id,"Set protect parameters");
-	printhexmsg(ECU_DBG_MAIN,"Set protect parameters", sendbuff, i);
-	zb_send_cmd(inverter, sendbuff, i);
-	ret = zb_get_reply(data,inverter);
-	if((13 == ret) && (0xDE == data[3]) && (0xFB == data[0]) && (0xFB == data[1]) && (0xFE == data[11]) && (0xFE == data[12]))
-		return 1;
-	else
-		return -1;
-}
-
 int zb_query_protect_parameter(inverter_info *inverter, char *protect_data_DD_reply)		//´æ´¢²ÎÊý²éÑ¯DDÖ¸Áî
 {
 	int i=0,ret;
@@ -1088,30 +939,6 @@ int zb_query_protect_parameter(inverter_info *inverter, char *protect_data_DD_re
 		return -1;
 }
 
-int zb_afd_broadcast(void)		//AFD¹ã²¥Ö¸Áî
-{
-	int i=0;
-	char sendbuff[256];
-	
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0x07;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0xAF;
-	sendbuff[i++] = 0xFF;
-	sendbuff[i++] = 0xFF;
-	sendbuff[i++] = 0x05;
-	sendbuff[i++] = 0x01;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0xFE;
-	sendbuff[i++] = 0xFE;
-	
-	zb_broadcast_cmd(sendbuff, i);
-
-	return 1;
-}
 
 int zb_turnon_inverter_broadcast(void)		//¿ª»úÖ¸Áî¹ã²¥,OK
 {
@@ -1239,29 +1066,6 @@ int zb_boot_waitingtime_single(inverter_info *inverter)		//¿ª»úµÈ´ýÊ±¼äÆô¶¯¿ØÖÆµ
 	return 1;
 }
 
-int zb_clear_gfdi_broadcast(void)		//Çå³ýGFDI¹ã²¥,OK
-{
-	int i=0;
-	char sendbuff[256];
-
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0x06;
-	sendbuff[i++] = 0xCF;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0xFE;
-	sendbuff[i++] = 0xFE;
-
-	zb_broadcast_cmd(sendbuff, i);
-	return 1;
-}
-
 int zb_clear_gfdi(inverter_info *inverter)		//Çå³ýGFDI,OK
 {
 	int i=0, ret;
@@ -1336,104 +1140,6 @@ int zb_ipp_single(inverter_info *inverter)		//IPPµ¥²¥
 	return 1;
 }
 
-int zb_frequency_protectime_broadcast(void)		//Ç·Æµ±£»¤Ê±¼ä¹ã²¥
-{
-	int i=0;
-	char sendbuff[256];
-//	char data[256];
-
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0x07;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0xC5;
-	sendbuff[i++] = 0xFF;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x05;
-	sendbuff[i++] = 0x01;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0xFE;
-	sendbuff[i++] = 0xFE;
-
-	zb_broadcast_cmd(sendbuff, i);
-	return 1;
-}
-
-int zb_frequency_protectime_single(inverter_info *inverter)		//Ç·Æµ±£»¤Ê±¼äµ¥²¥
-{
-	int i=0;
-	char sendbuff[256];
-//	char data[256];
-
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0x06;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0xC6;
-	sendbuff[i++] = 0xFF;
-	sendbuff[i++] = 0x04;
-	sendbuff[i++] = 0x01;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0xFE;
-	sendbuff[i++] = 0xFE;
-
-	zb_send_cmd(inverter, sendbuff, i);
-	return 1;
-}
-
-int zb_voltage_protectime_broadcast(void)		//Ç·Ñ¹±£»¤Ê±¼ä¹ã²¥
-{
-	int i=0;
-	char sendbuff[256];
-//	char data[256];
-
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0x07;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0xC9;
-	sendbuff[i++] = 0xFF;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x05;
-	sendbuff[i++] = 0x01;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0xFE;
-	sendbuff[i++] = 0xFE;
-
-	zb_broadcast_cmd(sendbuff, i);
-	return 1;
-}
-
-int zb_voltage_protectime_single(inverter_info *inverter)		//Ç·Ñ¹±£»¤Ê±¼äµ¥²¥
-{
-	int i=0;
-	char sendbuff[256];
-//	char data[256];
-
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0xFB;
-	sendbuff[i++] = 0x06;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0xCA;
-	sendbuff[i++] = 0xFF;
-	sendbuff[i++] = 0x04;
-	sendbuff[i++] = 0x01;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0xFE;
-	sendbuff[i++] = 0xFE;
-
-	zb_send_cmd(inverter, sendbuff, i);
-	return 1;
-}
-
 int process_gfdi(inverter_info *firstinverter)
 {
 	int i,j;
@@ -1472,19 +1178,6 @@ int process_gfdi(inverter_info *firstinverter)
 	fclose(fp);
 	fp = fopen("/tmp/procgfdi.con", "w");
 	fclose(fp);
-
-	return 0;
-}
-
-int compare_protect_data(char *set_protect_data, char *actual_protect_data)				//±È½ÏÄæ±äÆ÷·µ»ØµÄÔ¤ÉèÖµºÍÒ³ÃæÉÏÊäÈëµÄÔ¤ÉèÖµ
-{
-	int i;
-
-	for(i=0; i<12; i++)
-	{
-		if(set_protect_data[i] != actual_protect_data[i])
-			return -1;
-	}
 
 	return 0;
 }
@@ -2001,90 +1694,6 @@ int zb_change_inverter_channel_one(char *inverter_id, int channel)
 	printhexmsg(ECU_DBG_MAIN,"Change Inverter Channel (one)", sendbuff, 21);
 
 	rt_hw_s_delay(1); //´Ë´¦ÑÓÊ±±ØÐë´óÓÚ1S
-	return 0;
-}
-
-//¸Ä±ä´«ÈëÄæ±äÆ÷IDµÄÐÅµÀ
-int zb_change_channel(int num, char **ids)
-{
-	int i, j;
-	char ecu_channel[16];
-
-	clear_zbmodem();
-	ecu_channel[0] = 0x0B;
-	ecu_channel[1] = 0x0C;
-	ecu_channel[2] = 0x0D;
-	ecu_channel[3] = 0x0E;
-	ecu_channel[4] = 0x0F;
-	ecu_channel[5] = 0x10;
-	ecu_channel[6] = 0x11;
-	ecu_channel[7] = 0x12;
-	ecu_channel[8] = 0x13;
-	ecu_channel[9] = 0x14;
-	ecu_channel[10] = 0x15;
-	ecu_channel[11] = 0x16;
-	ecu_channel[12] = 0x17;
-	ecu_channel[13] = 0x18;
-	ecu_channel[14] = 0x19;
-	ecu_channel[15] = 0x1A;
-
-	//¸Ä±äÃ¿Ì¨Äæ±äÆ÷µÄÐÅµÀ
-	for (i=0; i<16; i++) {
-		zb_restore_ecu_panid_0xffff(ecu_channel[i]); //¸Ä±äECUÐÅµÀ
-		for (j=1; j<=num; j++) {
-			if (RT_NULL != ids[j] && rt_strlen(ids[j])) {
-				print2msg(ECU_DBG_MAIN,"inverter", ids[j]);
-				zb_change_inverter_channel_one(ids[j], ecu.channel);
-			}
-		}
-	}
-
-	//ÉèÖÃECUÐÅµÀÎªÅäÖÃÎÄ¼þÖÐµÄÐÅµÀ
-	zb_change_ecu_panid();
-
-	return 0;
-}
-
-
-//»¹Ô­Äæ±äÆ÷ÐÅµÀ
-int zb_reset_channel(int num, char **ids)
-{
-	int i, j;
-	char ecu_channel[16];
-
-	clear_zbmodem();
-	ecu_channel[0] = 0x0B;
-	ecu_channel[1] = 0x0C;
-	ecu_channel[2] = 0x0D;
-	ecu_channel[3] = 0x0E;
-	ecu_channel[4] = 0x0F;
-	ecu_channel[5] = 0x10;
-	ecu_channel[6] = 0x11;
-	ecu_channel[7] = 0x12;
-	ecu_channel[8] = 0x13;
-	ecu_channel[9] = 0x14;
-	ecu_channel[10] = 0x15;
-	ecu_channel[11] = 0x16;
-	ecu_channel[12] = 0x17;
-	ecu_channel[13] = 0x18;
-	ecu_channel[14] = 0x19;
-	ecu_channel[15] = 0x1A;
-
-	//»¹Ô­Ã¿Ì¨Äæ±äÆ÷µÄÐÅµÀ
-	for (i=0; i<16; i++) {
-		zb_restore_ecu_panid_0xffff(ecu_channel[i]); //¸Ä±äECUÐÅµÀ
-		for (j=1; j<=num; j++) {
-			if (RT_NULL != ids[j] && rt_strlen(ids[j])) {
-				print2msg(ECU_DBG_MAIN,"inverter", ids[j]);
-				zb_change_inverter_channel_one(ids[j], 0x10);
-			}
-		}
-	}
-
-	//ÉèÖÃECUµÄÐÅµÀÎªÄ¬ÈÏÐÅµÀ
-	ecu.channel = 0x10;
-	zb_change_ecu_panid();
-
 	return 0;
 }
 

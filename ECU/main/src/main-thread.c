@@ -322,11 +322,6 @@ void main_thread_entry(void* parameter)
 	char broadcast_hour_minute[3]={'\0'};									//向逆变器发送广播命令时的时间
 	int cur_time_hour;														//当前的时间小时
 	long time_linux;
-	
-	
-#if ECU_JLINK_DEBUG
-	SEGGER_RTT_printf(0,"\n---********** main.exe %s_%s_%s **********---\n", ECU_VERSION,MAJORVERSION,MINORVERSION);
-#endif
 
 #if ECU_DEBUG
 #if ECU_DEBUG_MAIN

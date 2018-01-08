@@ -1373,9 +1373,6 @@ void get_mac(rt_uint8_t  dev_addr[6])
 			dev_addr[3]=strtohex(&macstr[9]);
 			dev_addr[4]=strtohex(&macstr[12]);
 			dev_addr[5]=strtohex(&macstr[15]);
-#if ECU_JLINK_DEBUG
-			SEGGER_RTT_printf(0,"ECU MAC: %x %x %x %x %x %x\n",dev_addr[0],dev_addr[1],dev_addr[2],dev_addr[3],dev_addr[4],dev_addr[5]);
-#endif
 			fclose(fp);
 			return;
 		}
