@@ -100,7 +100,7 @@ void APP_Response_BaseInfo(unsigned char *ID,stBaseInfo baseInfo)
 	SendData[packlength++] = '0';
 	SendData[packlength++] = '0';
 	SendData[packlength++] = '9';
-	sprintf(&SendData[packlength],"%s_%s_%s",ECU_VERSION,MAJORVERSION,MINORVERSION);
+	sprintf(&SendData[packlength],"%s_%s.%s",ECU_VERSION,MAJORVERSION,MINORVERSION);
 	packlength += 9;
 	
 	SendData[packlength++] = '0';

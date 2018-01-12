@@ -214,7 +214,7 @@ void Phone_GetBaseInfo(unsigned char * ID,int Data_Len,const char *recvbuffer) 	
 	baseInfo.InvertersNum = ecu.total;				//ECU 逆变器总数
 	baseInfo.LastInvertersNum = ecu.count;		//ECU 当前连接的逆变器总数
 	baseInfo.Length = ECU_VERSION_LENGTH;								//ECU 版本号长度
-	sprintf(baseInfo.Version,"%s_%s_%s",ECU_VERSION,MAJORVERSION,MINORVERSION);	//ECU 版本
+	sprintf(baseInfo.Version,"%s_%s.%s",ECU_VERSION,MAJORVERSION,MINORVERSION);	//ECU 版本
 	baseInfo.TimeZoneLength = 9;				//ECU 时区长度
 	sprintf(baseInfo.TimeZone,"Etc/GMT-8");									//ECU 时区
 	memset(baseInfo.MacAddress,'\0',7);

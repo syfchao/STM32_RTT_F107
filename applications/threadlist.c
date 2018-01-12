@@ -130,6 +130,7 @@ rt_mutex_t usr_wifi_lock = RT_NULL;
 extern rt_mutex_t wifi_uart_lock;
 
 unsigned char LED_Status = 0;
+unsigned char LED_IDWrite_Status = 0;
 
 /*****************************************************************************/
 /*  Function Implementations                                                 */
@@ -263,7 +264,11 @@ static void led_thread_entry(void* parameter)
 		{
 			rt_hw_led_on();
 		}
-		
+
+		if(LED_IDWrite_Status == 1)
+		{
+			rt_hw_led_on();
+		}
 		rt_thread_delay( RT_TICK_PER_SECOND);
 		cpu_usage_get(&major, &minor);
 		//printf("CPU : %d.%d%\n", major, minor);

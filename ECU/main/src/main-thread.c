@@ -325,7 +325,7 @@ void main_thread_entry(void* parameter)
 
 #if ECU_DEBUG
 #if ECU_DEBUG_MAIN
-	printf("\n---********** main.exe %s_%s_%s **********---\n", ECU_VERSION,MAJORVERSION,MINORVERSION);
+	printf("\n---********** main.exe %s_%s.%s **********---\n", ECU_VERSION,MAJORVERSION,MINORVERSION);
 #endif
 #endif
 	init_all(inverter);   //初始化所有逆变器
