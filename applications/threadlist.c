@@ -51,6 +51,7 @@ extern int lwip_system_init(void);
 
 #include "ds1302z_rtc.h"
 #include "usart5.h"
+#include "485usart.h"
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
 /*****************************************************************************/
@@ -228,6 +229,7 @@ void rt_init_thread_entry(void* parameter)
 	cpu_usage_init();
 	WIFI_Reset();
 	sysDirDetection();
+	usart485_init(115200);
 	
 }
 
