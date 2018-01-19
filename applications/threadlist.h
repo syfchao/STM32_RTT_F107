@@ -99,7 +99,7 @@ typedef struct IPConfig
 //LAN8720A Monitor thread priority
 #define THREAD_PRIORITY_LAN8720_RST						11
 //LED thread priority
-#define THREAD_PRIORITY_LED               				12
+#define THREAD_PRIORITY_LED               				9
 
 //phone Server thread priority
 #define THREAD_PRIORITY_PHONE_SERVER					19
