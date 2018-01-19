@@ -15,11 +15,12 @@ void MCP1316_init(void)
 		GPIO_SetBits(MCP1316_GPIO, MCP1316_PIN);
 }
 
+//标准踢狗时间为50ns
 void MCP1316_kickwatchdog(void)
 {
 	//先拉低电平   然后再拉高
 	GPIO_ResetBits(MCP1316_GPIO, MCP1316_PIN);
-	rt_hw_ms_delay(100);
+	rt_hw_us_delay(1);
 	GPIO_SetBits(MCP1316_GPIO, MCP1316_PIN);
 	
 }
