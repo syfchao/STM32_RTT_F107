@@ -1948,6 +1948,24 @@ void control_client_thread_entry(void* parameter)
 			}	
 		}
 		
+		fp=fopen("/TMP/ECUUPVER.CON","r");
+		if(fp!=NULL)
+		{
+			char c='0';
+			c=fgetc(fp);
+			fclose(fp);
+			if(c=='1')
+			{
+				result = communication_with_EMA(102);
+				if(result != -1)
+				{
+					unlink("/TMP/ECUUPVER.CON");
+				}
+				
+			}
+		}
+		
+		
 		if(exist_inverter_abnormal_status() && ecu_flag){
 			ecu_time =  acquire_time();
 			result = response_inverter_abnormal_status();
