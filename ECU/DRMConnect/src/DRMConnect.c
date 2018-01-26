@@ -4,6 +4,8 @@
 #include "file.h"
 #include "stdio.h"
 #include "debug.h"
+#include "zigbee.h"
+#include "threadlist.h"
 
 
 #define DRM0_IN1_RCC                    RCC_APB2Periph_GPIOB
@@ -59,9 +61,9 @@ void rt_hw_DRM_init(void)
 void DRM_Connect_thread_entry(void* parameter)
 {
 	int status = 2;   //当前设置开关机的状态  防止重复写入文件
-	FILE *fp = NULL;
 	rt_hw_DRM_init();
-	
+	rt_thread_delay(RT_TICK_PER_SECOND * START_TIME_DRM);
+
 	//判断是否带有该功能  如果功能未打开：退出该线程  如果功能打开：运行改线程
 	if(-1 == DRMFunction()) 	
 	{
@@ -74,21 +76,14 @@ void DRM_Connect_thread_entry(void* parameter)
 		if((DRM0_IN1 != DRM0_IN2) && (status !=1))
 		{
 			status = 1;
-			fp = fopen("/tmp/connect.con","w");
-			fprintf(fp,"connect all");
-			fclose(fp);
-			fp = NULL;
+			zb_turnon_inverter_broadcast();
 			printmsg(ECU_DBG_OTHER,"DRM connect all!\n");
 		}
 		
 		if((DRM0_IN1 == DRM0_IN2) && (status != 0))
 		{
 			status = 0;
-			
-			fp = fopen("/tmp/connect.con","w");
-			fprintf(fp,"disconnect all");
-			fclose(fp);
-			fp = NULL;
+			zb_shutdown_broadcast();
 			printmsg(ECU_DBG_OTHER,"DRM disconnect all!\n");
 		}	
 		

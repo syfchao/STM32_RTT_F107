@@ -129,6 +129,7 @@ typedef struct IPConfig
 #define START_TIME_CONTROL_CLIENT							20			//120
 #define START_TIME_CLIENT									60			//180
 #define START_TIME_PHONE_SERVER								20
+#define START_TIME_DRM									10
 
 /*****************************************************************************/
 /*  Function Declarations                                                    */
