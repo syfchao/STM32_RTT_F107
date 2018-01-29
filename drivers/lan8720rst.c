@@ -72,6 +72,13 @@ void GetNet()
 	rt_hw_GetWiredNetConnect();
 }
 FINSH_FUNCTION_EXPORT(GetNet, GetNet.)
+	
+void sleep(int i)
+{
+	rt_thread_delay(i * RT_TICK_PER_SECOND);
+	printf("SLEEP OK\n");
+}
+FINSH_FUNCTION_EXPORT(sleep, sleep.)
 
 #endif
 #endif

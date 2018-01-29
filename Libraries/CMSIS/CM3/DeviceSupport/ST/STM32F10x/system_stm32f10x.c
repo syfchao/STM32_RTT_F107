@@ -209,12 +209,12 @@ static void SetSysClock(void);
   * @param  None
   * @retval None
   */
-#if 1		//使用外部25M晶振
+#if 0		//使用外部25M晶振
 void SystemInit (void)
 {
   /* Reset the RCC clock configuration to the default reset state(for debug purpose) */
   /* Set HSION bit */
-  RCC->CR |= (uint32_t)0x00000001;
+  RCC->CR |= (uint32_t)0x00000001;		//操作时钟控制寄存器，将内部8M高速时钟使能
 
   /* Reset SW, HPRE, PPRE1, PPRE2, ADCPRE and MCO bits */
 #ifndef STM32F10X_CL
