@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "zigbee.h"
 #include "threadlist.h"
+#include "rthw.h"
 
 
 #define DRM0_IN1_RCC                    RCC_APB2Periph_GPIOB
@@ -76,6 +77,7 @@ void DRM_Connect_thread_entry(void* parameter)
 		if((DRM0_IN1 != DRM0_IN2) && (status !=1))
 		{
 			status = 1;
+			rt_hw_s_delay(1);
 			zb_turnon_inverter_broadcast();
 			printmsg(ECU_DBG_OTHER,"DRM connect all!\n");
 		}
@@ -83,8 +85,10 @@ void DRM_Connect_thread_entry(void* parameter)
 		if((DRM0_IN1 == DRM0_IN2) && (status != 0))
 		{
 			status = 0;
+			rt_hw_s_delay(1);
 			zb_shutdown_broadcast();
 			printmsg(ECU_DBG_OTHER,"DRM disconnect all!\n");
+			rt_thread_delay(RT_TICK_PER_SECOND*10);
 		}	
 		
 		rt_thread_delay(RT_TICK_PER_SECOND);

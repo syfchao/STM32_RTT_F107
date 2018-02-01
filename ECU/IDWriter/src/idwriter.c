@@ -415,6 +415,13 @@ void idwrite_thread_entry(void* parameter)
 				fgets(area, sizeof(area), fp);
 				fclose(fp);
 			}
+			if(!memcmp(area,"SAA",3))
+			{
+				echo("/YUNENG/DRM.CON","1");
+			}else
+			{
+				unlink("/YUNENG/DRM.CON");
+			}
 			printdecmsg(ECU_DBG_IDWRITE,"Send",send(clientfd,area,strlen(area),0));
 		}
 
