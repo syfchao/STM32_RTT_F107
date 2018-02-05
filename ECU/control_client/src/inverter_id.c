@@ -46,7 +46,7 @@ int ecu_msg(char *sendbuffer, int num, const char *recvbuffer)
 	char timestamp[16] = {'\0'};	//时间戳
 
 	/* 处理数据 */
-	sprintf(version,"%s_%s.%s",ECU_EMA_VERSION,MAJORVERSION,MINORVERSION);
+	sprintf(version,"%s%s.%s",ECU_EMA_VERSION,MAJORVERSION,MINORVERSION);
 	file_get_one(version_number, sizeof(version_number),
 			"/yuneng/vernum.con");
 	file_get_one(area, sizeof(area),
