@@ -13,8 +13,6 @@ typedef struct
 	char LastToEMA[8];									//ECU 最后一次连接EMA的时间
 	unsigned short InvertersNum;				//ECU 逆变器总数
 	unsigned short LastInvertersNum;		//ECU 当前连接的逆变器总数
-	unsigned char Length;								//ECU 版本号长度
-	char Version[20];										//ECU 版本
 	unsigned char TimeZoneLength;				//ECU 时区长度
 	char TimeZone[20];									//ECU 时区
 	char MacAddress[7];									//ECU 有线Mac地址

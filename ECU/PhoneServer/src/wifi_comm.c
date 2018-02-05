@@ -97,11 +97,11 @@ void APP_Response_BaseInfo(unsigned char *ID,stBaseInfo baseInfo)
 	SendData[packlength++] = baseInfo.Channel[0];
 	SendData[packlength++] = baseInfo.Channel[1];
 	
-	SendData[packlength++] = '0';
-	SendData[packlength++] = '0';
-	SendData[packlength++] = '9';
+	SendData[packlength++] = '0' + (ECU_VERSION_LENGTH/100)%10;
+	SendData[packlength++] = '0'+ (ECU_VERSION_LENGTH/10)%10;
+	SendData[packlength++] = '0'+ (ECU_VERSION_LENGTH%10);
 	sprintf(&SendData[packlength],"%s_%s.%s",ECU_VERSION,MAJORVERSION,MINORVERSION);
-	packlength += 9;
+	packlength += ECU_VERSION_LENGTH;
 	
 	SendData[packlength++] = '0';
 	SendData[packlength++] = '0';
