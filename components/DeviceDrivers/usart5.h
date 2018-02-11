@@ -72,6 +72,7 @@ extern unsigned int WIFI_Recv_SocketB_LEN;
 extern unsigned char WIFI_RecvSocketCData[SOCKETC_LEN];
 extern unsigned char WIFI_Recv_SocketC_Event;
 extern unsigned int WIFI_Recv_SocketC_LEN;
+
 unsigned short packetlen_A(unsigned char *packet);
 unsigned short packetlen_B(unsigned char *packet);
 unsigned short packetlen_C(unsigned char *packet);
