@@ -58,16 +58,6 @@ extern rt_mutex_t record_data_lock;
 extern rt_mutex_t usr_wifi_lock;
 extern ecu_info ecu;
 
-typedef struct socket_config
-{
-	int timeout;
-	int report_interval;
-	int port1;
-	int port2;
-	char domain[32];
-	char ip[16];
-}Socket_Cfg;
-
 enum CommandID{
 	A100, A101, A102, A103, A104, A105, A106, A107, A108, A109, //0-9
 	A110, A111, A112, A113, A114, A115, A116, A117, A118, A119, //10-19
@@ -77,7 +67,6 @@ enum CommandID{
 	A150,A151,
 };
 int (*pfun[100])(const char *recvbuffer, char *sendbuffer);
-Socket_Cfg sockcfg = {'\0'};
 
 /*****************************************************************************/
 /*  Function Implementations                                                 */
@@ -130,51 +119,6 @@ int first_time_info(const char *recvbuffer, char *sendbuffer)
 	}
 		
 }
-/* 将从文件中读取的键值对保存到socket配置结构体中 */
-int get_socket_config(Socket_Cfg *cfg, MyArray *array)
-{
-	int i;
-
-	for(i=0; i<ARRAYNUM; i++){
-		if(!strlen(array[i].name))break;
-		//超时时间
-		if(!strcmp(array[i].name, "Timeout")){
-			cfg->timeout = atoi(array[i].value);
-		}
-		//轮训时间
-		else if(!strcmp(array[i].name, "Report_Interval")){
-			cfg->report_interval = atoi(array[i].value);
-		}
-		//域名
-		else if(!strcmp(array[i].name, "Domain")){
-			strncpy(cfg->domain, array[i].value, 32);
-		}
-		//IP地址
-		else if(!strcmp(array[i].name, "IP")){
-			strncpy(cfg->ip, array[i].value, 16);
-		}
-		//端口1
-		else if(!strcmp(array[i].name, "Port1")){
-			cfg->port1 = atoi(array[i].value);
-		}
-		//端口2
-		else if(!strcmp(array[i].name, "Port2")){
-			cfg->port2 = atoi(array[i].value);
-		}
-	}
-	return 0;
-}
-
-/* 随机取port1或port2 */
-int randport(Socket_Cfg cfg)
-{
-	srand((unsigned)acquire_time());
-	if(rand()%2)
-		return cfg.port1;
-	else
-		return cfg.port2;
-}
-
 
 int detection_statusflag(char flag)		//检测/home/record/inversta目录下是否存在flag的记录    存在返回1，不存在返回0
 {
@@ -1161,7 +1105,7 @@ int check_inverter_abnormal_status_sent(int hour)
 	}
 	//有flag=2的数据,发送一条读取EMA已存时间戳命令
 	printmsg(ECU_DBG_CONTROL_CLIENT,">>Start Check abnormal status sent");
-	sockfd = client_socket_init(randport(sockcfg), sockcfg.ip, sockcfg.domain);
+	sockfd = client_socket_init(randport(control_client_arg), control_client_arg.ip, control_client_arg.domain);
 	if(sockfd < 0)
 	{
 #ifdef WIFI_USE	
@@ -1172,7 +1116,7 @@ int check_inverter_abnormal_status_sent(int hour)
 			strcat(send_buffer, ecu.id);
 			strcat(send_buffer, "000000000000000000END\n");
 			rt_mutex_take(usr_wifi_lock, RT_WAITING_FOREVER);
-			ret = SendToSocketC(send_buffer, strlen(send_buffer));
+			ret = SendToSocketC(control_client_arg.ip,randport(control_client_arg),send_buffer, strlen(send_buffer));
 			if(ret == -1)
 			{
 				rt_mutex_release(usr_wifi_lock);
@@ -1244,7 +1188,7 @@ int check_inverter_abnormal_status_sent(int hour)
 		strcat(send_buffer, "000000000000000000END\n");
 		send_socket(sockfd, send_buffer, strlen(send_buffer));
 		//接收EMA应答
-		if(recv_socket(sockfd, recv_buffer, sizeof(recv_buffer), sockcfg.timeout) <= 0){
+		if(recv_socket(sockfd, recv_buffer, sizeof(recv_buffer), control_client_arg.timeout) <= 0){
 			closesocket(sockfd);
 			rt_free(recv_buffer);
 			rt_free(send_buffer);
@@ -1317,7 +1261,7 @@ int response_inverter_abnormal_status()
 	memset(data,'\0',MAXINVERTERCOUNT*RECORDLENGTH+RECORDTAIL);
 	memset(save_buffer,'\0',MAXBUFFER);
 	//建立socket连接
-	sockfd = client_socket_init(randport(sockcfg), sockcfg.ip, sockcfg.domain);
+	sockfd = client_socket_init(randport(control_client_arg), control_client_arg.ip, control_client_arg.domain);
 	if(sockfd < 0)
 	{
 #ifdef WIFI_USE	
@@ -1331,7 +1275,7 @@ int response_inverter_abnormal_status()
 			{	
 				rt_mutex_take(usr_wifi_lock, RT_WAITING_FOREVER);
 				//发送一条逆变器异常状态信息
-				if(SendToSocketC(data, strlen(data)) < 0){
+				if(SendToSocketC(control_client_arg.ip,randport(control_client_arg),data, strlen(data)) < 0){
 					rt_mutex_release(usr_wifi_lock);
 					rt_free(recv_buffer);
 					rt_free(command);
@@ -1420,7 +1364,7 @@ int response_inverter_abnormal_status()
 								
 								memset(send_buffer,0x00,1024);
 								msg_ACK(send_buffer, "A118", da_time, 0);
-								SendToSocketC(send_buffer, strlen(send_buffer));
+								SendToSocketC(control_client_arg.ip,randport(control_client_arg),send_buffer, strlen(send_buffer));
 								printmsg(ECU_DBG_CONTROL_CLIENT,">>End");
 								printdecmsg(ECU_DBG_CONTROL_CLIENT,"socked",sockfd);
 								result=1;break;
@@ -1477,7 +1421,7 @@ int response_inverter_abnormal_status()
 				continue;
 			}
 			//接收EMA应答
-			if(recv_socket(sockfd, recv_buffer, sizeof(recv_buffer), sockcfg.timeout) <= 0){
+			if(recv_socket(sockfd, recv_buffer, sizeof(recv_buffer), control_client_arg.timeout) <= 0){
 				closesocket(sockfd);
 				rt_free(recv_buffer);
 				rt_free(command);
@@ -1595,7 +1539,7 @@ int communication_with_EMA(int next_cmd_id)
 	while(1)
 	{
 		printmsg(ECU_DBG_CONTROL_CLIENT,"Start Communication with EMA");
-		sockfd = client_socket_init(randport(sockcfg), sockcfg.ip, sockcfg.domain);
+		sockfd = client_socket_init(randport(control_client_arg), control_client_arg.ip, control_client_arg.domain);
 		if(sockfd < 0) 
 		{
 #ifdef WIFI_USE	
@@ -1608,7 +1552,7 @@ int communication_with_EMA(int next_cmd_id)
 					//ECU向EMA发送请求命令指令
 					msg_REQ(send_buffer);
 					rt_mutex_take(usr_wifi_lock, RT_WAITING_FOREVER);
-					ret = SendToSocketC(send_buffer, strlen(send_buffer));
+					ret = SendToSocketC(control_client_arg.ip,randport(control_client_arg),send_buffer, strlen(send_buffer));
 					if(ret == -1)
 					{
 						rt_mutex_release(usr_wifi_lock);
@@ -1687,7 +1631,7 @@ int communication_with_EMA(int next_cmd_id)
 							ecu.id, cmd_id);
 				}
 				//将消息发送给EMA(自动计算长度,补上回车)
-				SendToSocketC(send_buffer, strlen(send_buffer));
+				SendToSocketC(control_client_arg.ip,randport(control_client_arg),send_buffer, strlen(send_buffer));
 				printmsg(ECU_DBG_CONTROL_CLIENT,">>End");
 				//如果功能函数返回值小于0,则返回-1,程序会自动退出
 				if(next_cmd_id < 0){
@@ -1712,7 +1656,7 @@ int communication_with_EMA(int next_cmd_id)
 				memset(send_buffer, '\0', sizeof(send_buffer));
 
 				//接收EMA发来的命令
-				if(recv_socket(sockfd, recv_buffer, sizeof(recv_buffer), sockcfg.timeout) < 0){
+				if(recv_socket(sockfd, recv_buffer, sizeof(recv_buffer), control_client_arg.timeout) < 0){
 					closesocket(sockfd);
 					rt_free(recv_buffer);
 					rt_free(send_buffer);
@@ -1805,7 +1749,7 @@ int response_process_result()
 		while(search_pro_result_flag(data,item,&flag,'1'))
 		{
 			printmsg(ECU_DBG_CONTROL_CLIENT,">>Start Response ECU Process Result");
-			sockfd = client_socket_init(randport(sockcfg), sockcfg.ip, sockcfg.domain);
+			sockfd = client_socket_init(randport(control_client_arg), control_client_arg.ip, control_client_arg.domain);
 			if(sockfd < 0) 
 			{
 #ifdef WIFI_USE	
@@ -1813,7 +1757,7 @@ int response_process_result()
 				//有线连接失败，使用wifi传输 
 				{
 					//发送一条记录
-					if(SendToSocketC(data, strlen(data)) < 0){
+					if(SendToSocketC(control_client_arg.ip,randport(control_client_arg),data, strlen(data)) < 0){
 						break;
 					}
 					//发送成功则将标志位置0
@@ -1863,14 +1807,14 @@ int response_process_result()
 			strncpy(&sendbuffer[5], msg_length, 5);
 			//发送数据
 			printmsg(ECU_DBG_CONTROL_CLIENT,">>Start Response Inverter Process Result");
-			sockfd = client_socket_init(randport(sockcfg), sockcfg.ip, sockcfg.domain);
+			sockfd = client_socket_init(randport(control_client_arg), control_client_arg.ip, control_client_arg.domain);
 			if(sockfd < 0)
 			{
 #ifdef WIFI_USE	
 
 				//有线连接失败，使用wifi传输 
 				{
-					if(SendToSocketC(sendbuffer, strlen(sendbuffer)) < 0){
+					if(SendToSocketC(control_client_arg.ip,randport(control_client_arg),sendbuffer, strlen(sendbuffer)) < 0){
 						break;
 					}
 					change_inv_pro_result_flag(item,'0');
@@ -1906,7 +1850,6 @@ void control_client_thread_entry(void* parameter)
 {
 	int result, ecu_time = 0, ecu_flag = 1;
 	char buffer[16] = {'\0'};
-	MyArray array[ARRAYNUM] = {'\0'};
 	FILE *fp;
 	int socketfd = -1;
 	rt_thread_delay(RT_TICK_PER_SECOND*START_TIME_CONTROL_CLIENT);
@@ -1921,10 +1864,6 @@ void control_client_thread_entry(void* parameter)
 
 	printdecmsg(ECU_DBG_CONTROL_CLIENT,"ecu_flag", ecu_flag);
 
-	//从配置文件中获取socket通讯参数
-	if(file_get_array(array, ARRAYNUM, "/yuneng/control.con") == 0){
-		get_socket_config(&sockcfg, array);
-	}
 	/* ECU轮训主循环 */
 	while(1)
 	{
@@ -1936,7 +1875,7 @@ void control_client_thread_entry(void* parameter)
 			char c='0';
 			c=fgetc(fp);
 			fclose(fp);
-			if(((socketfd = client_socket_init(randport(sockcfg), sockcfg.ip, sockcfg.domain))>=0)||(TestSocketCConnect() == 0))
+			if(((socketfd = client_socket_init(randport(control_client_arg), control_client_arg.ip, control_client_arg.domain))>=0)||(TestSocketCConnect() == 0))
 			{
 				if(socketfd >= 0)
 				{
@@ -1972,7 +1911,7 @@ void control_client_thread_entry(void* parameter)
 			printdecmsg(ECU_DBG_CONTROL_CLIENT,"result",result);
 			response_process_result();
 		}
-		else if(compareTime(acquire_time() ,ecu_time,60*sockcfg.report_interval)){
+		else if(compareTime(acquire_time() ,ecu_time,60*control_client_arg.report_interval)){
 			ecu_time = acquire_time();
 			if(ecu_flag){ //如果ecu_flag = 0 则不上报处理结果
 				response_process_result();
@@ -1986,7 +1925,7 @@ void control_client_thread_entry(void* parameter)
 			rt_thread_delay(300 * RT_TICK_PER_SECOND);
 			continue;
 		}
-		rt_thread_delay(RT_TICK_PER_SECOND*sockcfg.report_interval*60/3);
+		rt_thread_delay(RT_TICK_PER_SECOND*control_client_arg.report_interval*60/3);
 	
 	}
 

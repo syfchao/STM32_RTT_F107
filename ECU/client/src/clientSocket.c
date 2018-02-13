@@ -324,7 +324,7 @@ int serverCommunication_Client(char *sendbuff,int sendLength,char *recvbuff,int 
 		//失败情况下通过无线发送
 #ifdef WIFI_USE
 		int ret = 0,i = 0;
-		ret = SendToSocketB(sendbuff, sendLength);
+		ret = SendToSocketB(client_arg.ip,randport(client_arg),sendbuff, sendLength);
 		if(ret == -1)
 		{
 			LED_Status = 0;

@@ -59,7 +59,7 @@ enum CommandID{
 };
 
 
-void (*pfun_Phone[100])(unsigned char * ID,int Data_Len,const char *recvbuffer);
+void (*pfun_Phone[100])(int Data_Len,const char *recvbuffer);
 
 void add_Phone_functions(void)
 {
@@ -192,7 +192,7 @@ int ResolveWired(const char *string,IP_t *IPAddr,IP_t *MSKAddr,IP_t *GWAddr,IP_t
 }
 	
 //获取基本数据 
-void Phone_GetBaseInfo(unsigned char * ID,int Data_Len,const char *recvbuffer) 				//获取基本信息请求
+void Phone_GetBaseInfo(int Data_Len,const char *recvbuffer) 				//获取基本信息请求
 {
 	stBaseInfo baseInfo;
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 01 ",(char *)recvbuffer);
@@ -218,25 +218,25 @@ void Phone_GetBaseInfo(unsigned char * ID,int Data_Len,const char *recvbuffer) 	
 	memset(baseInfo.MacAddress,'\0',7);
 	memcpy(baseInfo.MacAddress,ecu.MacAddress,7);//ECU 有线Mac地址	
 	sprintf(baseInfo.Channel,"%02x",ecu.channel);
-	APP_Response_BaseInfo(ID,baseInfo);
+	APP_Response_BaseInfo(baseInfo);
 }
 
 //获取逆变器发电量数据
-void Phone_GetGenerationData(unsigned char * ID,int Data_Len,const char *recvbuffer) 	//获取逆变器发电量数据
+void Phone_GetGenerationData(int Data_Len,const char *recvbuffer) 	//获取逆变器发电量数据
 {
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 02 ",(char *)recvbuffer);
 	
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
 	{	//匹配成功进行相应操作
-		APP_Response_PowerGeneration(0x00,ID,inverter,ecu.total);
+		APP_Response_PowerGeneration(0x00,inverter,ecu.total);
 	}else
 	{
-		APP_Response_PowerGeneration(0x01,ID,inverter,ecu.total);
+		APP_Response_PowerGeneration(0x01,inverter,ecu.total);
 	}
 }
 
 //获取功率曲线
-void Phone_GetPowerCurve(unsigned char * ID,int Data_Len,const char *recvbuffer) 			//获取功率曲线
+void Phone_GetPowerCurve(int Data_Len,const char *recvbuffer) 			//获取功率曲线
 {
 	char date[9] = {'\0'};
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 03 ",(char *)recvbuffer);
@@ -245,29 +245,29 @@ void Phone_GetPowerCurve(unsigned char * ID,int Data_Len,const char *recvbuffer)
 	
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
 	{	//匹配成功进行相应操作
-		APP_Response_PowerCurve(0x00,ID,date);
+		APP_Response_PowerCurve(0x00,date);
 	}else
 	{
-		APP_Response_PowerCurve(0x01,ID,date);
+		APP_Response_PowerCurve(0x01,date);
 	}
 
 }
 
 //获取发电量曲线
-void Phone_GetGenerationCurve(unsigned char * ID,int Data_Len,const char *recvbuffer) 			//获取发电量曲线
+void Phone_GetGenerationCurve(int Data_Len,const char *recvbuffer) 			//获取发电量曲线
 {
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event04 ",(char *)recvbuffer);
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
 	{	//匹配成功进行相应操作
-		APP_Response_GenerationCurve(0x00,ID,recvbuffer[29]);
+		APP_Response_GenerationCurve(0x00,recvbuffer[29]);
 	}else
 	{
-		APP_Response_GenerationCurve(0x01,ID,recvbuffer[29]);
+		APP_Response_GenerationCurve(0x01,recvbuffer[29]);
 	}
 }
 
 //逆变器ID注册
-void Phone_RegisterID(unsigned char * ID,int Data_Len,const char *recvbuffer) 			//逆变器ID注册
+void Phone_RegisterID(int Data_Len,const char *recvbuffer) 			//逆变器ID注册
 {
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 05 ",(char *)recvbuffer);				
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
@@ -278,7 +278,7 @@ void Phone_RegisterID(unsigned char * ID,int Data_Len,const char *recvbuffer) 		
 		//匹配成功进行相应操作
 		//计算台数
 		AddNum = (Data_Len - 31)/6;
-		APP_Response_RegisterID(0x00,ID);
+		APP_Response_RegisterID(0x00);
 		//添加ID到文件
 		phone_add_inverter(AddNum,&recvbuffer[28]);
 			
@@ -334,12 +334,12 @@ void Phone_RegisterID(unsigned char * ID,int Data_Len,const char *recvbuffer) 		
 					
 	}else
 	{
-		APP_Response_RegisterID(0x01,ID);
+		APP_Response_RegisterID(0x01);
 	}
 }
 
 //ECU时间设置
-void Phone_SetTime(unsigned char * ID,int Data_Len,const char *recvbuffer) 			//ECU时间设置
+void Phone_SetTime(int Data_Len,const char *recvbuffer) 			//ECU时间设置
 {
 	char setTime[15];
 	char getTime[15];
@@ -364,16 +364,16 @@ void Phone_SetTime(unsigned char * ID,int Data_Len,const char *recvbuffer) 			//
 		set_time(setTime);
 		//重启main线程
 		restartThread(TYPE_MAIN);	
-		APP_Response_SetTime(0x00,ID);
+		APP_Response_SetTime(0x00);
 	}else
 	{
-		APP_Response_SetTime(0x01,ID);
+		APP_Response_SetTime(0x01);
 	}
 
 }
 
 //有线网络设置
-void Phone_SetWiredNetwork(unsigned char * ID,int Data_Len,const char *recvbuffer)			//有线网络设置
+void Phone_SetWiredNetwork(int Data_Len,const char *recvbuffer)			//有线网络设置
 {
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 07 ",(char *)recvbuffer);	
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
@@ -382,7 +382,7 @@ void Phone_SetWiredNetwork(unsigned char * ID,int Data_Len,const char *recvbuffe
 		char buff[200] = {'\0'};
 		IP_t IPAddr,MSKAddr,GWAddr,DNS1Addr,DNS2Addr;
 		//匹配成功进行相应操作
-		APP_Response_SetWiredNetwork(0x00,ID);
+		APP_Response_SetWiredNetwork(0x00);
 		//检查是DHCP  还是固定IP
 		ModeFlag = ResolveWired(&recvbuffer[28],&IPAddr,&MSKAddr,&GWAddr,&DNS1Addr,&DNS2Addr);
 		if(ModeFlag == 0x00)		//DHCP
@@ -403,26 +403,26 @@ void Phone_SetWiredNetwork(unsigned char * ID,int Data_Len,const char *recvbuffe
 	}	
 	else
 	{
-		APP_Response_SetWiredNetwork(0x01,ID);
+		APP_Response_SetWiredNetwork(0x01);
 	}
 }
 
 //获取硬件信息
-void Phone_GetECUHardwareStatus(unsigned char * ID,int Data_Len,const char *recvbuffer) 
+void Phone_GetECUHardwareStatus(int Data_Len,const char *recvbuffer) 
 {
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 8 ",(char *)recvbuffer);
 	if(!memcmp(&WIFI_RecvSocketAData[13],ecu.id,12))
 	{	//匹配成功进行相应的操作
-		APP_Response_GetECUHardwareStatus(0x00,ID);
+		APP_Response_GetECUHardwareStatus(0x00);
 	}else
 	{
-		APP_Response_GetECUHardwareStatus(0x01,ID);
+		APP_Response_GetECUHardwareStatus(0x01);
 	}
 
 }
 
 //AP密码设置
-void Phone_SetWIFIPasswd(unsigned char * ID,int Data_Len,const char *recvbuffer) 			//AP密码设置
+void Phone_SetWIFIPasswd(int Data_Len,const char *recvbuffer) 			//AP密码设置
 {
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 10 ",(char *)recvbuffer);
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
@@ -441,36 +441,36 @@ void Phone_SetWIFIPasswd(unsigned char * ID,int Data_Len,const char *recvbuffer)
 								
 		if((!memcmp(EEPROMPasswd,OldPassword,oldLen))&&(oldLen == strlen(EEPROMPasswd)))
 		{
-			APP_Response_SetWifiPasswd(0x00,ID);
+			APP_Response_SetWifiPasswd(0x00);
 			WIFI_ChangePasswd(NewPassword);
 
 			set_Passwd(NewPassword,newLen);
 		}else
 		{
-			APP_Response_SetWifiPasswd(0x02,ID);
+			APP_Response_SetWifiPasswd(0x02);
 		}				
 	}	else
 	{
-		APP_Response_SetWifiPasswd(0x01,ID);
+		APP_Response_SetWifiPasswd(0x01);
 	}
 	
 }
 
 //获取ID信息
-void Phone_GetIDInfo(unsigned char * ID,int Data_Len,const char *recvbuffer) 			//获取ID信息
+void Phone_GetIDInfo(int Data_Len,const char *recvbuffer) 			//获取ID信息
 {
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 11 ",(char *)recvbuffer);
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
 	{
-		APP_Response_GetIDInfo(0x00,ID,inverter);
+		APP_Response_GetIDInfo(0x00,inverter);
 	}else
 	{
-		APP_Response_GetIDInfo(0x01,ID,inverter);
+		APP_Response_GetIDInfo(0x01,inverter);
 	}
 }
 
 //获取时间
-void Phone_GetTime(unsigned char * ID,int Data_Len,const char *recvbuffer) 			//获取时间
+void Phone_GetTime(int Data_Len,const char *recvbuffer) 			//获取时间
 {
 	char Time[15] = {'\0'};
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 12 ",(char *)recvbuffer);
@@ -478,15 +478,15 @@ void Phone_GetTime(unsigned char * ID,int Data_Len,const char *recvbuffer) 			//
 	Time[14] = '\0';
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
 	{
-		APP_Response_GetTime(0x00,ID,Time);
+		APP_Response_GetTime(0x00,Time);
 	}else
 	{
-		APP_Response_GetTime(0x01,ID,Time);
+		APP_Response_GetTime(0x01,Time);
 	}
 }
 
 //获取FLASH空间
-void Phone_FlashSize(unsigned char * ID,int Data_Len,const char *recvbuffer) 			//获取时间
+void Phone_FlashSize(int Data_Len,const char *recvbuffer) 			//获取时间
 {
 	int result;
 	long long cap;
@@ -496,21 +496,21 @@ void Phone_FlashSize(unsigned char * ID,int Data_Len,const char *recvbuffer) 			
 	result = dfs_statfs("/", &buffer);
 	if (result != 0)
 	{
-		APP_Response_FlashSize(0x00,ID,0);
+		APP_Response_FlashSize(0x00,0);
 		return;
 	}
 	cap = buffer.f_bsize * buffer.f_bfree / 1024;
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
 	{
-		APP_Response_FlashSize(0x00,ID,(unsigned int)cap);
+		APP_Response_FlashSize(0x00,(unsigned int)cap);
 	}else
 	{
-		APP_Response_FlashSize(0x01,ID,(unsigned int)cap);
+		APP_Response_FlashSize(0x01,(unsigned int)cap);
 	}
 }
 
 //获取网络配置
-void Phone_GetWiredNetwork(unsigned char * ID,int Data_Len,const char *recvbuffer)			//获取有线网络设置
+void Phone_GetWiredNetwork(int Data_Len,const char *recvbuffer)			//获取有线网络设置
 {
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 14 ",(char *)recvbuffer);	
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
@@ -559,13 +559,13 @@ void Phone_GetWiredNetwork(unsigned char * ID,int Data_Len,const char *recvbuffe
 		//检查是DHCP  还是固定IP
 		ModeFlag = get_DHCP_Status();
 			
-		APP_Response_GetWiredNetwork(0x00,ID,ModeFlag,IPAddr,MSKAddr,GWAddr,DNS1Addr,DNS2Addr);
+		APP_Response_GetWiredNetwork(0x00,ModeFlag,IPAddr,MSKAddr,GWAddr,DNS1Addr,DNS2Addr);
 
 	}	else
 	{
 		int ModeFlag = 0;
 		IP_t IPAddr,MSKAddr,GWAddr,DNS1Addr,DNS2Addr;
-		APP_Response_GetWiredNetwork(0x01,ID,ModeFlag,IPAddr,MSKAddr,GWAddr,DNS1Addr,DNS2Addr);
+		APP_Response_GetWiredNetwork(0x01,ModeFlag,IPAddr,MSKAddr,GWAddr,DNS1Addr,DNS2Addr);
 	}
 }
 
@@ -590,7 +590,7 @@ int switchChannel(unsigned char *buff)
 }
 
 //设置信道
-void Phone_SetChannel(unsigned char * ID,int Data_Len,const char *recvbuffer)
+void Phone_SetChannel(int Data_Len,const char *recvbuffer)
 {
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 15 ",(char *)recvbuffer);
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
@@ -598,7 +598,7 @@ void Phone_SetChannel(unsigned char * ID,int Data_Len,const char *recvbuffer)
 		unsigned char old_channel = 0x00;
 		unsigned char new_channel = 0x00;
 	
-		APP_Response_SetChannel(ID,0x00,ecu.channel,0);
+		APP_Response_SetChannel(0x00,ecu.channel,0);
 		old_channel = switchChannel(&WIFI_RecvSocketAData[28]);
 		new_channel = switchChannel(&WIFI_RecvSocketAData[30]);	
 
@@ -609,45 +609,44 @@ void Phone_SetChannel(unsigned char * ID,int Data_Len,const char *recvbuffer)
 		restartThread(TYPE_MAIN);
 	}else
 	{
-		APP_Response_SetChannel(ID,0x01,ecu.channel,0);
+		APP_Response_SetChannel(0x01,ecu.channel,0);
 	}
 
 }
 
-void Phone_GetShortAddrInfo(unsigned char * ID,int Data_Len,const char *recvbuffer) 			//获取ID信息
+void Phone_GetShortAddrInfo(int Data_Len,const char *recvbuffer) 			//获取ID信息
 {
 	
 	
 	//printf("WIFI_Recv_Event%d %s\n",18,recvbuffer);
 	if(!memcmp(&WIFI_RecvSocketAData[13],ecu.id,12))
 	{
-		APP_Response_GetShortAddrInfo(0x00,ID,inverter);
+		APP_Response_GetShortAddrInfo(0x00,inverter);
 	}else
 	{
-		APP_Response_GetShortAddrInfo(0x01,ID,inverter);
+		APP_Response_GetShortAddrInfo(0x01,inverter);
 	}
 	
 }
 
 
 //WIFI事件处理
-void process_WIFI(unsigned char * ID,char *WIFI_RecvData)
+void process_WIFI(void)
 {
 //#ifdef WIFI_USE
 	int ResolveFlag = 0,Data_Len = 0,Command_Id = 0;
-	ResolveFlag =  Resolve_RecvData((char *)WIFI_RecvData,&Data_Len,&Command_Id);
+	ResolveFlag =  Resolve_RecvData((char *)WIFI_RecvSocketAData,&Data_Len,&Command_Id);
 	if(ResolveFlag == 0)
 	{
 		add_Phone_functions();
 		if(pfun_Phone[Command_Id])
 		{
-			(*pfun_Phone[Command_Id])(ID,Data_Len,WIFI_RecvData);
+			(*pfun_Phone[Command_Id])(Data_Len,(char *)WIFI_RecvSocketAData);
 		}
 		
 	}
 //#endif
 }
-
 
 //按键初始化密码事件处理
 void process_KEYEvent(void)
@@ -676,18 +675,28 @@ void process_KEYEvent(void)
 //无线复位处理
 int process_WIFI_RST(void)
 {
-	int ret =1,i = 0;
 	printf("process_WIFI_RST Start\n");
-	for(i = 0;i<3;i++)
+	if(AT_RST() != 0)
 	{
-		ret = WIFI_SoftReset();
-		if(ret == 0) break;
+		WIFI_Reset();
 	}
 	printf("process_WIFI_RST End\n");
-	return ret;
+	return 0;
 }
 
-
+void process_WIFIEvent_ESP07S(void)
+{
+	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
+	//检测WIFI事件
+	WIFI_GetEvent_ESP07S();
+	rt_mutex_release(wifi_uart_lock);
+	//判断是否有WIFI接收事件
+	if(WIFI_Recv_SocketA_Event == 1)
+	{
+		process_WIFI();
+		WIFI_Recv_SocketA_Event = 0;
+	}
+}
 
 /*****************************************************************************/
 /*  Function Implementations                                                 */
@@ -733,7 +742,7 @@ void phone_server_thread_entry(void* parameter)
 		//上锁
 		rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
 		//获取WIFI事件
-		WIFI_GetEvent();
+		process_WIFIEvent_ESP07S();
 		//解锁
 		rt_mutex_release(wifi_uart_lock);
 		
@@ -741,7 +750,7 @@ void phone_server_thread_entry(void* parameter)
 		{
 			//print2msg(ECU_DBG_WIFI,"phone_server",(char *)WIFI_RecvSocketAData);
 			WIFI_Recv_SocketA_Event = 0;
-			process_WIFI(ID_A,(char *)WIFI_RecvSocketAData);
+			process_WIFI();
 		}
 
 		//检测按键事件

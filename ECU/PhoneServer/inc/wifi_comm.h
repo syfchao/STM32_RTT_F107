@@ -25,34 +25,34 @@ unsigned short packetlen(unsigned char *packet);
 int Resolve_RecvData(char *RecvData,int* Data_Len,int* Command_Id);
 int phone_add_inverter(int num,const char *uidstring);
 //01	获取基本信息请求
-void APP_Response_BaseInfo(unsigned char *ID,stBaseInfo baseInfo);
+void APP_Response_BaseInfo(stBaseInfo baseInfo);
 //02	逆变器发电数据请求
-void APP_Response_PowerGeneration(char mapping,unsigned char *ID,inverter_info *inverter,int VaildNum);
+void APP_Response_PowerGeneration(char mapping,inverter_info *inverter,int VaildNum);
 //03	功率曲线请求
-void APP_Response_PowerCurve(char mapping,unsigned char *ID,char * date);
+void APP_Response_PowerCurve(char mapping,char * date);
 //04	发电量曲线请求
-void APP_Response_GenerationCurve(char mapping,unsigned char *ID,char request_type);
+void APP_Response_GenerationCurve(char mapping,char request_type);
 //05	逆变器ID注册请求
-void APP_Response_RegisterID(char mapping,unsigned char *ID);
+void APP_Response_RegisterID(char mapping);
 //06	时间设置请求
-void APP_Response_SetTime(char mapping,unsigned char *ID);
+void APP_Response_SetTime(char mapping);
 //07	有线网络设置请求
-void APP_Response_SetWiredNetwork(char mapping,unsigned char *ID);
+void APP_Response_SetWiredNetwork(char mapping);
 //08 	获取ECU硬件信息
-void APP_Response_GetECUHardwareStatus(char mapping,unsigned char *ID);
+void APP_Response_GetECUHardwareStatus(char mapping);
 //10	AP密码设置请求
-void APP_Response_SetWifiPasswd(char mapping,unsigned char *ID);
+void APP_Response_SetWifiPasswd(char mapping);
 //11	AP密码设置请求
-void APP_Response_GetIDInfo(char mapping,unsigned char *ID,inverter_info *inverter);
+void APP_Response_GetIDInfo(char mapping,inverter_info *inverter);
 //12	AP密码设置请求
-void APP_Response_GetTime(char mapping,unsigned char *ID,char *Time);
+void APP_Response_GetTime(char mapping,char *Time);
 //13	FlashSize 判断
-void APP_Response_FlashSize(char mapping,unsigned char *ID,unsigned int Flashsize);
+void APP_Response_FlashSize(char mapping,unsigned int Flashsize);
 //14	获取有线网络设置
-void APP_Response_GetWiredNetwork(char mapping,unsigned char *ID,char dhcpStatus,IP_t IPAddr,IP_t MSKAddr,IP_t GWAddr,IP_t DNS1Addr,IP_t DNS2Addr);
+void APP_Response_GetWiredNetwork(char mapping,char dhcpStatus,IP_t IPAddr,IP_t MSKAddr,IP_t GWAddr,IP_t DNS1Addr,IP_t DNS2Addr);
 //15 	设置信道
-void APP_Response_SetChannel(unsigned char *ID,unsigned char mapflag,char SIGNAL_CHANNEL,char SIGNAL_LEVEL);
+void APP_Response_SetChannel(unsigned char mapflag,char SIGNAL_CHANNEL,char SIGNAL_LEVEL);
 //18 	获取短地址
-void APP_Response_GetShortAddrInfo(char mapping,unsigned char *ID,inverter_info *inverter);
+void APP_Response_GetShortAddrInfo(char mapping,inverter_info *inverter);
 
 #endif /*__WIFI_COMM_H__*/

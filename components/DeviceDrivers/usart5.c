@@ -25,6 +25,9 @@
 #include "client.h"
 #include "threadlist.h"
 #include "clientSocket.h"
+#include "file.h"
+#include "datetime.h"
+
 
 /*****************************************************************************/
 /*  Definitions                                                              */
@@ -39,12 +42,121 @@ extern rt_mutex_t usr_wifi_lock;
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
+Socket_Cfg client_arg;
+Socket_Cfg control_client_arg;
 
-void delayMS(unsigned int ms)
+void initSocketArgs(void)
 {
-	rt_hw_ms_delay(ms);
+	FILE *fp;
+	char *buff = NULL;
+	client_arg.port1 = CLIENT_SERVER_PORT1;
+	client_arg.port2 = CLIENT_SERVER_PORT2;
+	strcpy(client_arg.domain, CLIENT_SERVER_DOMAIN);
+	strcpy(client_arg.ip, CLIENT_SERVER_IP);
+
+	buff = malloc(512);
+	memset(buff,'\0',512);
+	//初始化电量上传参数
+	fp = fopen("/yuneng/datacent.con", "r");
+	if(fp)
+	{
+		while(1)
+		{
+			memset(buff, '\0', 512);
+			fgets(buff, 512, fp);
+			
+			if(!strlen(buff))
+				break;
+			if(!strncmp(buff, "Domain", 6))
+			{
+				strcpy(client_arg.domain, &buff[7]);
+				if('\n' == client_arg.domain[strlen(client_arg.domain)-1])
+					client_arg.domain[strlen(client_arg.domain)-1] = '\0';
+			}
+			if(!strncmp(buff, "IP", 2))
+			{
+				strcpy(client_arg.ip, &buff[3]);
+				if('\n' == client_arg.ip[strlen(client_arg.ip)-1])
+					client_arg.ip[strlen(client_arg.ip)-1] = '\0';
+			}
+			if(!strncmp(buff, "Port1", 5))
+				client_arg.port1=atoi(&buff[6]);
+			if(!strncmp(buff, "Port2", 5))
+				client_arg.port2=atoi(&buff[6]);
+		}
+		fclose(fp);
+	}
+	
+	//初始化远程控制参数
+	control_client_arg.port1 = CONTROL_SERVER_PORT1;
+	control_client_arg.port2 = CONTROL_SERVER_PORT2;
+;	strcpy(control_client_arg.domain, CONTROL_SERVER_DOMAIN);
+	strcpy(control_client_arg.ip, CONTROL_SERVER_IP);
+	fp = fopen("/yuneng/control.con", "r");
+	if(fp)
+	{
+		while(1)
+		{
+			memset(buff, '\0',512);
+			fgets(buff, 512, fp);
+			if(!strlen(buff))
+			break;
+			if(!strncmp(buff, "Domain", 6))
+			{
+				strcpy(control_client_arg.domain, &buff[7]);
+				if('\n' == control_client_arg.domain[strlen(control_client_arg.domain)-1])
+					control_client_arg.domain[strlen(control_client_arg.domain)-1] = '\0';
+			}
+			if(!strncmp(buff, "IP", 2))
+			{
+				strcpy(control_client_arg.ip, &buff[3]);
+				if('\n' == control_client_arg.ip[strlen(control_client_arg.ip)-1])
+					control_client_arg.ip[strlen(control_client_arg.ip)-1] = '\0';
+			}
+			if(!strncmp(buff, "Port1", 5))
+				control_client_arg.port1=atoi(&buff[6]);
+			if(!strncmp(buff, "Port2", 5))
+				control_client_arg.port2=atoi(&buff[6]);
+
+			if(!strncmp(buff, "Timeout", 7))
+			{
+				control_client_arg.timeout = atoi(&buff[8]);
+			}
+			
+			if(!strncmp(buff, "Report_Interval", 15))
+			{
+				control_client_arg.report_interval = atoi(&buff[16]);
+			}
+		}
+		fclose(fp);
+	}
+
+	printf("client_arg.domain:%s\n",client_arg.domain);
+	printf("client_arg.ip:%s\n",client_arg.ip);
+	printf("client_arg.port1:%d\n",client_arg.port1);
+	printf("client_arg.port2:%d\n",client_arg.port2);
+
+	printf("client_arg.domain:%s\n",control_client_arg.domain);
+	printf("client_arg.ip:%s\n",control_client_arg.ip);
+	printf("client_arg.port1:%d\n",control_client_arg.port1);
+	printf("client_arg.port2:%d\n",control_client_arg.port2);
+	printf("client_arg.timeout:%d\n",control_client_arg.timeout);
+	printf("client_arg.report_interval:%d\n",control_client_arg.report_interval);
+	
+	free(buff);
+	buff = NULL;
 }
 
+
+/* 随机取port1或port2 */
+int randport(Socket_Cfg cfg)
+{
+	srand((unsigned)acquire_time());
+	if(rand()%2)
+		return cfg.port1;
+	else
+		return cfg.port2;
+}
 //4个字节
 unsigned short packetlen_A(unsigned char *packet)
 {
@@ -147,13 +259,14 @@ void uart5_init(u32 bound){
 
 }
 
-unsigned char ID[9] = {'\0'};
 
 //WIFI  socket A 当串口发出来的数据组包成功时 ,数组赋值，并且Socket事件变为1
 unsigned char WIFI_RecvSocketAData[SOCKETA_LEN] = {'\0'};
 unsigned char WIFI_Recv_SocketA_Event = 0;
 unsigned int WIFI_Recv_SocketA_LEN =0;
-unsigned char ID_A[9] = {'\0'};
+char TCPServerConnectID = '0';
+
+char ConnectID = '0';
 	
 //WIFI  socket B 当串口发出来的数据组包成功时 ,数组赋值，并且Socket事件变为1
 unsigned char WIFI_RecvSocketBData[SOCKETB_LEN] = {'\0'};
@@ -165,17 +278,10 @@ unsigned char WIFI_RecvSocketCData[SOCKETC_LEN] = {'\0'};
 unsigned char WIFI_Recv_SocketC_Event = 0;
 unsigned int WIFI_Recv_SocketC_LEN =0;
 
-//WIFI SOCKET 连接 断开 查询 帧
-unsigned char WIFI_RecvSocketData[SOCKET_LEN] = {'\0'};
-unsigned char WIFI_Recv_Socket_Event = 0;
 
 //wifi  串口当前收到的数据 
 unsigned char USART_RX_BUF[USART_REC_LEN];     			//接收缓冲,最大USART_REC_LEN个字节.
-unsigned short Cur = 0;															//当前采值位置
-unsigned short PackLen = 0;
-eRecvSM eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;	//数据采集状态机
-eRecvType eTypeMachine = EN_RECV_TYPE_UNKNOWN;     	//
-unsigned short pos = 0;															//数据解析位置
+unsigned short Cur = 0;															//当前采值位置														//数据解析位置
 
 void UART5_IRQHandler(void)                	//串口1中断服务程序
 {
@@ -189,2225 +295,655 @@ void UART5_IRQHandler(void)                	//串口1中断服务程序
 			Cur = 0;
 		}
 	}
-} 
-void WIFI_GetEvent(void)
-{
-	  pos = 0;
-		
-		//接收A报文头部
-		if(eStateMachine == EN_RECV_ST_GET_SCOKET_HEAD)
-		{
-			while(pos < Cur)
-      {
-				if(1 == pos)   //'a'
-				{
-						TIM3_Int_Init(499,7199);
-						if((USART_RX_BUF[0] != 'a') && (USART_RX_BUF[0] != 'b') && (USART_RX_BUF[0] != 'c') && (USART_RX_BUF[0] != 0x65))
-						{
-							Cur = 0;
-							pos = 0;
-							eTypeMachine = EN_RECV_TYPE_UNKNOWN;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							TIM3_Int_Deinit();
-							break;
-						}else if(USART_RX_BUF[0] == 'a')
-						{
-							delayMS(2);
-							eStateMachine = EN_RECV_ST_GET_SCOKET_ID;
-							eTypeMachine = EN_RECV_TYPE_A;
-							TIM3_Int_Deinit();							
-							break;
-						}else if(USART_RX_BUF[0] == 'b')
-						{
-							delayMS(2);
-							eTypeMachine = EN_RECV_TYPE_B;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_ID;
-							TIM3_Int_Deinit();
-							break;
-						}else if(USART_RX_BUF[0] == 'c')
-						{
-							delayMS(2);
-							eTypeMachine = EN_RECV_TYPE_C;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_ID;
-							TIM3_Int_Deinit();
-							break;
-						}else if(USART_RX_BUF[0] == 0x65)
-						{
-							delayMS(2);
-							eTypeMachine = EN_RECV_TYPE_SOCKET;
-							eStateMachine = EN_RECV_ST_GET_SOCKET_DATA;
-							TIM3_Int_Deinit();
-							if(Cur >= 2)
-							{
-								if(USART_RX_BUF[1] == 'd')
-								{
-									Cur = 0;
-									pos = 0;
-									eTypeMachine = EN_RECV_TYPE_UNKNOWN;
-									eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-								}
-							}
-							
-							break;
-						}
-				}
-				pos++;
-			}
-		}		
-
-
-		//接收数据
-		if(eStateMachine == EN_RECV_ST_GET_SOCKET_DATA)
-		{
-			delayMS(1);
-			TIM3_Int_Init(499,7199);//10Khz的计数频率，计数到5000为500ms 打开定时器
-			while(pos < Cur)
-			{
-				if(5 == pos)
-				{
-					memset(WIFI_RecvSocketData,0x00,SOCKET_LEN);
-					memcpy(WIFI_RecvSocketData,&USART_RX_BUF[0],SOCKET_LEN);
-					WIFI_Recv_Socket_Event = 1;
-	
-
-					eTypeMachine = EN_RECV_TYPE_UNKNOWN;
-					eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-					Cur = 0;
-					pos = 0;		
-					TIM3_Int_Deinit();
-					break;
-				}
-				pos++;
-			}
-			
-		}
-
-
-	
-		//接收ID
-		if(eStateMachine == EN_RECV_ST_GET_SCOKET_ID)
-		{
-      		while(pos < Cur)
-      		{
-				if(2 == pos)
-				{
-					ID[0] = USART_RX_BUF[1];
-				}
-				
-				if(3 == pos)
-				{
-					ID[1] = USART_RX_BUF[2];
-				}	
-				
-				if(4 == pos)
-				{
-					ID[2] = USART_RX_BUF[3];
-				}
-				
-				if(5 == pos) 
-				{
-					ID[3] = USART_RX_BUF[4];
-				}
-				
-				if(6 == pos)
-				{
-					ID[4] = USART_RX_BUF[5];
-				}
-				
-				if(7 == pos)
-				{
-					ID[5] = USART_RX_BUF[6];
-				}
-				
-				if(8 == pos)   
-				{
-					ID[6] = USART_RX_BUF[7];
-				}
-				
-				if(9 == pos)   //接收版本号完毕
-				{
-					ID[7] = USART_RX_BUF[8];
-					if(eTypeMachine == EN_RECV_TYPE_A)
-					{
-						eStateMachine = EN_RECV_ST_GET_A_HEAD;
-					}
-					else if(eTypeMachine == EN_RECV_TYPE_B)
-					{
-						eStateMachine = EN_RECV_ST_GET_B_HEAD;
-					}
-					else if(eTypeMachine == EN_RECV_TYPE_C)
-					{
-						eStateMachine = EN_RECV_ST_GET_C_HEAD;
-					}
-					else
-					{
-						Cur = 0;
-						pos = 0;
-						eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-					}
-							
-					break;
-				}
-								
-				pos++;
-			}
-		}			
-	
-		//SOCKET A
-		//receive start character
-		if(eStateMachine == EN_RECV_ST_GET_A_HEAD)    //接收报文头部
-		{
-			// check for the start character(SYNC_CHARACTER)
-      		// also check it's not arriving the end of valid data
-      		while(pos < Cur)
-      		{
-
-				if(10 == pos)   //'A'
-				{
-						if(USART_RX_BUF[9] != 'A')
-						{
-							Cur = 0;
-							pos = 0;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							break;
-						}
-				}
-				
-				if(11 == pos)   //'P'
-				{
-						if(USART_RX_BUF[10] != 'P')
-						{
-							Cur = 0;
-							pos = 0;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							break;
-						}
-				}	
-				
-				if(12 == pos)   //'S'
-				{
-						if(USART_RX_BUF[11] != 'S')
-						{
-							Cur = 0;
-							pos = 0;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							break;
-						}
-				}
-				
-				if(14 == pos)   //接收版本号完毕
-				{
-					eStateMachine = EN_RECV_ST_GET_A_LEN;
-					break;
-				}
-				
-				pos++;
-			}
-		}
-		
-		//receive data length
-		if(eStateMachine == EN_RECV_ST_GET_A_LEN)
-		{
-			while(pos < Cur)
-      		{
-				//判断是否有a出现  如果出现了判断后面8个字节
-				if(18 == pos)   //接收数据长度结束
-				{
-					PackLen = (packetlen_A(&USART_RX_BUF[14])+9);
-					//计算长度
-					eStateMachine = EN_RECV_ST_GET_A_DATA;
-					delayMS(30);
-					TIM3_Int_Init(499,7199);//10Khz的计数频率，计数到5000为500ms 打开定时器
-
-					break;
-				}
-				pos++;
-			}
-		}
-		
-		//Continue to receive data
-		if(eStateMachine == EN_RECV_ST_GET_A_DATA)
-		{
-			TIM3_Int_Deinit();
-			pos = 0;
-			while(pos < Cur)
-      		{
-
-				if((PackLen - 3) == pos)   //接收数据长度结束
-				{
-					eStateMachine = EN_RECV_ST_GET_A_END;
-					TIM3_Int_Init(499,7199);
-					break;
-				}
-				pos++;
-			}
-		}		
-		
-		//receive END
-		if(eStateMachine == EN_RECV_ST_GET_A_END)
-		{
-			pos = 0;
-			while(pos <= Cur)
-      		{
-				
-				if((PackLen - 2) == pos)   //'A'
-				{
-						if(USART_RX_BUF[PackLen - 3] != 'E')
-						{
-							Cur = 0;
-							pos = 0;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							break;
-						}
-				}
-				
-				if((PackLen - 1) == pos)   //'P'
-				{
-						if(USART_RX_BUF[PackLen - 2] != 'N')
-						{
-							Cur = 0;
-							pos = 0;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							break;
-						}
-				}	
-				
-				if((PackLen) == pos)   //'S'
-				{
-						if(USART_RX_BUF[PackLen - 1] != 'D')
-						{
-							Cur = 0;
-							pos = 0;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							break;
-						}						
-						//报文接收完毕
-						//进行完毕的相应操作
-						//将采集成功的数据复制到成功数组
-						memset(WIFI_RecvSocketAData,0x00,USART_REC_LEN);
-						memcpy(WIFI_RecvSocketAData,&USART_RX_BUF[9],(PackLen-9));
-						memcpy(ID_A,ID,8);
-						//解析数据，去掉多包问题
-						WIFI_Recv_SocketA_LEN = PackLen-9;
-						
-						WIFI_RecvSocketAData[WIFI_Recv_SocketA_LEN] = '\0';
-						WIFI_Recv_SocketA_Event = 1;
-						eTypeMachine = EN_RECV_TYPE_UNKNOWN;
-						eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-						Cur = 0;
-						pos = 0;		
-						TIM3_Int_Deinit();
-						break;
-				}
-								
-				pos++;
-			}
-		}
-		
-		//SOCKET B
-		//receive start character
-		if(eStateMachine == EN_RECV_ST_GET_B_HEAD)    //接收报文头部
-		{
-      		while(pos < Cur)
-      		{	
-				if(10 == pos)   // 101   14字节的时间点
-				{
-					if(USART_RX_BUF[9] != '1')
-					{
-							Cur = 0;
-							pos = 0;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							break;
-					}
-					else
-					{
-						
-						eStateMachine = EN_RECV_ST_GET_B_LEN;
-						break;
-					}
-				}
-				pos++;
-			}
-		}
-		
-		//receive data length
-		if(eStateMachine == EN_RECV_ST_GET_B_LEN)
-		{
-			while(pos < Cur)
-      {
-      			if(10 == pos)
-      			{
-      				if('b' != USART_RX_BUF[10])
-      				{
-      					PackLen = packetlen_B(&USART_RX_BUF[10]);
-						eStateMachine = EN_RECV_ST_GET_B_DATA;
-						delayMS(30);
-						TIM3_Int_Init(499,7199);//10Khz的计数频率，计数到5000为500ms 打开定时器
-
-					break;
-      				}
-      			}
-				//判断是否有a出现  如果出现了判断后面8个字节
-				if(19 == pos)   //接收数据长度结束
-				{
-					PackLen = (packetlen_B(&USART_RX_BUF[19])+9);
-					//计算长度
-					eStateMachine = EN_RECV_ST_GET_B_DATA;
-					delayMS(30);
-					TIM3_Int_Init(499,7199);//10Khz的计数频率，计数到5000为500ms 打开定时器
-
-					break;
-				}
-				pos++;
-			}
-		}
-		
-		//Continue to receive data
-		if(eStateMachine == EN_RECV_ST_GET_B_DATA)
-		{
-			TIM3_Int_Deinit();
-			pos = 0;
-			while(pos <= Cur)
-      {
-				if(PackLen == pos)   //接收数据长度结束
-				{
-					eStateMachine = EN_RECV_ST_GET_B_END;
-					TIM3_Int_Init(499,7199);
-					break;
-				}
-				pos++;
-			}
-		}		
-		
-		//receive END
-		if(eStateMachine == EN_RECV_ST_GET_B_END)
-		{
-			//报文接收完毕
-			//进行完毕的相应操作
-			//将采集成功的数据复制到成功数组
-			memset(WIFI_RecvSocketBData,0x00,USART_REC_LEN);
-			memcpy(WIFI_RecvSocketBData,&USART_RX_BUF[9],(PackLen-9));
-			//解析数据，去掉多包问题
-			WIFI_Recv_SocketB_LEN = PackLen-9;
-			
-			WIFI_RecvSocketBData[WIFI_Recv_SocketB_LEN] = '\0';
-			//printf("WIFI_Recv_SocketB_LEN:%d   %s \n",WIFI_Recv_SocketB_LEN,WIFI_RecvSocketBData);
-			WIFI_Recv_SocketB_Event = 1;
-			eTypeMachine = EN_RECV_TYPE_UNKNOWN;
-			eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-			Cur = 0;
-			pos = 0;		
-			TIM3_Int_Deinit();
-		}
-		
-		//SOCKET C
-		//receive start character
-		if(eStateMachine == EN_RECV_ST_GET_C_HEAD)    //接收报文头部
-		{
-			// check for the start character(SYNC_CHARACTER)
-			// also check it's not arriving the end of valid data
-      		while(pos < Cur)
-      		{
-
-				if(10 == pos)   //'A'
-				{
-						if(USART_RX_BUF[9] != 'A')
-						{
-							Cur = 0;
-							pos = 0;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							break;
-						}
-				}
-				
-				if(11 == pos)   //'P'
-				{
-						if(USART_RX_BUF[10] != 'P')
-						{
-							Cur = 0;
-							pos = 0;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							break;
-						}
-				}	
-				
-				if(12 == pos)   //'S'
-				{
-						if(USART_RX_BUF[11] != 'S')
-						{
-							Cur = 0;
-							pos = 0;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							break;
-						}
-				}
-				
-				if(14 == pos)   //接收版本号完毕
-				{
-					eStateMachine = EN_RECV_ST_GET_C_LEN;
-					break;
-				}
-				
-				pos++;
-			}
-		}
-		
-		//receive data length
-		if(eStateMachine == EN_RECV_ST_GET_C_LEN)
-		{
-			while(pos < Cur)
-      		{
-				//判断是否有a出现  如果出现了判断后面8个字节
-				if(19 == pos)   //接收数据长度结束
-				{
-					PackLen = (packetlen_C(&USART_RX_BUF[14])+9);
-					//计算长度
-					eStateMachine = EN_RECV_ST_GET_C_DATA;
-					delayMS(300);
-					TIM3_Int_Init(499,7199);//10Khz的计数频率，计数到5000为500ms 打开定时器
-
-					break;
-				}
-				pos++;
-			}
-		}
-		
-		//Continue to receive data
-		if(eStateMachine == EN_RECV_ST_GET_C_DATA)
-		{
-			TIM3_Int_Deinit();
-			pos = 0;
-			while(pos <= Cur)
-      {
-				if((PackLen-3) == pos)   //接收数据长度结束
-				{
-					eStateMachine = EN_RECV_ST_GET_C_END;
-					TIM3_Int_Init(499,7199);
-					break;
-				}
-				pos++;
-			}
-		}		
-		
-		//receive END
-		if(eStateMachine == EN_RECV_ST_GET_C_END)
-		{
-			pos = 0;
-			while(pos <= Cur)
-      		{
-				
-				if((PackLen - 2) == pos)   //'A'
-				{
-						if(USART_RX_BUF[PackLen - 3] != 'E')
-						{
-							Cur = 0;
-							pos = 0;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							break;
-						}
-				}
-				
-				if((PackLen - 1) == pos)   //'P'
-				{
-						if(USART_RX_BUF[PackLen - 2] != 'N')
-						{
-							Cur = 0;
-							pos = 0;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							break;
-						}
-				}	
-				
-				if((PackLen) == pos)   //'S'
-				{
-						if(USART_RX_BUF[PackLen - 1] != 'D')
-						{
-							Cur = 0;
-							pos = 0;
-							eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-							break;
-						}
-						//报文接收完毕
-						//进行完毕的相应操作
-						//将采集成功的数据复制到成功数组
-						memset(WIFI_RecvSocketCData,0x00,USART_REC_LEN);
-						memcpy(WIFI_RecvSocketCData,&USART_RX_BUF[9],(PackLen-9));
-						//解析数据，去掉多包问题
-						WIFI_Recv_SocketC_LEN = PackLen-9;
-						
-						WIFI_RecvSocketCData[WIFI_Recv_SocketC_LEN] = '\0';
-						WIFI_Recv_SocketC_Event = 1;
-						eTypeMachine = EN_RECV_TYPE_UNKNOWN;
-						eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
-						Cur = 0;
-						pos = 0;		
-						TIM3_Int_Deinit();
-						break;
-				}
-								
-				pos++;
-			}
-		}	
 }
 
 void clear_WIFI(void)
 {
 	//TIM3_Int_Deinit();
-	eStateMachine = EN_RECV_ST_GET_SCOKET_HEAD;
 	Cur = 0;
 }
 
-#ifdef USR_MODULE
-//进入AT模式
-int AT(void)
-{
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	//先向模块写入"+++"然后再写入"a" 写入+++返回"a" 写入"a"返回+ok
-	WIFI_SendData("+++", 3);
-	//获取到a
-	rt_hw_ms_delay(350);
-	if(Cur < 1)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(USART_RX_BUF,"a",1))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	
-	//接着发送a
-	clear_WIFI();
-	WIFI_SendData("a", 1);
-	rt_hw_ms_delay(350);
-	if(Cur < 3)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(USART_RX_BUF,"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
 
+
+//判断字符中是否有OK  字符
+int detectionOK(int size)		//检测到OK  返回1   未检出到返回0
+{
+	int i=0;
+	for(i = 0;i<(size-2);i++)
+	{
+		if(!memcmp(&USART_RX_BUF[i],"OK",2))
+		{
+			return 1;			
+		}
 	}
-	printf("AT :a+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
 	return 0;
 }
 
-
-//切换回原来的工作模式    OK
-int AT_ENTM(void)
+int detectionUNLINK(int size)		//检测到OK  返回1   未检出到返回0
 {
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	//发送"AT+ENTM\n",返回+ok
-	WIFI_SendData("AT+ENTM\n", 8);
-	rt_hw_ms_delay(300);
-	if(Cur < 10)
+	int i=0;
+	for(i = 0;i<(size-2);i++)
 	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[9],"+ok",3))
+		if(!memcmp(&USART_RX_BUF[i],"UNLINK",6))
 		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-
-	}
-	printf("AT+ENTM :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-	
-}
-
-//usr 版本信息
-int AT_VER(void)
-{
-	int i = 0,flag_failed = 0;
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	WIFI_SendData("AT+VER\n", 7);
-
-	for(i = 0;i< 400;i++)
-	{
-		delayMS(5);
-		if(Cur >= 10) 
-		{
-			flag_failed = 1;
-			break;
-		}
-		
-	}
-	
-	if(flag_failed == 0)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		clear_WIFI();
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[7],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			print2msg(ECU_DBG_WIFI,"Version",(char *)USART_RX_BUF);
-			clear_WIFI();
-			return 0;
+			return 1;			
 		}
 	}
-	
-
-	printmsg(ECU_DBG_WIFI,"AT_VER WIFI Get reply time out 1");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return -1;
-
-}
-
-
-int AT_Z(void)
-{
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	//发送"AT+Z\n",返回+ok
-	WIFI_SendData("AT+Z\n", 5);
-	rt_hw_ms_delay(300);
-	if(Cur < 6)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[6],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-
-	}
-	printf("AT+Z :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-	
-}
-
-//设置WIFI SSID
-
-int AT_WAP(char *ECUID12)
-{
-	char AT[100] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	//发送"AT+WAKEY\n",返回+ok
-	sprintf(AT,"AT+WAP=11BGN,ECU_R_%s,Auto\n",ECUID12);
-	printf("%s",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	
-	rt_hw_ms_delay(1000);
-	
-	if(Cur < 10)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[strlen(AT)+1],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+WAP :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
 	return 0;
 }
 
-//设置WIFI密码
-int AT_WAKEY(char *NewPasswd)
+//判断字符中是否有Ai-Thinker Technology Co. Ltd.  字符
+int detectionResetStatus(int size)		//检测到Ai-Thinker Technology Co. Ltd.  返回1   未检出到返回0
 {
-	char AT[100] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	//发送"AT+WAKEY\n",返回+ok
-	sprintf(AT,"AT+WAKEY=WPA2PSK,AES,%s\n",NewPasswd);
-	printf("%s",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	
-	rt_hw_ms_delay(1000);
-	
-	if(Cur < 10)
+	int i=0;
+	for(i = 0;i<(size-30);i++)
 	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[strlen(AT)+1],"+ok",3))
+		if(!memcmp(&USART_RX_BUF[i],"Ai-Thinker Technology Co. Ltd.",30))
 		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
+			AT_CIPMUX1();
+			AT_CIPSERVER();
+			AT_CIPSTO();
+			return 1;			
 		}
 	}
-	printf("AT+WAKEY :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-/*  废除
-//设置连接无线路由器SSID
-int AT_WSSSID(char *SSSID)
-{
-	int i = 0,flag_failed = 0;
-	char AT[100] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	//发送"AT+WSSSID\n",返回+ok
-	sprintf(AT,"AT+WSSSID=%s\n",SSSID);
-	printf("%s\n",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	delayMS(5);
-	for(i = 0;i< 400;i++)
-	{
-		delayMS(5);
-		if(Cur >= (strlen(AT)+ 4)) 
-		{
-			flag_failed = 1;
-			break;
-		}
-		
-	}
-	
-	if(flag_failed == 0)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[strlen(AT)+1],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+WSSSID :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
 	return 0;
 }
 
-//设置连接路由器KEY
-int AT_WSKEY(char Auth,char Encry,char *SKEY,int passWDLen)
+//判断字符中是否有OK  字符
+int detectionSENDOK(int size)		//检测到OK  返回1   未检出到返回0
 {
-	int i = 0,flag_failed = 0;
-	char AT[100] = { '\0' };
-	char AuthString[20] = {'\0'};
-	char EncryString[20] = {'\0'};
-	int AT_length = 0;
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-
-	if(Auth == '1')
+	int i=0;
+	for(i = 0;i<(size-7);i++)
 	{
-		sprintf(AuthString,"OPEN");
-	}else if(Auth == '2')
-	{
-		sprintf(AuthString,"SHARED");
-	}else if(Auth == '3')
-	{
-		sprintf(AuthString,"WPAPSK");
-	}else if(Auth == '4')
-	{
-		sprintf(AuthString,"WPA2PSK");
-	}
-
-	if(Encry == '1')
-	{
-		sprintf(EncryString,"NONE");
-	}else if(Encry == '2')
-	{
-		sprintf(EncryString,"WEP-H");
-	}else if(Encry == '3')
-	{	
-		sprintf(EncryString,"WEP-A");
-	}else if(Encry == '4')
-	{
-		sprintf(EncryString,"TKIP");
-	}else if(Encry == '5')
-	{
-		sprintf(EncryString,"AES");
-	}
-	
-	//发送"AT+WSSSID\n",返回+ok
-	if(passWDLen > 0)
-	{
-		//密码长度大于0
-		
-		sprintf(AT,"AT+WSKEY=%s,%s,",AuthString,EncryString);
-		AT_length = strlen(AT);
-		memcpy(&AT[AT_length],SKEY,passWDLen);
-		AT[AT_length+passWDLen]  = '\n';
-		AT_length = AT_length+passWDLen + 1;
-		
-	}else
-	{
-		//密码长度为0
-		sprintf(AT,"AT+WSKEY=%s,%s\n",AuthString,EncryString);
-		AT_length = strlen(AT);
-	}
-	
-	printf("%s\n",AT);
-	WIFI_SendData(AT, (AT_length+1));
-	
-	for(i = 0;i< 400;i++)
-	{
-		delayMS(5);
-		if(Cur >= (AT_length+4)) 
+		if(!memcmp(&USART_RX_BUF[i],"SEND OK",7))
 		{
-			flag_failed = 1;
-			break;
-		}
-		
-	}
-	
-	if(flag_failed == 0)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[AT_length+1],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
+			return 1;			
 		}
 	}
-	printf("AT+WSSSID :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-*/
-
-//设置WIFI密码
-int AT_WAKEY_Clear(void)
-{
-	char AT[100] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	//发送"AT+WAKEY\n",返回+ok
-	sprintf(AT,"AT+WAKEY=OPEN,NONE\n");
-	printf("%s",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	
-	rt_hw_ms_delay(1000);
-	
-	if(Cur < 10)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[strlen(AT)+1],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+WAKEY Clear :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
 	return 0;
 }
 
-//配置SOCKET B 开启
-int AT_TCPB_ON(void)
+//判断字符中是否有+IPD
+int detectionIPD(int size)
 {
-	int i = 0,flag_failed = 0;
-	char AT[255] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	sprintf(AT,"AT+TCPB=on\n");
-	printf("%s\n",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
+	int i=0,j=0;
+	char messageLen[5] = {'\0'};
+	int len = 0;
 	
-	for(i = 0;i< 400;i++)
+	for(i = 0;i<(size-4);i++)
 	{
-		rt_hw_ms_delay(5);
-		if(Cur >= (strlen(AT)+4)) 
+		if(!memcmp(&USART_RX_BUF[i],"+IPD",4))
 		{
-			flag_failed = 1;
-			break;
-		}
-	}
-	
-	if(flag_failed == 0)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[strlen(AT)+1],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+TCPB=on :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-//配置SOCKET B IP地址
-int AT_TCPADDB(char *IP)
-{
-	int i = 0,flag_failed = 0;
-	char AT[255] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	
-	sprintf(AT,"AT+TCPADDB=%s\n",IP);
-	printf("%s\n",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	
-	for(i = 0;i< 400;i++)
-	{
-		rt_hw_ms_delay(5);
-		if(Cur >= (strlen(AT)+4)) 
-		{
-			flag_failed = 1;
-			break;
-		}
-	}
-	
-	if(flag_failed == 0)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[strlen(AT)+1],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+TCPADDB :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-//配置SOCKET B IP端口
-int AT_TCPPTB(int port)
-{
-	int i = 0,flag_failed = 0;
-	char AT[255] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	
-	sprintf(AT,"AT+TCPPTB=%d\n",port);
-	printf("%s\n",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	
-	for(i = 0;i< 400;i++)
-	{
-		rt_hw_ms_delay(5);
-		if(Cur >= (strlen(AT)+4)) 
-		{
-			flag_failed = 1;
-			break;
-		}
-	}
-	
-	if(flag_failed == 0)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[strlen(AT)+1],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+TCPPTB :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-//配置SOCKET C 开启
-int AT_TCPC_ON(void)
-{
-	int i = 0,flag_failed = 0;
-	char AT[255] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	
-	sprintf(AT,"AT+TCPC=on\n");
-	printf("%s\n",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	
-	for(i = 0;i< 400;i++)
-	{
-		rt_hw_ms_delay(5);
-		if(Cur >= (strlen(AT)+4)) 
-		{
-			flag_failed = 1;
-			break;
-		}
-	}
-	
-	if(flag_failed == 0)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[strlen(AT)+1],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+TCPC :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-//配置SOCKET C IP地址
-int AT_TCPADDC(char *IP)
-{
-	int i = 0,flag_failed = 0;
-	char AT[255] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	
-	sprintf(AT,"AT+TCPADDC=%s\n",IP);
-	printf("%s\n",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	
-	for(i = 0;i< 400;i++)
-	{
-		rt_hw_ms_delay(5);
-		if(Cur >= (strlen(AT)+4)) 
-		{
-			flag_failed = 1;
-			break;
-		}
-	}
-	
-	if(flag_failed == 0)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[strlen(AT)+1],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+TCPADDC :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-//配置SOCKET C IP端口
-int AT_TCPPTC(int port)
-{
-	int i = 0,flag_failed = 0;
-	char AT[255] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	
-	sprintf(AT,"AT+TCPPTC=%d\n",port);
-	printf("%s\n",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	
-	for(i = 0;i< 400;i++)
-	{
-		rt_hw_ms_delay(5);
-		if(Cur >= (strlen(AT)+4)) 
-		{
-			flag_failed = 1;
-			break;
-		}
-	}
-	
-	if(flag_failed == 0)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[strlen(AT)+1],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+TCPPTC:+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-
-}
-
-//配置AP+STA功能模式
-int AT_FAPSTA_ON(void)
-{
-	int i = 0,flag_failed = 0;
-	char AT[255] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	
-	sprintf(AT,"AT+FAPSTA=on\n");
-	printf("%s\n",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	
-	for(i = 0;i< 600;i++)
-	{
-		rt_hw_ms_delay(5);
-		if(Cur >= (strlen(AT)+4)) 
-		{
-			flag_failed = 1;
-			break;
-		}
-	}
-	
-	if(flag_failed == 0)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[strlen(AT)+1],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+FAPSTA:+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-//设置WIFI工作模式  STA or AP
-int AT_WMODE(char *WMode)
-{
-	int i = 0,flag_failed = 0;
-	char AT[255] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	
-	sprintf(AT,"AT+WMODE=%s\n",WMode);
-	printf("%s\n",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	
-	for(i = 0;i< 400;i++)
-	{
-		rt_hw_ms_delay(5);
-		if(Cur >= (strlen(AT)+4)) 
-		{
-			flag_failed = 1;
-			break;
-		}
-	}
-	
-	if(flag_failed == 0)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(&USART_RX_BUF[strlen(AT)+1],"+ok",3))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+AT_WMODE:%s +ok\n",WMode);
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-
-int InitTestMode(void)
-{
-	int i = 0,res = 0;
-	//进入AT模式
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT())
-		{//进入AT模式成功
-			//printf("AT Successful\n");
-			res = 0;
-			break;
-		}else
-		{//进入AT模式失败，尝试先退出AT模式。
-			//printf("AT Failed,AT_ENTM\n");
-			res = -1;
-			AT_ENTM();
-		}
-	}
-	if(res == -1) return -1;
-	//只有在进入AT模式之后才能进行后续的操作
-
-	//设置工作模式 WMODE
-		for(i = 0;i<3;i++)
-	{
-		if(0 == AT_WMODE("STA"))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;	
-
-	//设置同时开启AP-STA模式
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_FAPSTA_ON())
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;	
-
-	//打开SOCKET B功能
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPB_ON())
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;	
-	//配置SOCKET B的服务器IP地址
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPADDB("139.168.200.158"))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	//配置SOCKET B的服务器端口号
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPPTB(8093))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	//打开SOCKET C功能
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPC_ON())
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	//配置SOCKET C的服务器IP地址
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPADDC("139.168.200.158"))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	//配置SOCKET C的服务器端口号
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPPTC(8997))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_ENTM())
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	printmsg(ECU_DBG_WIFI,"WIFI_InitTestMode Over");
-	return 0;
-
-
-}
-
-int InitWorkMode(int portflag)
-{
-	int i = 0,res = 0;
-	//进入AT模式
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT())
-		{//进入AT模式成功
-			//printf("AT Successful\n");
-			res = 0;
-			break;
-		}else
-		{//进入AT模式失败，尝试先退出AT模式。
-			//printf("AT Failed,AT_ENTM\n");
-			res = -1;
-			AT_ENTM();
-		}
-	}
-	if(res == -1) return -1;
-	//只有在进入AT模式之后才能进行后续的操作
-		//设置工作模式 WMODE
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_WMODE("STA"))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;	
-	
-	//设置同时开启AP-STA模式
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_FAPSTA_ON())
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;	
-	//打开SOCKET B功能
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPB_ON())
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;	
-	//配置SOCKET B的服务器IP地址
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPADDB(CLIENT_SERVER_IP))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	if(portflag == 0)
-	{
-		//配置SOCKET B的服务器端口号
-		for(i = 0;i<3;i++)
-		{
-			if(0 == AT_TCPPTB(CLIENT_SERVER_PORT1))
+			ConnectID = USART_RX_BUF[i+5];
+			memcpy(messageLen,&USART_RX_BUF[i+7],4);
+			for(j = 0;j<4;j++)
 			{
-				res = 0;
-				break;
-			}else
-				res = -1;
-		}
-	}else
-	{
-		//配置SOCKET B的服务器端口号
-		for(i = 0;i<3;i++)
-		{
-			if(0 == AT_TCPPTB(CLIENT_SERVER_PORT2))
+				if(messageLen[j] == ':')
+				{
+					messageLen[j] = '\0';
+					//printf("%c %d,%s\n",USART_RX_BUF[i+5],j,messageLen);
+					len = atoi(messageLen);
+					break;
+				}
+			}
+			if((size - i -7-j) >=len)
 			{
-				res = 0;
-				break;
-			}else
-				res = -1;
+				if('4'==ConnectID)
+				{
+					memcpy(WIFI_RecvSocketCData,&USART_RX_BUF[i+8+j],len );
+					WIFI_RecvSocketCData[len] = '\0';
+					WIFI_Recv_SocketC_Event = 1;
+					WIFI_Recv_SocketC_LEN =len;
+					printf("C:%s\n",WIFI_RecvSocketCData);
+				}else if('3' == ConnectID){
+					memcpy(WIFI_RecvSocketBData,&USART_RX_BUF[i+8+j],len );
+					WIFI_RecvSocketBData[len] = '\0';
+					WIFI_Recv_SocketB_Event = 1;
+					WIFI_Recv_SocketB_LEN =len;
+					printf("B:%s\n",WIFI_RecvSocketBData);
+				}else
+				{
+					TCPServerConnectID = ConnectID;
+					memcpy(WIFI_RecvSocketAData,&USART_RX_BUF[i+8+j],len );
+					WIFI_RecvSocketAData[len] = '\0';
+					WIFI_Recv_SocketA_Event = 1;
+					WIFI_Recv_SocketA_LEN =len;
+					printf("A:%s\n",WIFI_RecvSocketAData);
+				}
+				Cur = 0;
+				return 1;
+			}
+			break;
+			
 		}
 	}
-	
-	if(res == -1) return -1;
-	
-	//打开SOCKET C功能
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPC_ON())
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	//配置SOCKET C的服务器IP地址
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPADDC(CONTROL_SERVER_IP))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	//配置SOCKET C的服务器端口号
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPPTC(CONTROL_SERVER_PORT1))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_ENTM())
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	printmsg(ECU_DBG_WIFI,"WIFI_InitWorkMode Over");
 	return 0;
 }
 
-int WIFI_ChangePasswd(char *NewPasswd)
+void WIFI_GetEvent_ESP07S(void)
 {
-	int ret = 0,index;
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT();
-		if(ret == 0) break;
-	}
-	if(ret == -1) return -1;
-	
-	rt_hw_ms_delay(200);
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_WAKEY(NewPasswd);
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
-		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();;
-			if(ret == 0) break;
-		}
-	
-		return -1;
-	}		
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_Z();
-		if(ret == 0) return 0;
-	}
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_ENTM();;
-		if(ret == 0) break;
-	}
-	if(ret == -1) return -1;
-	
-	WIFI_Reset();	
-	return 0;
+	//判断ECU_R数据大于38个字节
+	detectionIPD(Cur);
+	detectionResetStatus(Cur);
 }
 
 int WIFI_Reset(void)
 {
 	GPIO_ResetBits(WIFI_GPIO, WIFI_PIN);
-	
 	rt_hw_ms_delay(1000);
 	GPIO_SetBits(WIFI_GPIO, WIFI_PIN);
+	rt_hw_ms_delay(3000);
+	AT_CIPMUX1();
+	AT_CIPSERVER();
+	AT_CIPSTO();
 	return 0;
 }
 
-int WIFI_SoftReset(void)
+char sendbuff[4096] = {'\0'};
+
+int ESP07S_sendData(char *data ,int length)
 {
-	int ret = 0,index;
-	for(index = 0;index<3;index++)
+	int i = 0;
+	clear_WIFI();
+	WIFI_SendData(data,length);
+	for(i = 0;i< 100;i++)
 	{
-		rt_hw_ms_delay(200);
-		ret =AT();
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
+		if(1 == detectionSENDOK(Cur))
 		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();
-			if(ret == 0) break;
+			//printf("AT+CWMODE3 :+ok\n");
+			return 0;
 		}
-	
-		return -1;
-	}	
-	
-	rt_hw_ms_delay(200);	
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_Z();
-		if(ret == 0) return 0;
+		rt_thread_delay(1);
 	}
+	clear_WIFI();
+	return -1;
 	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_ENTM();;
-		if(ret == 0) break;
-	}
-	if(ret == -1) 
-	{
-		WIFI_Reset();	
-		return -1;
-	}
-	
-	return 0;
 }
 
-int WIFI_ClearPasswd(void)
+int SendToSocket(char connectID,char *data ,int length)
 {
-	int ret = 0,index;
-	for(index = 0;index<3;index++)
+	int send_length = 0;	//需要发送的字节位置
+	while(length > 0)
 	{
-		delayMS(5);
-		ret =AT();
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
+		memset(sendbuff,'\0',4096);
+		if(length > 1460)
 		{
-			delayMS(5);
-			ret =AT_ENTM();
-			if(ret == 0) break;
-		}
-	
-		return -1;
-	}	
-	
-	delayMS(5);
-	
-	for(index = 0;index<3;index++)
-	{
-		delayMS(5);
-		ret = AT_WAKEY_Clear();
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
+			memcpy(sendbuff,&data[send_length],1460);
+			AT_CIPSEND(connectID,1460);
+			ESP07S_sendData(sendbuff,1460);
+			//rt_hw_ms_delay(230);
+			send_length += 1460;
+			length -= 1460;
+		}else
 		{
-			delayMS(5);
-			ret =AT_ENTM();
-			if(ret == 0) break;
-		}
-	
-		return -1;
-	}		
-	
-	for(index = 0;index<3;index++)
-	{
-		delayMS(5);
-		ret =AT_Z();
-		if(ret == 0) return 0;
-	}
-	
-	for(index = 0;index<3;index++)
-	{
-		delayMS(5);
-		ret =AT_ENTM();;
-		if(ret == 0) break;
-	}
-	if(ret == -1) return -1;
-	
-	WIFI_Reset();	
-	return 0;
+			memcpy(sendbuff,&data[send_length],length);
+			AT_CIPSEND(connectID,length);
+			ESP07S_sendData(sendbuff,length);
+			length -= length;
 
+			return 0;
+		}
+		
+	}
+	AT_CIPCLOSE(connectID);
+	return -1;
 }
+
+
+//SOCKET A 发送数据  \n需要在传入字符串中带入
+int SendToSocketA(char *data ,int length)
+{
+	return SendToSocket(TCPServerConnectID,data,length);
+}
+
+//SOCKET B 发送数据
+int SendToSocketB(char *IP ,int port,char *data ,int length)
+{
+	WIFI_Recv_SocketB_Event = 0;
+	if(!AT_CIPSTART('3',"TCP",IP ,port))
+	{
+		//printf("SendToSocketB: ino AT_CIPSTART\n");
+		return SendToSocket('3',data,length);
+	}
+	return -1;
+}
+
+//SOCKET C 发送数据
+int SendToSocketC(char *IP ,int port,char *data ,int length)
+{
+	WIFI_Recv_SocketC_Event = 0;
+	if(!AT_CIPSTART('4',"TCP",IP ,port))
+	{
+		//printf("SendToSocketC: ino AT_CIPSTART\n");
+		return SendToSocket('4',data,length);
+	}
+	return -1;
+}
+
+//----ESP01流程-------------------------------
+int AT_CWMODE3(void)			//配置WIFI模块为AP+STA模式
+{
+	int i = 0;
+	clear_WIFI();
+	WIFI_SendData("AT+CWMODE_DEF=3\r\n", 17);
+	for(i = 0;i< 100;i++)
+	{
+		if(1 == detectionOK(Cur))
+		{
+			printf("AT+CWMODE3 :+ok\n");
+			clear_WIFI();
+			return 0;
+		}
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return -1;
+		
+}
+
+int AT_RST(void)			//复位WIFI模块
+{
+	int i = 0;
+	clear_WIFI();
+	//发送"AT+Z\n",返回+ok
+	WIFI_SendData("AT+RST\r\n", 8);
+	for(i = 0;i< 200;i++)
+	{
+		if(1 == detectionOK(Cur))
+		{
+			printf("AT+RST :+ok\n");
+			clear_WIFI();
+			return 0;
+		}
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return -1;
+	
+}
+
 
 int WIFI_Test(void)
 {
-	int ret = 0,index;
-	for(index = 0;index<3;index++)
+	int i = 0;
+	clear_WIFI();
+	//发送"AT+Z\n",返回+ok
+	WIFI_SendData("AT\r\n", 8);
+	for(i = 0;i< 200;i++)
 	{
-		rt_hw_ms_delay(200);
-		ret =AT();
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
+		if(1 == detectionOK(Cur))
 		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();
-			if(ret == 0)return 0;
+			printf("AT:+ok\n");
+			clear_WIFI();
+			return 0;
 		}
-	
-		return -1;
-	}	
-	
-	for(index = 0;index<3;index++)
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return -1;
+}
+
+int AT_CWSAP(char *ECUID,char *PASSWD)			//配置ECU热点名字
+{
+	int i = 0;
+	char AT[100] = { '\0' };
+	clear_WIFI();
+	sprintf(AT,"AT+CWSAP_DEF=\"ECU_R_%s\",\"%s\",11,3\r\n",ECUID,PASSWD);
+	printf("%s",AT);
+	WIFI_SendData(AT, (strlen(AT)+1));
+	for(i = 0;i< 200;i++)
 	{
-		rt_hw_ms_delay(200);
-		ret =AT_ENTM();
-		if(ret == 0) return 0;
+		if(1 == detectionOK(Cur))
+		{
+			printf("AT+CWSAP :+ok\n");
+			clear_WIFI();
+			return 0;
+		}
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return -1;
+	
+}
+
+int WIFI_Factory_Passwd(void)
+{
+	char ECUID[13] = {'\0'};
+	get_ecuid(ECUID);
+	if(!AT_CWSAP(ECUID,"88888888"))
+		return 0;
+	else
+		return -1;
+}
+
+int AT_CWJAP(char *SSID,char *PASSWD)			//配置ECU连接无线路由器名
+{
+	char AT[100] = { '\0' };
+	clear_WIFI();
+	sprintf(AT,"AT+CWJAP_DEF=\"%s\",\"%s\"\r\n",SSID,PASSWD);
+	printf("%s",AT);
+	WIFI_SendData(AT, (strlen(AT)+1));
+
+	return 0;
+}
+
+int AT_CWJAP_DEF(char *SSID,char *PASSWD)			//配置ECU连接无线路由器名
+{
+	int i = 0;
+	char AT[100] = { '\0' };
+	clear_WIFI();
+	sprintf(AT,"AT+CWJAP_DEF=\"%s\",\"%s\"\r\n",SSID,PASSWD);
+	printf("%s",AT);
+	WIFI_SendData(AT, (strlen(AT)+1));
+	for(i = 0;i< 1500;i++)
+	{
+		if(1 == detectionOK(Cur))
+		{
+			printf("AT+AT_CWJAP_DEF :+ok\n");
+			clear_WIFI();
+			return 0;
+		}
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return -1;
+}
+
+//判断字符中是否有OK  字符	LinksStatus:连接状态 0表示未连接 1表示已连接
+int detectionJAPStatus(int size,char *info,unsigned char *LinksStatus)		//检测到OK  返回1   未检出到返回0
+{
+	int i=0,j=0,SSIDStart = 0,SSIDEnd = 0;
+	*LinksStatus = 0;
+	for(i = 0;i<(size-2);i++)
+	{
+		if(!memcmp(&USART_RX_BUF[i],"OK",2))
+		{
+			for(j = 0;j < i;j++)
+			{
+				if(!memcmp(&USART_RX_BUF[j],"+CWJAP:\"",8))
+				{
+					SSIDStart = j+7;
+					for(j=SSIDStart;j < i;j++)
+					{
+						if('\r' == USART_RX_BUF[j])
+						{
+							
+							SSIDEnd = j;
+							break;
+						}
+					}
+					memcpy(info,&USART_RX_BUF[SSIDStart],(SSIDEnd-SSIDStart));
+					printf("info:%s\n",info);
+					*LinksStatus = 1;
+					return 1;
+				}
+			}
+			*LinksStatus = 0;
+			return 1;			
+		}
+	}
+	return -1;
+}
+
+int AT_CWJAPStatus(char *info)			//查询ECU连接无线路由器名 返回1表示获取成功连接，返回0表示未连接
+{
+	int i = 0;
+	unsigned char LinksStatus;
+	char AT[100] = { '\0' };
+	clear_WIFI();
+	sprintf(AT,"AT+CWJAP?\r\n");
+	printf("%s",AT);
+	WIFI_SendData(AT, (strlen(AT)+1));
+	for(i = 0;i< 200;i++)
+	{
+		if(1 == detectionJAPStatus(Cur,info,&LinksStatus))
+		{
+			printf("AT+AT_CWJAPStatus :+ok:%d\n",LinksStatus);
+			clear_WIFI();
+			return LinksStatus;
+		}
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return 0;
+}
+
+
+int detectionLAPList(int size,char *str)		//检测到OK  返回1   未检出到返回0
+{
+	int i=0,j=0;
+	for(i = 0;i<(size-2);i++)
+	{
+		if(!memcmp(&USART_RX_BUF[i],"OK",2))
+		{
+			for(j = 0;j < i;j++)
+			{
+				if(!memcmp(&USART_RX_BUF[j],"+CWLAP:",7))
+				{
+					memcpy(str,&USART_RX_BUF[j],(i-j-4));
+					str[i-j-4] = '\0';
+					printf("list:%d %d %d  %s\n",i,j,strlen(str),str);
+					return 1;
+				}
+			}
+			return 1;			
+		}
 	}
 	return -1;
 }
 
 
+int AT_CWLAPList(char *liststr)		
+{
+	int i = 0;
+	char AT[100] = { '\0' };
+	clear_WIFI();
+	sprintf(AT,"AT+CWLAP\r\n");
+	printf("%s",AT);
+	WIFI_SendData(AT, (strlen(AT)+1));
+	for(i = 0;i< 600;i++)
+	{
+		if(1 == detectionLAPList(Cur,liststr))
+		{
+			printf("AT+AT_CWLAPList :+ok\n");
+			clear_WIFI();
+			return 0;
+		}
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return -1;
+}
+
+int AT_CIPMUX1(void)			//设置多连接AT命令
+{
+	int i = 0;
+	clear_WIFI();
+	WIFI_SendData("AT+CIPMUX=1\r\n", 13);
+	for(i = 0;i< 200;i++)
+	{
+		if(1 == detectionOK(Cur))
+		{
+			//printf("AT+CIPMUX :+ok\n");
+			clear_WIFI();
+			return 0;
+		}
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return -1;
+}
+
+int AT_CIPSERVER(void)			//设置多连接AT命令
+{
+	int i = 0;
+	clear_WIFI();
+	WIFI_SendData("AT+CIPSERVER=1,8899\r\n", 21);
+	for(i = 0;i< 200;i++)
+	{
+		if(1 == detectionOK(Cur))
+		{
+			//printf("AT+CIPSERVER=1,8899 :+ok\n");
+			clear_WIFI();
+			return 0;
+		}
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return -1;
+}
+
+
+int AT_CIPSTART(char ConnectID,char *connectType,char *IP,int port)			//配置ECU连接无线路由器名
+{
+	int i = 0;
+	char AT[100] = { '\0' };
+	clear_WIFI();
+	sprintf(AT,"AT+CIPSTART=%c,\"%s\",\"%s\",%d\r\n",ConnectID,connectType,IP,port);
+	
+	WIFI_SendData(AT, (strlen(AT)+1));
+	for(i = 0;i< 500;i++)
+	{
+		if(1 == detectionOK(Cur))
+		{
+			printf("%s +ok\n",AT);
+			clear_WIFI();
+			return 0;
+		}
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return -1;
+}
+
+int AT_CIPCLOSE(char ConnectID)			//配置ECU连接无线路由器名
+{
+	int i = 0;
+	char AT[100] = { '\0' };
+	clear_WIFI();
+	sprintf(AT,"AT+CIPCLOSE=%c\r\n",ConnectID);
+	//printf("%s",AT);
+	WIFI_SendData(AT, (strlen(AT)+1));
+	for(i = 0;i< 100;i++)
+	{
+		if((1 == detectionOK(Cur))||(1 == detectionUNLINK(Cur)))
+		{
+			printf("AT+AT_CIPCLOSE :%c +ok\n",ConnectID);
+			clear_WIFI();
+			return 0;
+		}
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return -1;
+}
+
+
+int AT_CIPSEND(char ConnectID,int size)			//配置ECU连接无线路由器名
+{
+	int i = 0;
+	char AT[100] = { '\0' };
+	clear_WIFI();
+	sprintf(AT,"AT+CIPSEND=%c,%d\r\n",ConnectID,size);
+	//printf("%s",AT);
+	WIFI_SendData(AT, (strlen(AT)+1));
+	for(i = 0;i< 200;i++)
+	{
+		if(1 == detectionOK(Cur))
+		{
+			//printf("AT+AT_CIPSEND :+ok\n");
+			clear_WIFI();
+			return 0;
+		}
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return -1;
+}
+
+int AT_CIPAP_DEF(void)			//配置ECU连接无线路由器名
+{
+	int i = 0;
+	char AT[100] = { '\0' };
+	clear_WIFI();
+	sprintf(AT,"AT+CIPAP_DEF=\"10.10.100.254\"\r\n");
+	printf("%s",AT);
+	WIFI_SendData(AT, (strlen(AT)+1));
+	for(i = 0;i< 200;i++)
+	{
+		if(1 == detectionOK(Cur))
+		{
+			printf("AT+AT_CIPAP_DEF :+ok\n");
+			clear_WIFI();
+			return 0;
+		}
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return -1;
+}
+
+int AT_CIPSTO(void)			//配置WIFI模块作为TCP服务器时的超时时间
+{
+	int i = 0;
+	char AT[100] = { '\0' };
+	clear_WIFI();
+	sprintf(AT,"AT+CIPSTO=20\r\n");
+	//printf("%s",AT);
+	WIFI_SendData(AT, (strlen(AT)+1));
+	for(i = 0;i< 200;i++)
+	{
+		if(1 == detectionOK(Cur))
+		{
+			printmsg(ECU_DBG_WIFI,"AT_CIPSTO :+ok");	
+			clear_WIFI();
+			return 0;
+		}
+		rt_thread_delay(1);
+	}
+	clear_WIFI();
+	return -1;
+}
+
 int WIFI_Factory(char *ECUID12)
 {
-	int ret = 0,index;
-	for(index = 0;index<3;index++)
+
+	if(!AT_CWSAP(ECUID12,"88888888"))
 	{
-		rt_hw_ms_delay(500);
-		ret = AT();
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
+
+		if(0 != AT_RST())
 		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();
-			if(ret == 0) break;
+			WIFI_Reset();
 		}
-	
+		rt_hw_s_delay(1);
+		AT_CIPMUX1();
+		AT_CIPSERVER();
+		AT_CIPSTO();
+		return 0;
+	}
+	else
 		return -1;
-	}	
-	
-	rt_hw_ms_delay(200);
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret = AT_WAP(ECUID12);
-		ret = AT_WAKEY("88888888");
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
-		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();
-			if(ret == 0) break;
-		}
-	
-		return -1;
-	}		
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_Z();
-		if(ret == 0) return 0;
-	}
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_ENTM();;
-		if(ret == 0) break;
-	}
-	if(ret == -1) return -1;
-	
-	WIFI_Reset();	
-	return 0;
 
 }
 
-int WIFI_Factory_Passwd(void)
+int WIFI_ChangePasswd(char *NewPasswd)
 {
-	int ret = 0,index;
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(500);
-		ret = AT();
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
-		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();
-			if(ret == 0) break;
-		}
-	
+	char ECUID[13] = {'\0'};
+	get_ecuid(ECUID);
+	if(!AT_CWSAP(ECUID,NewPasswd))
+		return 0;
+	else
 		return -1;
-	}	
-	
-	rt_hw_ms_delay(200);
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret = AT_WAKEY("88888888");
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
-		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();
-			if(ret == 0) break;
-		}
-	
-		return -1;
-	}		
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_Z();
-		if(ret == 0) return 0;
-	}
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_ENTM();;
-		if(ret == 0) break;
-	}
-	if(ret == -1) return -1;
-	
-	WIFI_Reset();	
-	return 0;
-
 }
 
-#endif
-
-
-#ifdef RAK475_MODULE
-//进入AT模式
-int AT(void)
-{
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	//先向模块写入"+++"然后再写入"a" 写入+++返回"a" 写入"a"返回+ok
-	WIFI_SendData("+++", 3);
-	//获取到a
-	rt_hw_ms_delay(100);
-	if(Cur < 1)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(USART_RX_BUF,"U",1))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	
-	//接着发送a
-	clear_WIFI();
-	WIFI_SendData("U", 1);
-	rt_hw_ms_delay(500);
-	if(Cur < 2)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(USART_RX_BUF,"OK",2))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-
-	}
-	printf("AT :OK\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-
-//切换回原来的透传模式    OK
-int AT_ENTM(void)
-{
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	//发送"AT+ENTM\n",返回+ok
-	WIFI_SendData("at+easy_txrx\r\n",14);
-	rt_hw_ms_delay(300);
-	if(Cur < 2)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(USART_RX_BUF,"OK",2))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-
-	}
-	printf("AT+ENTM :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-	
-}
-
-int AT_Z(void)
-{
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	//发送"AT+Z\n",返回+ok
-	WIFI_SendData("at+reset\r\n", 10);
-	rt_hw_ms_delay(300);
-	if(Cur < 2)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(USART_RX_BUF,"OK",2))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-
-	}
-	printf("AT+Z :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-	
-}
-
-//设置WIFI SSID
-
-int AT_WAP(char *ECUID12)
-{
-	char AT[100] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	//发送"AT+WAKEY\n",返回+ok
-	sprintf(AT,"at+write_config=%d,ap_ssid=ECU_R_%s\r\n",14+strlen(ECUID12),ECUID12);
-	printf("[%d]:%s",(strlen(AT)),AT);
-	WIFI_SendData(AT, strlen(AT));
-	
-	rt_hw_ms_delay(1000);
-	
-	if(Cur < 2)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(USART_RX_BUF,"OK",2))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+WAP :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-//设置WIFI密码
-int AT_WAKEY(char *NewPasswd)
-{
-	int length = 0;
-	char AT[100] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	//发送"AT+WAKEY\n",返回+ok
-	length = strlen(NewPasswd)+34;
-	sprintf(AT,"at+write_config=%d,ap_channel=6&ap_sec_mode=1&ap_psk=%s\r\n",length,NewPasswd);
-	printf("%s",AT);
-	WIFI_SendData(AT, strlen(AT));
-	
-	rt_hw_ms_delay(1000);
-	
-	if(Cur < 2)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(USART_RX_BUF,"OK",2))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+WAKEY :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-
-//配置SOCKET B IP地址
-int AT_TCPADDB(char *IP)
-{
-	int length = 0;
-	char AT[255] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	length = strlen(IP) + 15;
-	sprintf(AT,"at+write_config=%d,socketB_destip=%s\r\n",length,IP);
-	printf("%s\n",AT);
-	WIFI_SendData(AT,strlen(AT));
-	rt_hw_ms_delay(500);
-	if(Cur < 2)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(USART_RX_BUF,"OK",2))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-
-	printf("AT+TCPADDB :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-//配置SOCKET B IP端口
-int AT_TCPPTB(int port)
-{
-	int length = 0;
-	char AT[255] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	length = 17 + int_length(port);
-	sprintf(AT,"at+write_config=%d,socketB_destport=%d\r\n",length,port);
-	printf("%s\n",AT);
-	WIFI_SendData(AT, strlen(AT));
-	rt_hw_ms_delay(500);
-	if(Cur < 2)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(USART_RX_BUF,"OK",2))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+TCPPTB :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-
-//配置SOCKET C IP地址
-int AT_TCPADDC(char *IP)
-{
-	int length = 0;
-	char AT[255] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	
-	length = strlen(IP) + 15;
-	sprintf(AT,"at+write_config=%d,socketC_destip=%s\r\n",length,IP);
-	printf("%s\n",AT);
-	WIFI_SendData(AT, strlen(AT));
-	rt_hw_ms_delay(500);
-	if(Cur < 2)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(USART_RX_BUF,"OK",2))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+TCPADDC :+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-//配置SOCKET C IP地址
-int AT_TCPPTC(int port)
-{
-	int length = 0;
-	char AT[255] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	length = 17 + int_length(port);
-	sprintf(AT,"at+write_config=%d,socketC_destport=%d\r\n",length,port);
-	printf("%s\n",AT);
-	WIFI_SendData(AT, strlen(AT));
-	rt_hw_ms_delay(500);
-	if(Cur < 2)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(USART_RX_BUF,"OK",2))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+TCPPTC:+ok\n");
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-
-}
-
-//设置WIFI工作模式  STA or AP
-int AT_WMODE(char *WMode)
-{
-	int i = 0,flag_failed = 0;
-	char AT[255] = { '\0' };
-	rt_mutex_take(wifi_uart_lock, RT_WAITING_FOREVER);
-	clear_WIFI();
-	
-	sprintf(AT,"at+write_config=102,wlan_mode=2&socket_multi_en=1&socketA_localport=8899&socketB_type=0&socketC_type=0&ap_ip=10.10.100.254\r\n");
-	printf("%s\n",AT);
-	WIFI_SendData(AT, (strlen(AT)));
-	
-	for(i = 0;i< 400;i++)
-	{
-		rt_hw_ms_delay(5);
-		if(Cur < 2) 
-		{
-			flag_failed = 1;
-			break;
-		}
-	}
-	
-	if(flag_failed == 0)
-	{
-		rt_mutex_release(wifi_uart_lock);
-		return -1;
-	}else
-	{
-		if(memcmp(USART_RX_BUF,"OK",2))
-		{
-			rt_mutex_release(wifi_uart_lock);
-			return -1;
-		}
-	}
-	printf("AT+AT_WMODE:%s +ok\n",WMode);
-	clear_WIFI();
-	rt_mutex_release(wifi_uart_lock);
-	return 0;
-}
-
-
-
-int InitTestMode(void)
+int InitWorkMode(void)
 {
 	int i = 0,res = 0;
-	//进入AT模式
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT())
-		{//进入AT成功
-			//printf("AT Successful\n");
-			res = 0;
-			break;
-		}else
-		{//进入AT失败,尝试退出AT模式
-			//printf("AT Failed,AT_ENTM\n");
-			res = -1;
-			AT_ENTM();
-		}
-	}
-	if(res == -1) return -1;
-	//进入AT模式成功后，执行后续操作
 
 	//选择 WMODE
 	for(i = 0;i<3;i++)
 	{
-		if(0 == AT_WMODE("STA"))
+		if(0 == AT_CWMODE3())
 		{
 			res = 0;
 			break;
@@ -2416,96 +952,10 @@ int InitTestMode(void)
 	}
 	if(res == -1) return -1;	
 
-	//配置SOCKET B IP地址
+	//配置默认IP
 	for(i = 0;i<3;i++)
 	{
-		if(0 == AT_TCPADDB("192.168.1.100"))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	//配置SOCKET B端口
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPPTB(CLIENT_SERVER_PORT1))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	
-	//配置SOCKET C  IP地址
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPADDC("192.168.1.100"))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	//配置SOCKET C端口
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPPTC(CONTROL_SERVER_PORT1))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_ENTM())
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	printf("WIFI_InitTestMode Over\n");
-	return 0;
-
-
-}
-
-int InitWorkMode(int portflag)
-{
-	int i = 0,res = 0;
-	//进入AT模式
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT())
-		{//进入AT成功
-			//printf("AT Successful\n");
-			res = 0;
-			break;
-		}else
-		{//进入AT失败,尝试退出AT模式
-			//printf("AT Failed,AT_ENTM\n");
-			res = -1;
-			AT_ENTM();
-		}
-	}
-	if(res == -1) return -1;
-	//进入AT模式成功后，执行后续操作
-
-	//选择 WMODE
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_WMODE("STA"))
+		if(0 == AT_CIPAP_DEF())
 		{
 			res = 0;
 			break;
@@ -2513,830 +963,70 @@ int InitWorkMode(int portflag)
 			res = -1;
 	}
 	if(res == -1) return -1;	
-
-	//配置SOCKET B IP地址
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPADDB(CLIENT_SERVER_IP))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	if(portflag == 0)
-	{
-		//配置SOCKET B的服务器端口号
-		for(i = 0;i<3;i++)
-		{
-			if(0 == AT_TCPPTB(CLIENT_SERVER_PORT1))
-			{
-				res = 0;
-				break;
-			}else
-			res = -1;
-		}
-	}else
-	{
-		//配置SOCKET B的服务器端口号
-		for(i = 0;i<3;i++)
-		{
-			if(0 == AT_TCPPTB(CLIENT_SERVER_PORT2))
-			{
-				res = 0;
-				break;
-			}else
-			res = -1;
-		}
-	}
-
-	if(res == -1) return -1;
-	
-	//配置SOCKET C  IP地址
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPADDC(CLIENT_SERVER_IP))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	//配置SOCKET C端口
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_TCPPTC(CONTROL_SERVER_PORT1))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
-	
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_ENTM())
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;
 	
 	printf("WIFI_InitWorkMode Over\n");
 
 	return 0;
 }
 
-
-
-int WIFI_ChangePasswd(char *NewPasswd)
-{
-	int ret = 0,index;
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT();
-		if(ret == 0) break;
-	}
-	if(ret == -1) return -1;
-	
-	rt_hw_ms_delay(200);
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_WAKEY(NewPasswd);
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
-		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();;
-			if(ret == 0) break;
-		}
-	
-		return -1;
-	}		
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_Z();
-		if(ret == 0) return 0;
-	}
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_ENTM();;
-		if(ret == 0) break;
-	}
-	if(ret == -1) return -1;
-	
-	WIFI_Reset();
-
-	return 0;
-}
-
-
-int WIFI_Reset(void)
-{
-	GPIO_ResetBits(WIFI_GPIO, WIFI_PIN);
-	
-	rt_hw_ms_delay(1000);
-	GPIO_SetBits(WIFI_GPIO, WIFI_PIN);
-	return 0;
-
-}
-
-int WIFI_SoftReset(void)
-{
-	int ret = 0,index;
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT();
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
-		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();
-			if(ret == 0) break;
-		}
-	
-		return -1;
-	}	
-	
-	rt_hw_ms_delay(200);	
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_Z();
-		if(ret == 0) return 0;
-	}
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_ENTM();;
-		if(ret == 0) break;
-	}
-	if(ret == -1) return -1;
-	
-	WIFI_Reset();
-	return 0;
-}
-
-int WIFI_Test(void)
-{
-	int ret = 0,index;
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT();
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
-		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();
-			if(ret == 0)return 0;
-		}
-	
-		return -1;
-	}	
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_ENTM();
-		if(ret == 0) return 0;
-	}
-	return -1;
-
-}
-
-
-int WIFI_Factory(char *ECUID12)
-{
-	int ret = 0,index;
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(500);
-		ret = AT();
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
-		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();
-			if(ret == 0) break;
-		}
-	
-		return -1;
-	}	
-	
-	rt_hw_ms_delay(200);
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret = AT_WAP(ECUID12);
-		ret = AT_WAKEY("88888888");
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
-		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();
-			if(ret == 0) break;
-		}
-	
-		return -1;
-	}		
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_Z();
-		if(ret == 0) return 0;
-	}
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_ENTM();;
-		if(ret == 0) break;
-	}
-	if(ret == -1) return -1;
-	
-	WIFI_Reset();	
-	return 0;
-
-}
-
-
-int WIFI_Factory_Passwd(void)
-{
-	int ret = 0,index;
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(500);
-		ret = AT();
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
-		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();
-			if(ret == 0) break;
-		}
-	
-		return -1;
-	}	
-	
-	rt_hw_ms_delay(200);
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret = AT_WAKEY("88888888");
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
-		{
-			rt_hw_ms_delay(200);
-			ret =AT_ENTM();
-			if(ret == 0) break;
-		}
-	
-		return -1;
-	}		
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_Z();
-		if(ret == 0) return 0;
-	}
-	
-	for(index = 0;index<3;index++)
-	{
-		rt_hw_ms_delay(200);
-		ret =AT_ENTM();;
-		if(ret == 0) break;
-	}
-	if(ret == -1) return -1;
-	
-	WIFI_Reset();	
-	return 0;
-
-}
-
-#endif 
-
-
-
-//创建SOCKET连接
-//返回0 表示创建成功  -1表示创建失败
-int WIFI_Create(eSocketType Type)
-{
-	char send[50] = {'\0'};
-	int i = 0,j = 0;
-	send[0]= 0x65;
-	if(Type == SOCKET_B)
-		send[1]= 0x62;
-	else if(Type == SOCKET_C)
-		send[1]= 0x63;
-	else
-		return -1;
-	
-	send[2]= 0x06;
-	send[3]= 0x01;
-	send[4]= 0x00;
-	send[5]= 0x02;
-	for(i = 0;i<2;i++)
-	{
-		clear_WIFI();
-		WIFI_Recv_Socket_Event = 0;
-		WIFI_SendData(send, 6);
-		
-		for(j = 0;j <300;j++)
-		{
-			if(WIFI_Recv_Socket_Event == 1)
-			{
-				WIFI_Recv_Socket_Event = 0;
-				if((WIFI_RecvSocketData[0] == 0x65)&&
-					(WIFI_RecvSocketData[1] == send[1])&&
-					(WIFI_RecvSocketData[2] == 0x06)&&
-					(WIFI_RecvSocketData[4] == 0x01))
-				{
-					//创建 SOCKET 成功
-					printdecmsg(ECU_DBG_WIFI,"WIFI_CreateSocket Successful ",Type);
-					clear_WIFI();
-					return 0;
-				}else
-				{
-					//创建SOCKET 失败
-					printdecmsg(ECU_DBG_WIFI,"WIFI_CreateSocket Failed ",Type);
-					clear_WIFI();
-					return -1;
-				}
-			}
-					
-					
-				rt_thread_delay(1);
-		}
-		printdecmsg(ECU_DBG_WIFI,"WIFI_CreateSocket WIFI Get reply time out ",Type);
-	}	
-	clear_WIFI();
-	return -1;
-}
-
-//关闭Socket连接
-//返回0 关闭socket连接成功  -1关闭socket连接失败
-int WIFI_Close(eSocketType Type)
-{
-	char send[50] = {'\0'};
-	int i = 0,j = 0;
-	if(1 != WIFI_QueryStatus(Type))
-		return -1;
-
-	send[0]= 0x65;
-	if(Type == SOCKET_B)
-		send[1]= 0x62;
-	else if(Type == SOCKET_C)
-		send[1]= 0x63;
-	else
-		return -1;
-	
-	send[2]= 0x06;
-	send[3]= 0x02;
-	send[4]= 0x00;
-	send[5]= 0x03;
-	for(i = 0;i<2;i++)
-	{
-		clear_WIFI();
-		WIFI_Recv_Socket_Event = 0;
-		WIFI_SendData(send, 6);
-		for(j = 0;j <300;j++)
-		{
-			if(WIFI_Recv_Socket_Event == 1)
-			{
-				WIFI_Recv_Socket_Event = 0;
-				if((WIFI_RecvSocketData[0] == 0x65)&&
-					(WIFI_RecvSocketData[1] == send[1])&&
-					(WIFI_RecvSocketData[2] == 0x06)&&
-					(WIFI_RecvSocketData[4] == 0x01))
-				{
-					//关闭SOCKET 成功
-					printdecmsg(ECU_DBG_WIFI,"WIFI_CloseSocket Successful ",Type);
-					clear_WIFI();
-					return 0;
-				}else
-				{
-					//关闭SOCKET 失败
-					printdecmsg(ECU_DBG_WIFI,"WIFI_CloseSocket Failed ",Type);
-					clear_WIFI();
-					return -1;
-				}
-				
-			}
-			rt_thread_delay(1);
-		}
-		printdecmsg(ECU_DBG_WIFI,"WIFI_CloseSocket WIFI Get reply time out ",Type);
-	}	
-	clear_WIFI();
-	return -1;
-
-}
-
-
-int WIFI_QueryStatus(eSocketType Type)
-{
-	char send[50] = {'\0'};
-	int i = 0,j = 0;
-	clear_WIFI();
-	send[0]= 0x65;
-	if(Type == SOCKET_B)
-		send[1]= 0x62;
-	else if(Type == SOCKET_C)
-		send[1]= 0x63;
-	else
-		return -1;
-	
-	send[2]= 0x06;
-	send[3]= 0x03;
-	send[4]= 0x00;
-	send[5]= 0x04;
-
-	for(i = 0;i<2;i++)
-	{
-		clear_WIFI();
-		WIFI_Recv_Socket_Event = 0;
-		WIFI_SendData(send, 6);
-		for(j = 0;j <300;j++)
-		{
-			if(WIFI_Recv_Socket_Event == 1)
-			{
-				WIFI_Recv_Socket_Event = 0;
-				if((WIFI_RecvSocketData[0] == 0x65)&&
-					(WIFI_RecvSocketData[1] == send[1])&&
-					(WIFI_RecvSocketData[2] == 0x06))
-				{
-#ifdef USR_MODULE					
-					//查询SOCKET 成功
-					if(WIFI_RecvSocketData[4] == 0x01)	//在线
-					{
-						printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus Online ",Type);
-						clear_WIFI();
-						return 1;
-					}else if(WIFI_RecvSocketData[4] == 0x00)	//离线
-					{
-						printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus not Online ",Type);
-						clear_WIFI();
-						return 0;
-					}else	//未知
-					{
-						printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus unknown ",Type);
-						clear_WIFI();
-						return -1;
-					}
-#endif
-#ifdef RAK475_MODULE
-					//查询SOCKET 成功
-					if(WIFI_RecvSocketData[4] == 0x01)			//离线
-					{
-						printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus Online ",Type);
-						clear_WIFI();
-						return 0;
-					}else if(WIFI_RecvSocketData[4] == 0x00)	//在线
-					{
-						printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus not Online ",Type);
-						clear_WIFI();
-						return 1;
-					}else	//未知
-					{
-						printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus unknown ",Type);
-						clear_WIFI();
-						return -1;
-					}
-#endif		
-				}else
-				{
-					//查询SOCKET 失败
-					printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus Failed ",Type);
-					clear_WIFI();
-					return -1;
-				}
-				
-			}
-			rt_thread_delay(1);
-		}
-		printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus WIFI Get reply time out ",Type);
-	}	
-	clear_WIFI();
-	return -1;
-}
-
-char sendbuff[4096] = {'\0'};
-
-//SOCKET A 发送数据  \n需要在传入字符串中带入
-int SendToSocketA(char *data ,int length,unsigned char ID[8])
-{
-	int send_length = 0;	//需要发送的字节位置
-	rt_enter_critical();
-	while(length > 0)
-	{
-		memset(sendbuff,'\0',4096);
-		sprintf(sendbuff,"a%c%c%c%c%c%c%c%c",ID[0],ID[1],ID[2],ID[3],ID[4],ID[5],ID[6],ID[7]);
-
-		if(length > SIZE_PER_SEND)
-		{
-			memcpy(&sendbuff[9],&data[send_length],SIZE_PER_SEND);
-			WIFI_SendData(sendbuff, (SIZE_PER_SEND+9));
-			send_length += SIZE_PER_SEND;
-			length -= SIZE_PER_SEND;
-		}else
-		{
-			memcpy(&sendbuff[9],&data[send_length],length);	
-			WIFI_SendData(sendbuff, (length+9));
-			length -= length;
-			rt_exit_critical();
-			return 0;
-		}
-		rt_hw_ms_delay(50);
-	}
-	rt_exit_critical();
-	return 0;
-}
-
-//SOCKET B 发送数据
-int SendToSocketB(char *data ,int length)
-{
-	//每次最多发送4000个字节
-	int send_length = 0;	//需要发送的字节位置
-	clear_WIFI();
-	rt_mutex_take(usr_wifi_lock, RT_WAITING_FOREVER);
-	//if((1 == WIFI_QueryStatus(SOCKET_B)) || (0 == WIFI_Create(SOCKET_B)))
-	if(1 == WIFI_QueryStatus(SOCKET_B))
-	{
-		WIFI_Close(SOCKET_B);
-	}
-	
-	if((0 == WIFI_Create(SOCKET_B)))
-	{
-		rt_enter_critical();
-		while(length > 0)
-		{
-			memset(sendbuff,0x00,4096);
-			sprintf(sendbuff,"b00000000");
-			if(length > SIZE_PER_SEND)
-			{
-				memcpy(&sendbuff[9],&data[send_length],SIZE_PER_SEND);
-				
-				WIFI_SendData(sendbuff, (SIZE_PER_SEND+9));
-				send_length += SIZE_PER_SEND;
-				length -= SIZE_PER_SEND;
-			}else
-			{	
-				//showconnected();
-				//writeconnecttime();
-				memcpy(&sendbuff[9],&data[send_length],length);
-				
-				
-				WIFI_SendData(sendbuff, (length+9));
-				length -= length;
-				rt_mutex_release(usr_wifi_lock);
-				rt_exit_critical();
-				return 0;
-			}
-			
-			rt_hw_ms_delay(50);
-		}
-		rt_exit_critical();
-	
-	}else
-	{
-		;//showdisconnected();
-	}
-	rt_mutex_release(usr_wifi_lock);
-	return -1;
-}
-
-//SOCKET C 发送数据
-int SendToSocketC(char *data ,int length)
-{
-	//每次最多发送4000个字节
-	int send_length = 0;
-	char msg_length[6] = {'\0'};
-
-	if(data[strlen(data)-1] == '\n'){
-		sprintf(msg_length, "%05d", strlen(data)-1);
-	}
-	else{
-		sprintf(msg_length, "%05d", strlen(data));
-		strcat(data, "\n");
-		length++;
-	}
-	strncpy(&data[5], msg_length, 5);
-	clear_WIFI();
-	rt_mutex_take(usr_wifi_lock, RT_WAITING_FOREVER);
-	//print2msg(ECU_DBG_CONTROL_CLIENT,"Sent", data);
-	//if((1 == WIFI_QueryStatus(SOCKET_C)) || (0 == WIFI_Create(SOCKET_C)))
-	if(1 == WIFI_QueryStatus(SOCKET_C))
-	{
-		WIFI_Close(SOCKET_C);
-	}
-	
-	if((0 == WIFI_Create(SOCKET_C)))
-	{
-		rt_enter_critical();
-		while(length > 0)
-		{
-			memset(sendbuff,0x00,4096);
-			sprintf(sendbuff,"c00000000");
-			if(length > SIZE_PER_SEND)
-			{
-				memcpy(&sendbuff[9],&data[send_length],SIZE_PER_SEND);
-				
-				WIFI_SendData(sendbuff, (SIZE_PER_SEND+9));
-				send_length += SIZE_PER_SEND;
-				length -= SIZE_PER_SEND;
-			}else
-			{	
-				memcpy(&sendbuff[9],&data[send_length],length);
-			
-				WIFI_SendData(sendbuff, (length+9));
-				length -= length;
-				rt_mutex_release(usr_wifi_lock);
-				rt_exit_critical();
-				return 0;
-			}
-			
-			rt_hw_ms_delay(50);
-		}
-		
-	}
-	rt_mutex_release(usr_wifi_lock);
-	return -1;
-}
-
-
-int TestSocketCConnect(void)
-{
-	rt_mutex_take(usr_wifi_lock, RT_WAITING_FOREVER);
-	if(1 == WIFI_QueryStatus(SOCKET_C))
-	{
-		WIFI_Close(SOCKET_C);
-	}
-	
-	if((0 == WIFI_Create(SOCKET_C)))
-	{
-		rt_mutex_release(usr_wifi_lock);
-		return 0;
-	}else{
-		rt_mutex_release(usr_wifi_lock);
-		return -1;
-	}
-	
-
-}
-
-/*
-int WIFI_ChangeSSID(char *SSID,char Auth,char Encry,char *Passwd,int passWDLen)
-{
-		int ret = 0,index;
-	for(index = 0;index<3;index++)
-	{
-		delayMS(5);
-		ret =AT();
-		if(ret == 0) break;
-	}
-	if(ret == -1) return -1;
-	
-	delayMS(5);
-	
-	for(index = 0;index<3;index++)
-	{
-		delayMS(5);
-		ret =AT_WSSSID(SSID);
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
-		{
-			delayMS(5);
-			ret =AT_ENTM();;
-			if(ret == 0) break;
-		}
-	
-		return -1;
-	}	
-
-	for(index = 0;index<3;index++)
-	{
-		delayMS(5);
-		ret =AT_WSKEY(Auth,Encry,Passwd,passWDLen);
-		if(ret == 0) break;
-	}
-	if(ret == -1)
-	{
-		for(index = 0;index<3;index++)
-		{
-			delayMS(5);
-			ret =AT_ENTM();;
-			if(ret == 0) break;
-		}
-	
-		return -1;
-	}	
-
-	for(index = 0;index<3;index++)
-	{
-		delayMS(5);
-		ret =AT_Z();
-		if(ret == 0) return 0;
-	}
-	
-	for(index = 0;index<3;index++)
-	{
-		delayMS(5);
-		ret =AT_ENTM();
-		if(ret == 0) break;
-	}
-	if(ret == -1) return -1;
-	
-	WIFI_Reset();	
-	return 0;
-}
-
-int WIFI_ConStatus(void)
-{
-	int status = 0;
-	status = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_8); 
-	printf("status : %d\n",status);
-	return status;
-}
-*/
-
 #ifdef RT_USING_FINSH
 #include <finsh.h>
+void Send(char *data, int num)
+{
+	memset(sendbuff,0x00,4096);
+	sprintf(sendbuff,"b00000000");
 
-FINSH_FUNCTION_EXPORT(AT , Into AT Mode.)
-FINSH_FUNCTION_EXPORT(AT_ENTM , Into AT_ENTM Mode.)
-FINSH_FUNCTION_EXPORT(AT_VER , Get version.)
-FINSH_FUNCTION_EXPORT(AT_Z , Reset USR232.)
+	memcpy(&sendbuff[9],data,num);
+	
+	WIFI_SendData(sendbuff,(num+9));
+}
+int AT_JAPST(void)
+{
+	char info[100] = {'\0'};
 
-FINSH_FUNCTION_EXPORT(AT_WAP , Set WAP.)
-FINSH_FUNCTION_EXPORT(AT_WAKEY , Set WAKEY.)
-FINSH_FUNCTION_EXPORT(AT_WAKEY_Clear , Clear WAKEY.)
+	return AT_CWJAPStatus(info);
+}
 
-FINSH_FUNCTION_EXPORT(AT_TCPB_ON , Set TCP B ON.)
-FINSH_FUNCTION_EXPORT(AT_TCPADDB , Set TCP B ADDR.)
-FINSH_FUNCTION_EXPORT(AT_TCPPTB , Set TCP B PORT.)
-FINSH_FUNCTION_EXPORT(AT_TCPC_ON , Set TCP C ON.)
-FINSH_FUNCTION_EXPORT(AT_TCPADDC , Set TCP C ADDR.)
-FINSH_FUNCTION_EXPORT(AT_TCPPTC , Set TCP C PORT.)
+void AT_LAPList(void)
+{
+	char *list = NULL;
+	list = malloc(2048);
+	memset(list,'\0',2048);
+	AT_CWLAPList(list);
+	free(list);
+}
+FINSH_FUNCTION_EXPORT(AT_LAPList ,AT_LAPList)
+FINSH_FUNCTION_EXPORT(Send ,WIFI send)
 
-FINSH_FUNCTION_EXPORT(AT_FAPSTA_ON , Set FAPSTA ON.)
-FINSH_FUNCTION_EXPORT(AT_WMODE , Set WMode AP or STA.)
 
-
-
-FINSH_FUNCTION_EXPORT(InitWorkMode , Init Work Mode.)
-FINSH_FUNCTION_EXPORT(InitTestMode , Init Test Mode.)
-
-FINSH_FUNCTION_EXPORT(WIFI_Factory , Set WIFI ID .)
 FINSH_FUNCTION_EXPORT(WIFI_Reset , Reset WIFI Module .)
+
+
+FINSH_FUNCTION_EXPORT(WIFI_SendData ,WIFI_SendData)
+FINSH_FUNCTION_EXPORT(AT_CWMODE3 ,AT CWMODE 3)
+FINSH_FUNCTION_EXPORT(AT_RST ,AT reset)
+FINSH_FUNCTION_EXPORT(AT_CWSAP ,AT_CWSAP)
+FINSH_FUNCTION_EXPORT(AT_CWJAP_DEF ,AT_CWJAP_DEF)
+FINSH_FUNCTION_EXPORT(AT_CIPMUX1 ,AT_CIPMUX1)
+FINSH_FUNCTION_EXPORT(AT_CIPSERVER ,AT_CIPSERVER)
+
+FINSH_FUNCTION_EXPORT(AT_CIPSTART ,AT_CIPSTART)
+FINSH_FUNCTION_EXPORT(AT_CIPCLOSE ,AT_CIPCLOSE)
+FINSH_FUNCTION_EXPORT(AT_CIPSEND ,AT_CIPSEND)
+FINSH_FUNCTION_EXPORT(detectionIPD ,detectionIPD)
+
+FINSH_FUNCTION_EXPORT(AT_CIPAP_DEF ,AT_CIPAP_DEF)
+FINSH_FUNCTION_EXPORT(AT_CIPSTO ,AT_CIPSTO)
+FINSH_FUNCTION_EXPORT(WIFI_Test ,WIFI_Test)
+FINSH_FUNCTION_EXPORT(InitWorkMode ,InitWorkMode)
 
 FINSH_FUNCTION_EXPORT(SendToSocketB , Send SOCKET B.)
 FINSH_FUNCTION_EXPORT(SendToSocketC , Send SOCKET C.)
 
+
+FINSH_FUNCTION_EXPORT(AT_JAPST , AT_JAPST.)
 #endif
+
 
 
 
