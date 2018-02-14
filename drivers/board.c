@@ -73,7 +73,7 @@ void rt_hw_board_init(void)
 	
 	rt_hw_lan8720_init();
   rt_hw_usart_init();		//串口初始化
-	uart5_init(57600);
+	uart5_init(115200);
 	EXTIX_Init();		 	//外部中断初始化
   rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
 	//rt_hw_watchdog_init();

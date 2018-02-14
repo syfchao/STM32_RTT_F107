@@ -45,6 +45,10 @@ void Phone_GetWiredNetwork(int Data_Len,const char *recvbuffer);			//”–œﬂÕ¯¬Á…Ë÷
 void Phone_SetChannel(int Data_Len,const char *recvbuffer);
 
 void Phone_GetShortAddrInfo(int Data_Len,const char *recvbuffer);
+
+void APP_GetECUAPInfo(int Data_Len,const char *recvbuffer) ;			//ªÒ»°ECU¡¨Ω”AP–≈œ¢
+void APP_SetECUAPInfo(int Data_Len,const char *recvbuffer); 			//…Ë÷√ECU¡¨Ω”AP
+void APP_ListECUAPInfo(int Data_Len,const char *recvbuffer); 
 //Phone Serverœﬂ≥Ã
 void phone_server_thread_entry(void* parameter);
 

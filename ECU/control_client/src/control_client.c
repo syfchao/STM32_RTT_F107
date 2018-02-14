@@ -1875,7 +1875,7 @@ void control_client_thread_entry(void* parameter)
 			char c='0';
 			c=fgetc(fp);
 			fclose(fp);
-			if(((socketfd = client_socket_init(randport(control_client_arg), control_client_arg.ip, control_client_arg.domain))>=0)||(TestSocketCConnect() == 0))
+			if(((socketfd = client_socket_init(randport(control_client_arg), control_client_arg.ip, control_client_arg.domain))>=0))
 			{
 				if(socketfd >= 0)
 				{

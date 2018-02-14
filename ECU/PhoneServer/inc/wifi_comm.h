@@ -54,5 +54,10 @@ void APP_Response_GetWiredNetwork(char mapping,char dhcpStatus,IP_t IPAddr,IP_t 
 void APP_Response_SetChannel(unsigned char mapflag,char SIGNAL_CHANNEL,char SIGNAL_LEVEL);
 //18 	获取短地址
 void APP_Response_GetShortAddrInfo(char mapping,inverter_info *inverter);
-
+//20 命令回应
+void APP_Response_GetECUAPInfo(char mapping,unsigned char connectStatus,char *info);
+//21 命令回应
+void APP_Response_SetECUAPInfo(unsigned char result);
+//22 命令回应
+void APP_Response_GetECUAPList(char mapping,char *list);
 #endif /*__WIFI_COMM_H__*/

@@ -693,4 +693,56 @@ void APP_Response_GetShortAddrInfo(char mapping,inverter_info *inverter)
 
 }
 
+void APP_Response_GetECUAPInfo(char mapping,unsigned char connectStatus,char *info)
+{
+	int packlength = 0;
+	memset(SendData,'\0',4096);	
+	if(mapping == 0x00)
+	{
+		if(0 == connectStatus)
+		{
+			sprintf(SendData,"APS110019002000%1dEND\n",connectStatus);
+			packlength = 20;
+		}else
+		{
+			sprintf(SendData,"APS11%04d002000%1d%sEND\n",(strlen(info) + 19),connectStatus,info);
+			packlength = (strlen(info) + 20);
+		}
+		
+	}else
+	{
+		sprintf(SendData,"APS110015002001\n");
+		packlength = 16;
+	}	
+	
+	SendToSocketA(SendData ,packlength);
+
+}
+
+
+//ECU-RS…Ë÷√WIFI√‹¬Î
+void APP_Response_SetECUAPInfo(unsigned char result)
+{
+	memset(SendData,'\0',MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER);
+	sprintf(SendData,"APS1100150021%02d\n",result);
+	SendToSocketA(SendData ,16);
+}
+
+
+void APP_Response_GetECUAPList(char mapping,char *list)
+{
+	int packlength = 0;
+	memset(SendData,'\0',4096);	
+	if(mapping == 0x00)
+	{
+		sprintf(SendData,"APS11%04d002200%sEND\n",(strlen(list) + 18),list);
+		packlength = (strlen(list) + 19);		
+	}else
+	{
+		sprintf(SendData,"APS110015002201\n");
+		packlength = 16;
+	}	
+	
+	SendToSocketA(SendData ,packlength);
+}
 

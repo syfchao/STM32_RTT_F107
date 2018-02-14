@@ -43,26 +43,9 @@ typedef struct IPConfig
 		
 } IPConfig_t;
 
-//WIFI 模块使用宏
-#if 1
-#define WIFI_MODULE_TYPE	0
-//使用有人模块
-#define USR_MODULE 		
-#else
-#define WIFI_MODULE_TYPE	1
-//使用RAK475模块
-#define RAK475_MODULE	
-#endif
-
-#ifdef USR_MODULE
-//socket每次发送的字节数
+#define WIFI_MODULE_TYPE	2
 #define SIZE_PER_SEND		2900
-#endif 
 
-#ifdef RAK475_MODULE
-//socket每次发送的字节数
-#define SIZE_PER_SEND		3800
-#endif 
 
 //网络通讯地址
 #if 1

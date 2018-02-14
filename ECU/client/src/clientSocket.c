@@ -74,70 +74,33 @@ int createsocket(void)					//创建SOCKET连接
 
 
 int connect_client_socket(int fd_sock)				//通过有线的方式连接服务器
-{
-	char domain[100]={'\0'};		//服务器域名
-	char ip[20] = {'\0'};	//服务器IP地址
-	int port[2]={CLIENT_SERVER_PORT1, CLIENT_SERVER_PORT2};	//服务器端口号
+{	
 	struct sockaddr_in serv_addr;
 	struct hostent * host;
-	char buff[512] = {'\0'};
-	FILE *fp;
-	unsigned char index = 0;
+
 	//不存在有线连接，直接关闭socket
 	if(rt_hw_GetWiredNetConnect() == 0)
 	{
 		closesocket(fd_sock);
 		return -1;
 	}
-	strcpy(domain, CLIENT_SERVER_DOMAIN);
-	strcpy(ip, CLIENT_SERVER_IP);
-	fp = fopen("/yuneng/datacent.con", "r");
-	if(fp)
-	{
-		while(1)
-		{
-			memset(buff, '\0', sizeof(buff));
-			fgets(buff, sizeof(buff), fp);
-			if(!strlen(buff))
-				break;
-			if(!strncmp(buff, "Domain", 6))
-			{
-				strcpy(domain, &buff[7]);
-				if('\n' == domain[strlen(domain)-1])
-					domain[strlen(domain)-1] = '\0';
-			}
-			if(!strncmp(buff, "IP", 2))
-			{
-				strcpy(ip, &buff[3]);
-				if('\n' == ip[strlen(ip)-1])
-					ip[strlen(ip)-1] = '\0';
-			}
-			if(!strncmp(buff, "Port1", 5))
-				port[0]=atoi(&buff[6]);
-			if(!strncmp(buff, "Port2", 5))
-				port[1]=atoi(&buff[6]);
-		}
-		fclose(fp);
-	}
-
-	host = gethostbyname(domain);
+	
+	host = gethostbyname(client_arg.domain);
 	if(NULL == host)
 	{
 		printmsg(ECU_DBG_CLIENT,"Resolve domain failure");
 	}
 	else
 	{
-		memset(ip, '\0', sizeof(ip));
-		sprintf(ip,"%s",ip_ntoa((ip_addr_t*)*host->h_addr_list));
+		memset(client_arg.ip, '\0', sizeof(client_arg.ip));
+		sprintf(client_arg.ip,"%s",ip_ntoa((ip_addr_t*)*host->h_addr_list));
 	}
 
 	memset(&serv_addr,0,sizeof(struct sockaddr_in));
 	serv_addr.sin_family=AF_INET;
-	srand((unsigned)acquire_time());
-	index = rand()%2;
-	printdecmsg(ECU_DBG_CLIENT,"client port:", port[index]);
-	serv_addr.sin_port=htons(port[index]);
-	serv_addr.sin_addr.s_addr=inet_addr(ip);
+
+	serv_addr.sin_port=htons(randport(client_arg));
+	serv_addr.sin_addr.s_addr=inet_addr(client_arg.ip);
 	memset(&(serv_addr.sin_zero),0,8);
 
 	if(-1==connect(fd_sock,(struct sockaddr *)&serv_addr,sizeof(struct sockaddr))){
@@ -158,48 +121,6 @@ void close_socket(int fd_sock)					//关闭socket连接
 {
 	closesocket(fd_sock);
 	printmsg(ECU_DBG_OTHER,"Close socket");
-}
-
-int wifi_socketb_format(char *data ,int length)
-{
-	char head[9] = {'\0'};
-	char *p = NULL;
-	int i = 0,retlength = 0;
-
-	head[0] = 'b';
-#ifdef USR_MODULE	
-	head[1] = 0x00;
-#endif 
-#ifdef RAK475_MODULE	
-		head[1] = 0x30;
-#endif 
-
-	head[2] = 0x00;
-	head[3] = 0x00;
-	head[4] = 0x00;
-	head[5] = 0x00;
-	head[6] = 0x00;
-	head[7] = 0x00;
-	head[8] = 0x00;
-	
-	if(((length -3)%14) != 0)
-	{
-		for(p = data,i = 0;p <= (data+length-9);p++,i++)
-		{
-			if(!memcmp(p,head,9))
-			{
-				memcpy(p,p+9,(length-9-i));
-				length -= 9;
-				data[length] = '\0';
-				retlength = length;
-			}
-		}
-	}else
-	{
-		retlength = length;
-	}
-	
-	return retlength;
 }
 
 //与Client服务器通讯 
@@ -335,18 +256,18 @@ int serverCommunication_Client(char *sendbuff,int sendLength,char *recvbuff,int 
 		{
 			if(WIFI_Recv_SocketB_Event == 1)
 			{
-				LED_Status = 1;
-				*recvLength = wifi_socketb_format((char *)WIFI_RecvSocketBData ,WIFI_Recv_SocketB_LEN);
+			*recvLength = WIFI_Recv_SocketB_LEN;
 				memcpy(recvbuff,WIFI_RecvSocketBData,*recvLength);
 				recvbuff[*recvLength] = '\0';
-					print2msg(ECU_DBG_CLIENT,"serverCommunication_Client",recvbuff);
+				//sprint2msg(ECU_DBG_CLIENT,"serverCommunication_Client",recvbuff);
 				WIFI_Recv_SocketB_Event = 0;
-				//WIFI_Close(SOCKET_B);
+				LED_Status = 1;
+				AT_CIPCLOSE('3');
 				return 0;
 			}
 			rt_hw_ms_delay(10);
 		}
-		//WIFI_Close(SOCKET_B);
+		AT_CIPCLOSE('3');
 		LED_Status = 0;
 		return -1;
 #endif
