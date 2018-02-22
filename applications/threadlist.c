@@ -229,7 +229,7 @@ void rt_init_thread_entry(void* parameter)
 	cpu_usage_init();
 	WIFI_Reset();
 	sysDirDetection();
-	usart485_init(115200);
+	//usart485_init(115200);
 	
 }
 
