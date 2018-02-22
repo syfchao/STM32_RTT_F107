@@ -37,7 +37,6 @@
 #define WIFI_PIN                    (GPIO_Pin_6)
 
 rt_mutex_t wifi_uart_lock = RT_NULL;
-extern rt_mutex_t usr_wifi_lock;
 
 /*****************************************************************************/
 /*  Function Implementations                                                 */
@@ -511,7 +510,19 @@ int SendToSocketB(char *IP ,int port,char *data ,int length)
 //SOCKET C ·¢ËÍÊý¾Ý
 int SendToSocketC(char *IP ,int port,char *data ,int length)
 {
+	char msg_length[6] = {'\0'};
+
+	if(data[strlen(data)-1] == '\n'){
+		sprintf(msg_length, "%05d", strlen(data)-1);
+	}
+	else{
+		sprintf(msg_length, "%05d", strlen(data));
+		strcat(data, "\n");
+		length++;
+	}
+	strncpy(&data[5], msg_length, 5);
 	WIFI_Recv_SocketC_Event = 0;
+	print2msg(ECU_DBG_CONTROL_CLIENT,"Sent", data);
 	if(!AT_CIPSTART('4',"TCP",IP ,port))
 	{
 		//printf("SendToSocketC: ino AT_CIPSTART\n");

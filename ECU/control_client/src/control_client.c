@@ -55,7 +55,6 @@
 /*  Variable Declarations                                                    */
 /*****************************************************************************/
 extern rt_mutex_t record_data_lock;
-extern rt_mutex_t usr_wifi_lock;
 extern ecu_info ecu;
 
 enum CommandID{
@@ -1115,13 +1114,12 @@ int check_inverter_abnormal_status_sent(int hour)
 			strcpy(send_buffer, "APS13AAA51A123AAA0");
 			strcat(send_buffer, ecu.id);
 			strcat(send_buffer, "000000000000000000END\n");
-			rt_mutex_take(usr_wifi_lock, RT_WAITING_FOREVER);
 			ret = SendToSocketC(control_client_arg.ip,randport(control_client_arg),send_buffer, strlen(send_buffer));
 			if(ret == -1)
 			{
-				rt_mutex_release(usr_wifi_lock);
 				rt_free(recv_buffer);
 				rt_free(send_buffer);
+				AT_CIPCLOSE('4');
 				return -1;
 			}
 			
@@ -1133,12 +1131,12 @@ int check_inverter_abnormal_status_sent(int hour)
 					WIFI_Recv_SocketC_Event = 0;
 					break;
 				}
-				rt_hw_ms_delay(10);
+				rt_thread_delay(1);
 			}
-			rt_mutex_release(usr_wifi_lock);
 
 			if(flag_failed == 0)
 			{
+				AT_CIPCLOSE('4');
 				rt_free(recv_buffer);
 				rt_free(send_buffer);
 				return -1;
@@ -1150,6 +1148,7 @@ int check_inverter_abnormal_status_sent(int hour)
 			recv_buffer[WIFI_Recv_SocketC_LEN] = '\0';
 			//校验命令
 			if(msg_format_check(recv_buffer) < 0){
+				AT_CIPCLOSE('4');
 				rt_free(recv_buffer);
 				rt_free(send_buffer);
 				return 0;
@@ -1167,6 +1166,7 @@ int check_inverter_abnormal_status_sent(int hour)
 
 			//将flag=2的数据改为flag=1
 			change_statusflag1();
+			AT_CIPCLOSE('4');
 			
 			//如果所有标志为0，则清空数据
 			delete_statusflag0();
@@ -1273,10 +1273,8 @@ int response_inverter_abnormal_status()
 			//逐条发送逆变器异常状态
 			while(search_statusflag(data,time,&havaflag,'1'))		//	获取一条resendflag为1的数据
 			{	
-				rt_mutex_take(usr_wifi_lock, RT_WAITING_FOREVER);
 				//发送一条逆变器异常状态信息
 				if(SendToSocketC(control_client_arg.ip,randport(control_client_arg),data, strlen(data)) < 0){
-					rt_mutex_release(usr_wifi_lock);
 					rt_free(recv_buffer);
 					rt_free(command);
 					rt_free(send_buffer);
@@ -1284,6 +1282,7 @@ int response_inverter_abnormal_status()
 					data = NULL;
 					free(save_buffer);
 					save_buffer = NULL;
+					AT_CIPCLOSE('4');
 					return -1;
 				}
 				for(j=0;j<800;j++)
@@ -1294,15 +1293,15 @@ int response_inverter_abnormal_status()
 						WIFI_Recv_SocketC_Event = 0;
 						break;
 					}
-					rt_hw_ms_delay(10);
+					rt_thread_delay(1);
 				}
-				rt_mutex_release(usr_wifi_lock);
 				if(flag_failed == 0)
 				{
 					rt_free(recv_buffer);
 					rt_free(command);
 					rt_free(send_buffer);
 					free(data);
+					AT_CIPCLOSE('4');
 					data = NULL;
 					free(save_buffer);
 					save_buffer = NULL;
@@ -1355,6 +1354,7 @@ int response_inverter_abnormal_status()
 							data = NULL;
 							free(save_buffer);
 							save_buffer = NULL;
+							AT_CIPCLOSE('4');
 							return -1;
 						}
 						else
@@ -1389,6 +1389,7 @@ int response_inverter_abnormal_status()
 			}
 			//清空inversta的flag标志位为0的标志
 			delete_statusflag0();
+			AT_CIPCLOSE('4');
 			rt_free(recv_buffer);
 			rt_free(command);
 			rt_free(send_buffer);
@@ -1551,13 +1552,12 @@ int communication_with_EMA(int next_cmd_id)
 				{
 					//ECU向EMA发送请求命令指令
 					msg_REQ(send_buffer);
-					rt_mutex_take(usr_wifi_lock, RT_WAITING_FOREVER);
 					ret = SendToSocketC(control_client_arg.ip,randport(control_client_arg),send_buffer, strlen(send_buffer));
 					if(ret == -1)
 					{
-						rt_mutex_release(usr_wifi_lock);
 						rt_free(recv_buffer);
 						rt_free(send_buffer);
+						AT_CIPCLOSE('4');
 						return -1;
 					}
 					memset(send_buffer, '\0', sizeof(send_buffer));
@@ -1569,16 +1569,15 @@ int communication_with_EMA(int next_cmd_id)
 							WIFI_Recv_SocketC_Event = 0;
 							break;
 						}
-						rt_hw_ms_delay(10);
+						rt_thread_delay(1);
 					}
-					rt_mutex_release(usr_wifi_lock);
 					if(flag_failed == 0)
 					{
 						rt_free(recv_buffer);
 						rt_free(send_buffer);
+						AT_CIPCLOSE('4');
 						return -1;
 					}
-
 
 					//去掉usr WIFI报文的头部
 					memcpy(recv_buffer,WIFI_RecvSocketCData,WIFI_Recv_SocketC_LEN);
@@ -1586,7 +1585,7 @@ int communication_with_EMA(int next_cmd_id)
 					print2msg(ECU_DBG_CONTROL_CLIENT,"communication_with_EMA recv",recv_buffer);
 					//校验命令
 					if(msg_format_check(recv_buffer) < 0){
-						//closesocket(sockfd);
+						AT_CIPCLOSE('4');
 						continue;
 					}
 					//解析命令号
@@ -1622,6 +1621,7 @@ int communication_with_EMA(int next_cmd_id)
 				}
 				//EMA命令发送完毕
 				else if(cmd_id == 100){
+					AT_CIPCLOSE('4');
 					break;
 				}
 				else{
@@ -1633,6 +1633,7 @@ int communication_with_EMA(int next_cmd_id)
 				//将消息发送给EMA(自动计算长度,补上回车)
 				SendToSocketC(control_client_arg.ip,randport(control_client_arg),send_buffer, strlen(send_buffer));
 				printmsg(ECU_DBG_CONTROL_CLIENT,">>End");
+				AT_CIPCLOSE('4');
 				//如果功能函数返回值小于0,则返回-1,程序会自动退出
 				if(next_cmd_id < 0){
 					rt_free(recv_buffer);
@@ -1758,11 +1759,12 @@ int response_process_result()
 				{
 					//发送一条记录
 					if(SendToSocketC(control_client_arg.ip,randport(control_client_arg),data, strlen(data)) < 0){
+						AT_CIPCLOSE('4');
 						break;
 					}
 					//发送成功则将标志位置0
 					change_pro_result_flag(item,'0');
-					//WIFI_Close(SOCKET_C);
+					AT_CIPCLOSE('4');
 					printmsg(ECU_DBG_CONTROL_CLIENT,">>End");
 				
 				}
@@ -1815,9 +1817,11 @@ int response_process_result()
 				//有线连接失败，使用wifi传输 
 				{
 					if(SendToSocketC(control_client_arg.ip,randport(control_client_arg),sendbuffer, strlen(sendbuffer)) < 0){
+						AT_CIPCLOSE('4');
 						break;
 					}
 					change_inv_pro_result_flag(item,'0');
+					AT_CIPCLOSE('4');
 									
 				}
 #endif	
@@ -1851,7 +1855,6 @@ void control_client_thread_entry(void* parameter)
 	int result, ecu_time = 0, ecu_flag = 1;
 	char buffer[16] = {'\0'};
 	FILE *fp;
-	int socketfd = -1;
 	rt_thread_delay(RT_TICK_PER_SECOND*START_TIME_CONTROL_CLIENT);
 	//添加功能函数
   	add_functions();
@@ -1869,23 +1872,25 @@ void control_client_thread_entry(void* parameter)
 	{
 		//每天一点时向EMA确认逆变器异常状态是否被存储
 		check_inverter_abnormal_status_sent(1);
+		
 		fp=fopen("/yuneng/A118.con","r");
 		if(fp!=NULL)
 		{
 			char c='0';
 			c=fgetc(fp);
 			fclose(fp);
-			if(((socketfd = client_socket_init(randport(control_client_arg), control_client_arg.ip, control_client_arg.domain))>=0))
+			printf("A118:%c\n",c);
+			if(c=='1')
 			{
-				if(socketfd >= 0)
+				result = communication_with_EMA(118);
+				if(result != -1)
 				{
-					closesocket(socketfd);
+					unlink("/yuneng/A118.con");
 				}
-				if(c=='1')
-					result = communication_with_EMA(118);
-				unlink("/yuneng/A118.con");
+				
 			}	
 		}
+		
 		
 		fp=fopen("/TMP/ECUUPVER.CON","r");
 		if(fp!=NULL)
@@ -1893,6 +1898,7 @@ void control_client_thread_entry(void* parameter)
 			char c='0';
 			c=fgetc(fp);
 			fclose(fp);
+			printf("A102:%c\n",c);
 			if(c=='1')
 			{
 				result = communication_with_EMA(102);
@@ -1930,3 +1936,26 @@ void control_client_thread_entry(void* parameter)
 	}
 
 }
+
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+void commEMA(int i)
+{
+	communication_with_EMA(i);
+}
+
+void prealarmprocess(void)
+{
+	
+	check_inverter_abnormal_status_sent(get_hour());
+}
+
+void respabnormal(void)
+{
+	response_inverter_abnormal_status();
+}
+FINSH_FUNCTION_EXPORT(commEMA, eg:commEMA());
+FINSH_FUNCTION_EXPORT(prealarmprocess, eg:prealarmprocess());
+FINSH_FUNCTION_EXPORT(respabnormal, eg:respabnormal());
+#endif
+

@@ -498,8 +498,8 @@ int preprocess()			//发送头信息到EMA,读取已经存在EMA的记录时间
 	char *readbuff = NULL;
 	char sendbuff[50] = {'\0'};
 
-	if(0 == detection_resendflag2())		//	检测是否有resendflag='2'的记录
-		return 0;
+	//if(0 == detection_resendflag2())		//	检测是否有resendflag='2'的记录
+		//return 0;
 	readbuff = malloc((4+99*14));
 	memset(readbuff,0x00,(4+99*14));
 	readbytes = 4+99*14;
@@ -623,4 +623,8 @@ void client_thread_entry(void* parameter)
 	}
 }
 
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+FINSH_FUNCTION_EXPORT(preprocess ,preprocess)
+#endif
 

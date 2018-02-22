@@ -127,7 +127,6 @@ static struct rt_thread phone_server_thread;
 
 
 rt_mutex_t record_data_lock = RT_NULL;
-rt_mutex_t usr_wifi_lock = RT_NULL;
 extern rt_mutex_t wifi_uart_lock;
 
 unsigned char LED_Status = 0;
@@ -213,12 +212,7 @@ void rt_init_thread_entry(void* parameter)
 	{
 		rt_kprintf("Initialize record_data_lock successful!\n");
 	}
-	/* WiFi Serial Initialize*/
-	if(usr_wifi_lock == NULL)
-	{
-		usr_wifi_lock = rt_mutex_create("usr_wifi_lock", RT_IPC_FLAG_FIFO);
-	}
-	
+
 	/* WiFi Serial Initialize*/
 	if(wifi_uart_lock == NULL)
 	{
@@ -230,7 +224,7 @@ void rt_init_thread_entry(void* parameter)
 	WIFI_Reset();
 	sysDirDetection();
 	initSocketArgs();
-	usart485_init(115200);
+	//usart485_init(115200);
 	
 }
 

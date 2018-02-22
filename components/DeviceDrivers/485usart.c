@@ -49,12 +49,12 @@ void usart485_init(unsigned int bound){
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;	//复用推挽输出
 	GPIO_Init(TX485_GPIO, &GPIO_InitStructure); 
    
-    //485RX
+    	//485RX
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;//浮空输入
 	GPIO_Init(GPIOD, &GPIO_InitStructure);  //初始化PD2
 	
-   //USART TX 初始化设置
+   	//USART TX 初始化设置
 	USART_InitStructure.USART_BaudRate = bound;//一般设置为115200;
 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;//字长为8位数据格式
 	USART_InitStructure.USART_StopBits = USART_StopBits_1;//一个停止位

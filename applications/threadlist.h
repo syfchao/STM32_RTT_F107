@@ -100,7 +100,7 @@ typedef struct IPConfig
 //control client thread priority
 #define THREAD_PRIORITY_CONTROL_CLIENT					26
 //data uploading thread priority
-#define THREAD_PRIORITY_CLIENT							27
+#define THREAD_PRIORITY_CLIENT							26
 
 
 

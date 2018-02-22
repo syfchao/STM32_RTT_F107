@@ -472,3 +472,10 @@ void idwrite_thread_entry(void* parameter)
 		closesocket(clientfd);
 	}
 }
+
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+
+FINSH_FUNCTION_EXPORT(clearrecord, eg:clearrecord());
+#endif
+

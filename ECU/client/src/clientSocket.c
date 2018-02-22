@@ -265,7 +265,7 @@ int serverCommunication_Client(char *sendbuff,int sendLength,char *recvbuff,int 
 				AT_CIPCLOSE('3');
 				return 0;
 			}
-			rt_hw_ms_delay(10);
+			rt_thread_delay(1);
 		}
 		AT_CIPCLOSE('3');
 		LED_Status = 0;
