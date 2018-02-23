@@ -609,4 +609,35 @@ void teststaticIP(void)
 }
 FINSH_FUNCTION_EXPORT(teststaticIP, eg:teststaticIP());
 
+void sysclock(void)
+{
+	RCC_ClocksTypeDef  RCC_Clocks;
+	RCC_GetClocksFreq(&RCC_Clocks); //获取各个时钟频率
+
+	printf("SYSCLK_Frequency %d \r\n",RCC_Clocks.SYSCLK_Frequency);
+	printf("HCLK_Frequency %d \r\n",RCC_Clocks.HCLK_Frequency);
+	printf("PCLK1_Frequency %d \r\n",RCC_Clocks.PCLK1_Frequency);
+	printf("PCLK2_Frequency %d \r\n",RCC_Clocks.PCLK2_Frequency);
+	printf("ADCCLK_Frequency %d \r\n",RCC_Clocks.ADCCLK_Frequency);
+	printf("SystemCoreClock:%d\n",SystemCoreClock);
+}
+FINSH_FUNCTION_EXPORT(sysclock, eg:sysclock());
+
+void delayRTS(int s)
+{
+	printf("RTS %d Start\n",s);
+	rt_thread_delay(RT_TICK_PER_SECOND*s);
+	printf("RTS %d End\n",s);
+}
+
+void delayHWS(int s)
+{
+	printf("HWS %d Start\n",s);
+	rt_hw_s_delay(s);
+	printf("HWS %d End\n",s);
+}
+
+
+FINSH_FUNCTION_EXPORT(delayRTS, eg:delayRTS());
+FINSH_FUNCTION_EXPORT(delayHWS, eg:delayHWS());
 #endif

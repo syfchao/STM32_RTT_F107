@@ -70,7 +70,7 @@ void rt_hw_board_init(void)
 
 	/* Configure the SysTick */
   SysTick_Config( SystemCoreClock / RT_TICK_PER_SECOND );
-	
+
 	rt_hw_lan8720_init();
   rt_hw_usart_init();		//´®¿Ú³õÊ¼»¯
 	uart5_init(115200);
