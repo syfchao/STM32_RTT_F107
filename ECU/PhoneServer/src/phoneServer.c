@@ -49,6 +49,7 @@
 extern rt_mutex_t wifi_uart_lock;
 extern ecu_info ecu;
 extern inverter_info inverter[MAXINVERTERCOUNT];
+extern unsigned char WIFI_RST_Event;
 enum CommandID{
 	P0000, P0001, P0002, P0003, P0004, P0005, P0006, P0007, P0008, P0009, //0-9
 	P0010, P0011, P0012, P0013, P0014, P0015, P0016, P0017, P0018, P0019, //10-19
@@ -414,7 +415,7 @@ void Phone_SetWiredNetwork(int Data_Len,const char *recvbuffer)			//有线网络设置
 //获取硬件信息
 void Phone_GetECUHardwareStatus(int Data_Len,const char *recvbuffer) 
 {
-	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 8 ",(char *)recvbuffer);
+	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 08 ",(char *)recvbuffer);
 	if(!memcmp(&WIFI_RecvSocketAData[13],ecu.id,12))
 	{	//匹配成功进行相应的操作
 		APP_Response_GetECUHardwareStatus(0x00);
@@ -623,6 +624,7 @@ void Phone_GetShortAddrInfo(int Data_Len,const char *recvbuffer) 			//获取ID信息
 	
 	
 	//printf("WIFI_Recv_Event%d %s\n",18,recvbuffer);
+	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 18",(char *)recvbuffer);
 	if(!memcmp(&WIFI_RecvSocketAData[13],ecu.id,12))
 	{
 		APP_Response_GetShortAddrInfo(0x00,inverter);
@@ -841,7 +843,7 @@ void phone_server_thread_entry(void* parameter)
 			if(ret == 0)
 				WIFI_RST_Event = 0;
 		}
-		
+
 		rt_thread_delay(RT_TICK_PER_SECOND/100);
 	}
 	

@@ -131,6 +131,7 @@ extern rt_mutex_t wifi_uart_lock;
 
 unsigned char LED_Status = 0;
 unsigned char LED_IDWrite_Status = 0;
+unsigned char WIFI_RST_Event = 0;
 
 /*****************************************************************************/
 /*  Function Implementations                                                 */
@@ -219,7 +220,6 @@ void rt_init_thread_entry(void* parameter)
 		wifi_uart_lock = rt_mutex_create("wifi_uart_lock", RT_IPC_FLAG_FIFO);
 	}
 	
-	TIM2_Int_Init(14999,7199);    //心跳包超时事件定时器初始化
 	cpu_usage_init();
 	WIFI_Reset();
 	sysDirDetection();
@@ -245,6 +245,7 @@ void rt_init_thread_entry(void* parameter)
 static void led_thread_entry(void* parameter)
 {	
 	rt_uint8_t major,minor;
+	int index = 0,ATFaliedNum = 0;
 	/* Initialize led */
 	rt_hw_led_init();
 	rt_hw_watchdog_init();
@@ -262,11 +263,29 @@ static void led_thread_entry(void* parameter)
 			rt_hw_led_on();
 		}
 
-		if(LED_IDWrite_Status == 1)
+		if(LED_IDWrite_Status == 1)	//判断IDWrite，当IDWrite发送点亮时，长期点亮直到关机
 		{
 			rt_hw_led_on();
 		}
-		rt_thread_delay( RT_TICK_PER_SECOND);
+		rt_thread_delay( RT_TICK_PER_SECOND/2);
+		index++;
+		if(index >= ESP07S_AT_TEST_CYCLE)
+		{
+			if(-1 == WIFI_Test())
+			{
+				ATFaliedNum++;
+				printf("WIFI_Test failed NUM:%d\n",ATFaliedNum);
+				if(ATFaliedNum >= ESP07S_AT_TEST_FAILED_NUM)	//连续失败2次
+				{
+					WIFI_RST_Event = 1;
+					ATFaliedNum = 0;
+				}
+				
+			}
+			index = 0;
+		}
+		MCP1316_kickwatchdog();
+		rt_thread_delay( RT_TICK_PER_SECOND/2);
 		cpu_usage_get(&major, &minor);
 		//printf("CPU : %d.%d%\n", major, minor);
     }

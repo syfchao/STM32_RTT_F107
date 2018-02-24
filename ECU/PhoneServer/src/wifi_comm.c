@@ -696,7 +696,8 @@ void APP_Response_GetShortAddrInfo(char mapping,inverter_info *inverter)
 void APP_Response_GetECUAPInfo(char mapping,unsigned char connectStatus,char *info)
 {
 	int packlength = 0;
-	memset(SendData,'\0',4096);	
+	memset(SendData,'\0',MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER);
+
 	if(mapping == 0x00)
 	{
 		if(0 == connectStatus)
@@ -707,6 +708,7 @@ void APP_Response_GetECUAPInfo(char mapping,unsigned char connectStatus,char *in
 		{
 			sprintf(SendData,"APS11%04d002000%1d%sEND\n",(strlen(info) + 19),connectStatus,info);
 			packlength = (strlen(info) + 20);
+			printf("sendData:%s\n",SendData);
 		}
 		
 	}else
@@ -714,7 +716,6 @@ void APP_Response_GetECUAPInfo(char mapping,unsigned char connectStatus,char *in
 		sprintf(SendData,"APS110015002001\n");
 		packlength = 16;
 	}	
-	
 	SendToSocketA(SendData ,packlength);
 
 }
@@ -732,7 +733,8 @@ void APP_Response_SetECUAPInfo(unsigned char result)
 void APP_Response_GetECUAPList(char mapping,char *list)
 {
 	int packlength = 0;
-	memset(SendData,'\0',4096);	
+	memset(SendData,'\0',MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER);
+
 	if(mapping == 0x00)
 	{
 		sprintf(SendData,"APS11%04d002200%sEND\n",(strlen(list) + 18),list);

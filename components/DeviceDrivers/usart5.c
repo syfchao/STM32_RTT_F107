@@ -27,6 +27,7 @@
 #include "clientSocket.h"
 #include "file.h"
 #include "datetime.h"
+#include "mcp1316.h"
 
 
 /*****************************************************************************/
@@ -196,7 +197,7 @@ int WIFI_SendData(char *data, int num)
 	{
 		ch = data[index];
 		while(USART_GetFlagStatus(UART5,USART_FLAG_TC)==RESET); 
-    USART_SendData(UART5,(uint16_t)ch);
+   			 USART_SendData(UART5,(uint16_t)ch);
 	}
 	return index;
 }
@@ -298,7 +299,6 @@ void UART5_IRQHandler(void)                	//串口1中断服务程序
 
 void clear_WIFI(void)
 {
-	//TIM3_Int_Deinit();
 	Cur = 0;
 }
 
@@ -580,15 +580,15 @@ int WIFI_Test(void)
 	clear_WIFI();
 	//发送"AT+Z\n",返回+ok
 	WIFI_SendData("AT\r\n", 8);
-	for(i = 0;i< 200;i++)
+	for(i = 0;i< 100;i++)
 	{
 		if(1 == detectionOK(Cur))
 		{
-			printf("AT:+ok\n");
 			clear_WIFI();
 			return 0;
 		}
 		rt_thread_delay(1);
+		MCP1316_kickwatchdog();
 	}
 	clear_WIFI();
 	return -1;

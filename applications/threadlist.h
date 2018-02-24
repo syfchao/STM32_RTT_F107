@@ -46,6 +46,8 @@ typedef struct IPConfig
 #define WIFI_MODULE_TYPE	2
 #define SIZE_PER_SEND		2900
 
+#define ESP07S_AT_TEST_CYCLE	60
+#define ESP07S_AT_TEST_FAILED_NUM 2
 
 //ÍøÂçÍ¨Ñ¶µØÖ·
 #if 1
