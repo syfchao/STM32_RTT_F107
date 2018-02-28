@@ -250,13 +250,13 @@ void rt_init_thread_entry(void* parameter)
 static void led_thread_entry(void* parameter)
 {	
 	rt_uint8_t major,minor;
+	int index = 0,ATFaliedNum = 0;
 	/* Initialize led */
 	rt_hw_led_init();
 	rt_hw_watchdog_init();
 	MCP1316_init();
-
 	while (1)
-	{
+    	{
 		kickwatchdog();
 		MCP1316_kickwatchdog();
 		if(LED_Status == 0)
@@ -266,12 +266,29 @@ static void led_thread_entry(void* parameter)
 		{
 			rt_hw_led_on();
 		}
-
 		if(LED_IDWrite_Status == 1)
 		{
 			rt_hw_led_on();
 		}
-		rt_thread_delay( RT_TICK_PER_SECOND);
+		rt_thread_delay( RT_TICK_PER_SECOND/2);
+		index++;
+		if(index >= USR_AT_TEST_CYCLE)
+		{
+			if(-1 == usr_Test())
+			{
+				ATFaliedNum++;
+				printdecmsg(ECU_DBG_WIFI,"WIFI_Test failed NUM ",ATFaliedNum);
+				if(ATFaliedNum >= USR_AT_TEST_FAILED_NUM)	//Á¬ÐøÊ§°Ü2´Î
+				{
+					WIFI_RST_Event = 1;
+					ATFaliedNum = 0;
+				}
+				
+			}
+			index = 0;
+		}
+		kickwatchdog();
+		MCP1316_kickwatchdog();
 		cpu_usage_get(&major, &minor);
 		//printf("CPU : %d.%d%\n", major, minor);
     }

@@ -64,6 +64,8 @@ typedef struct IPConfig
 #define SIZE_PER_SEND		3800
 #endif 
 
+#define USR_AT_TEST_CYCLE	60
+#define USR_AT_TEST_FAILED_NUM 2
 //ÍøÂçÍ¨Ñ¶µØÖ·
 #if 1
 #define CLIENT_SERVER_DOMAIN			"ecu.apsema.com"

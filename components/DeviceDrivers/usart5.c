@@ -25,6 +25,7 @@
 #include "client.h"
 #include "threadlist.h"
 #include "clientSocket.h"
+#include "mcp1316.h"
 
 /*****************************************************************************/
 /*  Definitions                                                              */
@@ -2997,8 +2998,9 @@ int WIFI_QueryStatus(eSocketType Type)
 		clear_WIFI();
 		WIFI_Recv_Socket_Event = 0;
 		WIFI_SendData(send, 6);
-		for(j = 0;j <300;j++)
+		for(j = 0;j <100;j++)
 		{
+			WIFI_GetEvent();
 			if(WIFI_Recv_Socket_Event == 1)
 			{
 				WIFI_Recv_Socket_Event = 0;
@@ -3010,12 +3012,12 @@ int WIFI_QueryStatus(eSocketType Type)
 					//查询SOCKET 成功
 					if(WIFI_RecvSocketData[4] == 0x01)	//在线
 					{
-						printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus Online ",Type);
+						//printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus Online ",Type);
 						clear_WIFI();
 						return 1;
 					}else if(WIFI_RecvSocketData[4] == 0x00)	//离线
 					{
-						printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus not Online ",Type);
+						//printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus not Online ",Type);
 						clear_WIFI();
 						return 0;
 					}else	//未知
@@ -3029,12 +3031,12 @@ int WIFI_QueryStatus(eSocketType Type)
 					//查询SOCKET 成功
 					if(WIFI_RecvSocketData[4] == 0x01)			//离线
 					{
-						printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus Online ",Type);
+						//printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus Online ",Type);
 						clear_WIFI();
 						return 0;
 					}else if(WIFI_RecvSocketData[4] == 0x00)	//在线
 					{
-						printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus not Online ",Type);
+						//printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus not Online ",Type);
 						clear_WIFI();
 						return 1;
 					}else	//未知
@@ -3054,6 +3056,7 @@ int WIFI_QueryStatus(eSocketType Type)
 				
 			}
 			rt_thread_delay(1);
+			MCP1316_kickwatchdog();
 		}
 		printdecmsg(ECU_DBG_WIFI,"WIFI_QueryStatus WIFI Get reply time out ",Type);
 	}	
@@ -3146,6 +3149,10 @@ int SendToSocketB(char *data ,int length)
 	return -1;
 }
 
+int usr_Test(void)
+{
+	return WIFI_QueryStatus(SOCKET_B);
+}
 //SOCKET C 发送数据
 int SendToSocketC(char *data ,int length)
 {
@@ -3198,7 +3205,7 @@ int SendToSocketC(char *data ,int length)
 			
 			rt_hw_ms_delay(50);
 		}
-		
+		rt_exit_critical();
 	}
 	rt_mutex_release(usr_wifi_lock);
 	return -1;
@@ -3336,7 +3343,12 @@ FINSH_FUNCTION_EXPORT(WIFI_Reset , Reset WIFI Module .)
 FINSH_FUNCTION_EXPORT(SendToSocketB , Send SOCKET B.)
 FINSH_FUNCTION_EXPORT(SendToSocketC , Send SOCKET C.)
 
-#endif
+FINSH_FUNCTION_EXPORT(WIFI_Create ,WIFI Create Socket)
 
+FINSH_FUNCTION_EXPORT(usr_Test ,WIFI Query Socket B)
+
+
+
+#endif
 
 

@@ -103,7 +103,7 @@ int WIFI_Reset(void);
 int AT_Z(void);
 int WIFI_ClearPasswd(void);
 int WIFI_SoftReset(void);
-
+int usr_Test(void);
 int WIFI_Test(void);
 int WIFI_Factory(char *ECUID12);
 /*

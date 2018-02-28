@@ -754,7 +754,8 @@ void phone_server_thread_entry(void* parameter)
 		//WIFI¸´Î»ÊÂ¼þ
 		if(WIFI_RST_Event == 1)
 		{
-			ret = process_WIFI_RST();
+			printf("WIFI_Reset\n");
+			ret = WIFI_Reset();
 			if(ret == 0)
 				WIFI_RST_Event = 0;
 		}
