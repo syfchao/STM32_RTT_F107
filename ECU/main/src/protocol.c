@@ -577,7 +577,7 @@ int saveevent(inverter_info *inverter, char *sendcommanddatatime)			//保存系�
 	for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(inverter->id)); i++){
 		if(1 == inverter->inverterstatus.dataflag)
 		{
-			if(0 != strcmp(inverter->status_web, "000000000000000000000000"))
+			if(0 != strcmp(inverter->status_web, "0000000000000000000000000000000000000"))
 			{
 				memset(event_buff, '\0', 200);
 			
