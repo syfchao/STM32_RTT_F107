@@ -532,16 +532,28 @@ int SendToSocketC(char *IP ,int port,char *data ,int length)
 }
 
 //----ESP01流程-------------------------------
-int AT_CWMODE3(void)			//配置WIFI模块为AP+STA模式
+int AT_CWMODE3(int mode)			//配置WIFI模块为AP+STA模式1.STA模式 3.AP+STA模式
 {
 	int i = 0;
 	clear_WIFI();
-	WIFI_SendData("AT+CWMODE_DEF=3\r\n", 17);
+	if(mode == 1)
+	{
+		WIFI_SendData("AT+CWMODE_DEF=1\r\n", 17);
+	}else if(mode == 3)
+	{
+		WIFI_SendData("AT+CWMODE_DEF=3\r\n", 17);
+	}else
+	{
+		return -1;
+	}
+	
+		
+	
 	for(i = 0;i< 100;i++)
 	{
 		if(1 == detectionOK(Cur))
 		{
-			printf("AT+CWMODE3 :+ok\n");
+			printf("AT+CWMODE :+ok\n");
 			clear_WIFI();
 			return 0;
 		}
@@ -954,7 +966,7 @@ int InitWorkMode(void)
 	//选择 WMODE
 	for(i = 0;i<3;i++)
 	{
-		if(0 == AT_CWMODE3())
+		if(0 == AT_CWMODE3(3))
 		{
 			res = 0;
 			break;

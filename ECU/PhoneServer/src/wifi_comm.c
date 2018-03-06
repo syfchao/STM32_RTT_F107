@@ -748,3 +748,91 @@ void APP_Response_GetECUAPList(char mapping,char *list)
 	SendToSocketA(SendData ,packlength);
 }
 
+void APP_Response_GetFunctionStatusInfo(char mapping)
+{
+	int packlength = 0;
+		memset(SendData,'\0',MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER);
+	
+
+	if(mapping == 0x00)
+	{
+		sprintf(SendData,"APS110015002300");
+		packlength = 15;
+		SendData[packlength++] = '0';
+		memset(&SendData[packlength],'0',300);
+		packlength += 300;
+		SendData[packlength++] = 'E';
+		SendData[packlength++] = 'N';
+		SendData[packlength++] = 'D';
+		
+		SendData[5] = (packlength/1000) + '0';
+		SendData[6] = ((packlength/100)%10) + '0';
+		SendData[7] = ((packlength/10)%10) + '0';
+		SendData[8] = ((packlength)%10) + '0';
+		SendData[packlength++] = '\n';
+
+		
+	}else
+	{
+		sprintf(SendData,"APS110015002301\n");
+		packlength = 16;
+	}		
+	SendToSocketA(SendData ,packlength);
+}
+
+
+void APP_Response_ServerInfo(char mapping,ECUServerInfo_t *serverInfo)
+{
+	int packlength = 0;
+
+	memset(SendData,'\0',MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER);
+	
+	if(mapping == 0x00)
+	{
+		if(serverInfo->serverCmdType == SERVER_UPDATE_GET)
+		{	//从文件中读取对应的信息
+			sprintf(SendData,"APS1100150024%02d00",SERVER_UPDATE_GET);
+			packlength = 17;
+			
+		}else if(serverInfo->serverCmdType == SERVER_CLIENT_GET)
+		{
+			sprintf(SendData,"APS1100150024%02d00",SERVER_CLIENT_GET);
+			packlength = 17;
+		}else if(serverInfo->serverCmdType == SERVER_CONTROL_GET)
+		{
+			sprintf(SendData,"APS1100150024%02d00",SERVER_CONTROL_GET);
+			packlength = 17;
+		}else if(serverInfo->serverCmdType == SERVER_UPDATE_SET)
+		{
+			sprintf(SendData,"APS1100150024%02d00",SERVER_UPDATE_SET);
+			packlength = 17;
+		}else if(serverInfo->serverCmdType == SERVER_CLIENT_SET)
+		{
+			sprintf(SendData,"APS1100150024%02d00",SERVER_CLIENT_SET);
+			packlength = 17;
+		}else if(serverInfo->serverCmdType == SERVER_CONTROL_SET)
+		{
+			sprintf(SendData,"APS1100150024%02d00",SERVER_CONTROL_SET);
+			packlength = 17;
+		}else
+		{
+			return;
+		}
+		
+		SendData[packlength++] = 'E';
+		SendData[packlength++] = 'N';
+		SendData[packlength++] = 'D';
+		
+		SendData[5] = (packlength/1000) + '0';
+		SendData[6] = ((packlength/100)%10) + '0';
+		SendData[7] = ((packlength/10)%10) + '0';
+		SendData[8] = ((packlength)%10) + '0';
+		SendData[packlength++] = '\n';
+		
+	}else
+	{
+		sprintf(SendData,"APS110015002401\n");
+		packlength = 16;
+	}		
+	SendToSocketA(SendData ,packlength);
+}

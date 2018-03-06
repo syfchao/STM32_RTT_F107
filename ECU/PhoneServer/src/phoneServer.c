@@ -80,10 +80,11 @@ void add_Phone_functions(void)
 	pfun_Phone[P0014] = Phone_GetWiredNetwork; 			//ªÒ»°Õ¯¬Á≈‰÷√
 	pfun_Phone[P0015] = Phone_SetChannel;			//…Ë÷√–≈µ¿
 	pfun_Phone[P0018] = Phone_GetShortAddrInfo;		//π¶¬ µÁ¡˜µÁ—π«˙œﬂ
-	pfun_Phone[P0020] = APP_GetECUAPInfo;		//π¶¬ µÁ¡˜µÁ—π«˙œﬂ
-	pfun_Phone[P0021] = APP_SetECUAPInfo;		//π¶¬ µÁ¡˜µÁ—π«˙œﬂ
-	pfun_Phone[P0022] = APP_ListECUAPInfo;		//π¶¬ µÁ¡˜µÁ—π«˙œﬂ
-
+	pfun_Phone[P0020] = Phone_GetECUAPInfo;		//π¶¬ µÁ¡˜µÁ—π«˙œﬂ
+	pfun_Phone[P0021] = Phone_SetECUAPInfo;		//π¶¬ µÁ¡˜µÁ—π«˙œﬂ
+	pfun_Phone[P0022] = Phone_ListECUAPInfo;		//π¶¬ µÁ¡˜µÁ—π«˙œﬂ
+	pfun_Phone[P0023] = Phone_GetFunctionStatusInfo;
+	pfun_Phone[P0024] = Phone_ServerInfo;			//≤Èø¥∫Õ…Ë÷√œ‡πÿ∑˛ŒÒ∆˜–≈œ¢
 }
 
 
@@ -194,6 +195,32 @@ int ResolveWired(const char *string,IP_t *IPAddr,IP_t *MSKAddr,IP_t *GWAddr,IP_t
 		return -1;
 	}
 
+}
+
+int ResolveServerInfo(const char *string,ECUServerInfo_t *serverInfo)
+{
+	char cmd[3] = {'\0'};
+	unsigned char cmdNO = 0;
+	char domainLenStr[4] = {'\0'};
+	unsigned char domainLen = 0;
+	
+	memcpy(cmd,&string[25],2);
+	cmdNO = atoi(cmd);
+	if((cmdNO<=0) ||(cmdNO>=7))
+		return -1;
+	serverInfo->serverCmdType = (eServerCmdType)atoi(cmd);
+	if((serverInfo->serverCmdType == SERVER_UPDATE_GET)||(serverInfo->serverCmdType == SERVER_CLIENT_GET)||(serverInfo->serverCmdType == SERVER_CONTROL_GET))
+		return 0;
+	memcpy(domainLenStr,&string[30],3);
+	domainLen = atoi(domainLenStr);
+	memcpy(serverInfo->domain,&string[33],domainLen);
+
+	memcpy(serverInfo->IP,&string[33+domainLen],4);
+
+	serverInfo->Port1 = string[37+domainLen]*256 + string[38+domainLen];
+	serverInfo->Port2 = string[39+domainLen]*256 + string[40+domainLen];
+	return 0;
+	
 }
 	
 //ªÒ»°ª˘±æ ˝æ› 
@@ -635,7 +662,7 @@ void Phone_GetShortAddrInfo(int Data_Len,const char *recvbuffer) 			//ªÒ»°ID–≈œ¢
 	
 }
 
-void APP_GetECUAPInfo(int Data_Len,const char *recvbuffer) 			//ªÒ»°ECU¡¨Ω”AP–≈œ¢
+void Phone_GetECUAPInfo(int Data_Len,const char *recvbuffer) 			//ªÒ»°ECU¡¨Ω”AP–≈œ¢
 {
 	unsigned char connectStatus = 0;
 	char info[100] = {'\0'};
@@ -653,7 +680,7 @@ void APP_GetECUAPInfo(int Data_Len,const char *recvbuffer) 			//ªÒ»°ECU¡¨Ω”AP–≈œ
 	
 }
 
-void APP_SetECUAPInfo(int Data_Len,const char *recvbuffer) 			//…Ë÷√ECU¡¨Ω”AP
+void Phone_SetECUAPInfo(int Data_Len,const char *recvbuffer) 			//…Ë÷√ECU¡¨Ω”AP
 {
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 21 ",(char *)recvbuffer);
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
@@ -676,7 +703,7 @@ void APP_SetECUAPInfo(int Data_Len,const char *recvbuffer) 			//…Ë÷√ECU¡¨Ω”AP
 	
 }
 
-void APP_ListECUAPInfo(int Data_Len,const char *recvbuffer) 			//¡–æŸECU ≤È—ØµΩµƒAP–≈œ¢
+void Phone_ListECUAPInfo(int Data_Len,const char *recvbuffer) 			//¡–æŸECU ≤È—ØµΩµƒAP–≈œ¢
 {
 	unsigned char ret = 0;
 	char *list = NULL;
@@ -702,6 +729,47 @@ void APP_ListECUAPInfo(int Data_Len,const char *recvbuffer) 			//¡–æŸECU ≤È—ØµΩµ
 	}
 	free(list);
 	list = NULL;
+	
+}
+
+void Phone_GetFunctionStatusInfo(int Data_Len,const char *recvbuffer) 			//¡–æŸECU ≤È—ØµΩµƒAP–≈œ¢
+{
+	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 23 ",(char *)recvbuffer);
+	if(!memcmp(&recvbuffer[13],ecu.id,12))
+	{
+		APP_Response_GetFunctionStatusInfo(0x00);
+	}else
+	{
+		APP_Response_GetFunctionStatusInfo(0x01);
+	}
+	
+}
+
+void Phone_ServerInfo(int Data_Len,const char *recvbuffer) 			
+{
+	int ret = 0;
+	ECUServerInfo_t serverInfo;
+	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 24 ",(char *)recvbuffer);
+	if(!memcmp(&recvbuffer[13],ecu.id,12))
+	{
+		//≈–∂œ «æﬂÃÂƒƒÃı√¸¡Ó
+		ret = ResolveServerInfo(recvbuffer,&serverInfo);
+		if(ret == 0)
+		{	
+			printf("%d\n",serverInfo.serverCmdType);
+			printf("%s\n",serverInfo.domain);
+			printf("%d,%d,%d,%d,\n",serverInfo.IP[0],serverInfo.IP[1],serverInfo.IP[2],serverInfo.IP[3]);
+			printf("%d\n",serverInfo.Port1);
+			printf("%d\n",serverInfo.Port2);
+			APP_Response_ServerInfo(0x00,&serverInfo);
+		}else
+		{
+			return;
+		}	
+	}else
+	{
+		APP_Response_ServerInfo(0x01,&serverInfo);
+	}
 	
 }
 
