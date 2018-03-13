@@ -22,6 +22,7 @@
 /*****************************************************************************/
 int check_yc500(struct inverter_info_t *inverter);		//在解析函数的最后调用
 int check_yc1000(struct inverter_info_t *inverter);		//在解析函数的最后调用
+int check_qs1200(struct inverter_info_t *inverter);
 int check_optimizer_YC500(struct inverter_info_t *inverter);
 
 #endif /*__CHECHDATA_H__*/

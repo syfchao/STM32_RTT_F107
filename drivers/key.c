@@ -76,3 +76,34 @@ void EXTI9_5_IRQHandler(void)
 	EXTI_ClearITPendingBit(EXTI_Line9); //清除LINE9上的中断标志位 
 }
 
+void WIFI_KEY_Init(void)
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOC  | RCC_APB2Periph_AFIO, ENABLE );  
+	GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_13 |GPIO_Pin_14 | GPIO_Pin_15  ;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+	GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_Out_PP;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
+	    
+	PWR_BackupAccessCmd(ENABLE);//允许修改RTC 和后备寄存器
+
+	RCC_LSEConfig(RCC_LSE_OFF);//关闭外部低速外部时钟信号功能 后，PC13 PC14 PC15 才可以当普通IO用。
+
+	PWR_BackupAccessCmd(DISABLE);//禁止修改后备寄存器
+
+	GPIO_SetBits(GPIOC, GPIO_Pin_14);
+	GPIO_SetBits(GPIOC, GPIO_Pin_15);
+}
+
+
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+
+void WIFIKey(void)
+{
+	WIFI_KEY_Init();
+	printf("WIFI_KEY_Init:OK\n");
+}
+FINSH_FUNCTION_EXPORT(WIFIKey, WIFIKey.)
+#endif
+

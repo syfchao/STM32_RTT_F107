@@ -831,7 +831,11 @@ int zb_query_data(inverter_info *inverter)		//请求逆变器实时数据
 		{
 			inverter->no_getdata_num = 0;	//一旦接收到数据就清0,ZK
 			inverter->inverterstatus.dataflag = 1;	//接收到数据置为1
-			if(7==inverter->model)
+			if(0x17==inverter->model)
+			{
+				resolvedata_1200(&data[4], inverter);
+			}
+			else if(7==inverter->model)
 			{
 				if(0xBB == data[3])
 				{
@@ -856,18 +860,17 @@ int zb_query_data(inverter_info *inverter)		//请求逆变器实时数据
 			return 1;
 		}else
 		{
-			inverter->inverterstatus.dataflag = 0;		//娌℃湁鎺ュ彈鍒版暟鎹氨缃负0
+			inverter->inverterstatus.dataflag = 0;		
 			return -1;
 		}
 	}
 	else
 	{
-		inverter->inverterstatus.dataflag = 0;		//没有接收到数据就置为0
+		inverter->inverterstatus.dataflag = 0;		
 		return -1;
 	}
 
 }
-
 int zb_test_communication(void)		//zigbee测试通信有没有断开
 {
 	unsigned char sendbuff[256] = {'\0'};
