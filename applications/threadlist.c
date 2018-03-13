@@ -284,6 +284,9 @@ static void led_thread_entry(void* parameter)
 					ATFaliedNum = 0;
 				}
 				
+			}else
+			{
+				ATFaliedNum = 0;
 			}
 			index = 0;
 		}
