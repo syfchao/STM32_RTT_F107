@@ -92,6 +92,8 @@ void initSocketArgs(void)
 	control_client_arg.port2 = CONTROL_SERVER_PORT2;
 ;	strcpy(control_client_arg.domain, CONTROL_SERVER_DOMAIN);
 	strcpy(control_client_arg.ip, CONTROL_SERVER_IP);
+	control_client_arg.timeout = 10;
+	control_client_arg.report_interval = 15;
 	fp = fopen("/yuneng/control.con", "r");
 	if(fp)
 	{

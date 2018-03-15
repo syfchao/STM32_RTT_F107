@@ -84,9 +84,17 @@ void add_Phone_functions(void)
 	pfun_Phone[P0021] = Phone_SetECUAPInfo;		//功率电流电压曲线
 	pfun_Phone[P0022] = Phone_ListECUAPInfo;		//功率电流电压曲线
 	pfun_Phone[P0023] = Phone_GetFunctionStatusInfo;
-	pfun_Phone[P0024] = Phone_ServerInfo;			//查看和设置相关服务器信息
-}
+	pfun_Phone[P0024] = Phone_ServerInfo;				//查看和设置相关服务器信息
+	//pfun_Phone[P0025] = Phone_InverterMaxPower;		//读取和设置最大保护功率值
+	//pfun_Phone[P0026] = Phone_InverterOnOff;		//读取和设置逆变器开关机
+	//pfun_Phone[P0027] = Phone_InverterGFDI;		//读取和设置GFDI控制
+	//pfun_Phone[P0028] = Phone_InverterIRD;		//读取和设置IRD控制标志
+	//pfun_Phone[P0029] = Phone_ACProtection;		//读取和设置保护参数
+	//pfun_Phone[P0030] = Phone_RSSI;			//获取逆变器信号强度
+	//pfun_Phone[P0031] = Phone_ClearEnergy;		//清空数据库（清空历史发电量）
+	//pfun_Phone[P0032] = Phone_ProtectionStatus;		//查看逆变器保护状态
 
+}
 
 int getAddr(MyArray *array, int num,IPConfig_t *IPconfig)
 {
@@ -756,11 +764,6 @@ void Phone_ServerInfo(int Data_Len,const char *recvbuffer)
 		ret = ResolveServerInfo(recvbuffer,&serverInfo);
 		if(ret == 0)
 		{	
-			printf("%d\n",serverInfo.serverCmdType);
-			printf("%s\n",serverInfo.domain);
-			printf("%d,%d,%d,%d,\n",serverInfo.IP[0],serverInfo.IP[1],serverInfo.IP[2],serverInfo.IP[3]);
-			printf("%d\n",serverInfo.Port1);
-			printf("%d\n",serverInfo.Port2);
 			APP_Response_ServerInfo(0x00,&serverInfo);
 		}else
 		{
