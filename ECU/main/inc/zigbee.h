@@ -25,6 +25,7 @@ int openzigbee(void);
 void zigbee_reset(void);
 int zb_shortaddr_cmd(int shortaddr, char *buff, int length);		//zigbee 短地址报头
 int zb_shortaddr_reply(char *data,int shortaddr,char *id);			//读取逆变器的返回帧,短地址模式
+int zb_get_reply_new(char *data,inverter_info *inverter,int second);
 int zb_get_reply(char *data,inverter_info *inverter);			//读取逆变器的返回帧
 int zb_get_reply_update_start(char *data,inverter_info *inverter);			//读取逆变器远程更新的Update_start返回帧，ZK，返回响应时间定为10秒
 int zb_get_reply_restore(char *data,inverter_info *inverter);			//读取逆变器远程更新失败，还原指令后的返回帧，ZK，因为还原时间比较长，所以单独写一个函数

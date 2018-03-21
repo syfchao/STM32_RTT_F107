@@ -1028,12 +1028,12 @@ int get_system_model(inverter_info *firstinverter)
 	{
 		if(curinverter->model==0)
 			m0++;
-		else if(curinverter->model==7)
+		else if((curinverter->model==7)||(curinverter->model==0x17))
 		{
 			m600++;
 			if(curinverter->inverterstatus.deputy_model==1)
 				bb++;
-			else if(curinverter->inverterstatus.deputy_model==2)
+			else if((curinverter->inverterstatus.deputy_model==2)||(curinverter->model==0x17))
 				b1++;
 		}
 		else if((curinverter->model==5)||(curinverter->model==6))
@@ -1470,13 +1470,14 @@ int resolve_protection_paras_YC600(inverter_info *inverter, char *readbuff, int 
 			rt_hw_s_delay(1);
 		}
 		
-		sprintf(inverter_result, "%s%03d%03d%03d%03d%05dAAAAAAAAAAAAAAAAAAAAAAAA%03d%03d%03d%03d%06d%06d%06d%06d%03d%03d%06d%05dEND",
+		sprintf(inverter_result, "%s018AA%06dAC%06dAD%06dAE%06dAF%06dAG%06dAH%06dAI%06dAJ%06dAK%06dAL%06dAM%06dAN%06dAO%06dAP%06dAQ%06dAR%06dAS%06dEND",
 				inverter->id,
+				(int)(active_antiisland_time*10),
 				under_voltage_slow,
 				over_voltage_slow,
 				(int)(under_frequency_slow*10),
 				(int)(over_frequency_slow*10),
-				(int)(grid_recovery_time),
+				(int)grid_recovery_time,
 				under_voltage_fast,
 				over_voltage_fast,
 				(int)(under_frequency_fast*10),
@@ -1485,11 +1486,11 @@ int resolve_protection_paras_YC600(inverter_info *inverter, char *readbuff, int 
 				(int)(voltage_triptime_slow*100),
 				(int)(frequency_triptime_fast*100),
 				(int)(frequency_triptime_slow*100),
-				(int)(regulated_dc_working_point*10),
+				regulated_dc_working_point,
 				under_voltage_stage_2,
 				(int)(voltage_3_clearance_time*100),
 				(int)(start_time));
-		save_inverter_parameters_result(inverter, 131, inverter_result);
+		save_inverter_parameters_result(inverter, 161, inverter_result);
 		
 		memset(inverter_result,'\0',sizeof(inverter_result));
 		if(power_factor==31)
@@ -1616,13 +1617,15 @@ int resolve_protection_paras_YC1000(inverter_info *inverter, char *readbuff, int
 			rt_hw_s_delay(1);
 		}
 		
-		sprintf(inverter_result, "%s%03d%03d%03d%03d%05dAAAAAAAAAAAAAAAAAAAAAAAA%03d%03d%03d%03d%06d%06d%06d%06d%03d%03d%06d%05dEND",
+//		//A161代替A131
+		sprintf(inverter_result, "%s018AA%06dAC%06dAD%06dAE%06dAF%06dAG%06dAH%06dAI%06dAJ%06dAK%06dAL%06dAM%06dAN%06dAO%06dAP%06dAQ%06dAR%06dAS%06dEND",
 				inverter->id,
+				(int)(active_antiisland_time*10),
 				under_voltage_slow,
 				over_voltage_slow,
 				(int)(under_frequency_slow*10),
 				(int)(over_frequency_slow*10),
-				(int)(grid_recovery_time),
+				(int)grid_recovery_time,
 				under_voltage_fast,
 				over_voltage_fast,
 				(int)(under_frequency_fast*10),
@@ -1631,11 +1634,11 @@ int resolve_protection_paras_YC1000(inverter_info *inverter, char *readbuff, int
 				(int)(voltage_triptime_slow*100),
 				(int)(frequency_triptime_fast*100),
 				(int)(frequency_triptime_slow*100),
-				(int)(regulated_dc_working_point*10),
+				regulated_dc_working_point,
 				under_voltage_stage_2,
 				(int)(voltage_3_clearance_time*100),
 				(int)(start_time));
-		save_inverter_parameters_result(inverter, 131, inverter_result);
+		save_inverter_parameters_result(inverter, 161, inverter_result);
 		free(inverter_result);
 		inverter_result = NULL;
 		return 0;
@@ -1693,15 +1696,15 @@ int resolve_protection_paras5(inverter_info *inverter, char *readbuff, int size)
 			rt_hw_s_delay(1);
 		}
 
-		sprintf(inverter_result, "%s%03d%03d%03d%03d%05dAAAAAAAAAAAAAAAAAAAAAAAA"
-				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEND",
+		//A161代替A131
+		sprintf(inverter_result, "%s018AC%06dAD%06dAE%06dAF%06dAG%06dEND",
 				inverter->id,
 				under_voltage_slow,
 				over_voltage_slow,
 				(int)(under_frequency_slow*10),
 				(int)(over_frequency_slow*10),
-				grid_recovery_time);
-		save_inverter_parameters_result(inverter, 131, inverter_result);
+				(int)grid_recovery_time);
+		save_inverter_parameters_result(inverter, 161, inverter_result);
 		free(inverter_result);
 		inverter_result = NULL;
 		return 0;
@@ -1766,7 +1769,7 @@ int get_parameters_from_inverter(inverter_info *inverter)
 		//17项参数
 		if((inverter->model==5)||(inverter->model==6))
 			resolve_protection_paras_YC1000(inverter, (char *)readbuff, res);
-		else if(inverter->model==7)
+		else if((inverter->model==7)||(inverter->model==0x17))
 			resolve_protection_paras_YC600(inverter, (char *)readbuff, res);
 		else ;
 		return 0;

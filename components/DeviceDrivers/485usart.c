@@ -91,7 +91,7 @@ void USART2_IRQHandler(void)                	//串口1中断服务程序
 {
 	if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
 	{
-		SEGGER_RTT_printf(0, "%c\n",USART_ReceiveData(USART2));
+		//SEGGER_RTT_printf(0, "%c\n",USART_ReceiveData(USART2));
 	}
 } 
 

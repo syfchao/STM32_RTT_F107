@@ -18,6 +18,7 @@
 #include "debug.h"
 #include "myfile.h"
 #include "rtthread.h"
+#include "mycommand.h"
 
 /*********************************************************************
 upinv表格字段：
@@ -87,6 +88,7 @@ int set_inverter_update(const char *recvbuffer, char *sendbuffer)
 				//升级指定逆变器，存入数据库
 				if(set_update_num(&recvbuffer[52], num) > 0)
 					ack_flag = DB_ERROR;
+				reboot_timer(10);
 			}
 			break;
 		default:

@@ -58,14 +58,14 @@ static void readtimeout_Zigbee(void* parameter)
 	zigbeereadtimeoutflag = 1;
 }
 
-int selectZigbee(int timeout)			//zigbee´®¿ÚÊı¾İ¼ì²â ·µ»Ø0 ±íÊ¾´®¿ÚÃ»ÓĞÊı¾İ  ·µ»Ø1±íÊ¾´®¿ÚÓĞÊı¾İ
+int selectZigbee(int timeout)			//10ms zigbee´®¿ÚÊı¾İ¼ì²â ·µ»Ø0 ±íÊ¾´®¿ÚÃ»ÓĞÊı¾İ  ·µ»Ø1±íÊ¾´®¿ÚÓĞÊı¾İ
 {
 	
 	rt_timer_t readtimer;
 	readtimer = rt_timer_create("read", /* ¶¨Ê±Æ÷Ãû×ÖÎª read */
 					readtimeout_Zigbee, /* ³¬Ê±Ê±»Øµ÷µÄ´¦Àíº¯Êı */
 					RT_NULL, /* ³¬Ê±º¯ÊıµÄÈë¿Ú²ÎÊı */
-					timeout*RT_TICK_PER_SECOND, /* ¶¨Ê±Ê±¼ä³¤¶È,ÒÔOS TickÎªµ¥Î»*/
+					timeout*RT_TICK_PER_SECOND/100, /* ¶¨Ê±Ê±¼ä³¤¶È,ÒÔOS TickÎªµ¥Î»*/
 					 RT_TIMER_FLAG_ONE_SHOT); /* µ¥ÖÜÆÚ¶¨Ê±Æ÷ */
 	if (readtimer != RT_NULL) rt_timer_start(readtimer);
 	zigbeereadtimeoutflag = 0;
@@ -186,7 +186,7 @@ int zb_shortaddr_reply(char *data,int shortaddr,char *id)			//¶ÁÈ¡Äæ±äÆ÷µÄ·µ»ØÖ¡
 	char inverterid[13] = {'\0'};
 	int temp_size,size;
 	
-	if(selectZigbee(2) <= 0)
+	if(selectZigbee(200) <= 0)
 	{
 		printmsg(ECU_DBG_MAIN,"Get reply time out");
 	
@@ -223,7 +223,7 @@ int zb_get_reply(char *data,inverter_info *inverter)			//¶ÁÈ¡Äæ±äÆ÷µÄ·µ»ØÖ¡
 	char inverterid[13] = {'\0'};
 	int temp_size,size;
 
-	if(selectZigbee(2) <= 0)
+	if(selectZigbee(200) <= 0)
 	{
 		printmsg(ECU_DBG_MAIN,"Get reply time out");
 		inverter->signalstrength=0;
@@ -255,6 +255,46 @@ int zb_get_reply(char *data,inverter_info *inverter)			//¶ÁÈ¡Äæ±äÆ÷µÄ·µ»ØÖ¡
 
 }
 
+int zb_get_reply_new(char *data,inverter_info *inverter,int second)			//¶ÁÈ¡Äæ±äÆ÷µÄ·µ»ØÖ¡
+{
+	int i;
+	char data_all[256];
+	char inverterid[13] = {'\0'};
+	int temp_size,size;
+
+
+	if(selectZigbee(second*100) <= 0)
+	{
+		printmsg(ECU_DBG_MAIN,"Get reply time out");
+		inverter->signalstrength=0;
+		return -1;
+	}
+	else
+	{
+		temp_size = ZIGBEE_SERIAL.read(&ZIGBEE_SERIAL,0, data, 255);
+		size = temp_size -12;
+
+		for(i=0;i<size;i++)
+		{
+			data[i]=data_all[i+12];
+		}
+		printf("temp_size:%d \n",temp_size);
+		printhexmsg(ECU_DBG_MAIN,"Reply", data_all, temp_size);
+		sprintf(inverterid,"%02x%02x%02x%02x%02x%02x",data_all[6],data_all[7],data_all[8],data_all[9],data_all[10],data_all[11]);
+		if((size>0)&&(0xFC==data_all[0])&&(0xFC==data_all[1])&&(data_all[2]==inverter->shortaddr/256)&&(data_all[3]==inverter->shortaddr%256)&&(0==strcmp(inverter->id,inverterid)))
+		{
+			inverter->raduis=data_all[5];
+			inverter->signalstrength=data_all[4];
+			return size;
+		}
+		else
+		{
+			inverter->signalstrength=0;
+			return -1;
+		}
+	}
+}
+
 /*------------------------------------------------------------------*/
 /*-------------------Ô¶³ÌÉı¼¶Ïà¹Ø²Ù×÷-------------------------*/
 /*------------------------------------------------------------------*/
@@ -265,7 +305,7 @@ int zb_get_reply_update_start(char *data,inverter_info *inverter)			//¶ÁÈ¡Äæ±äÆ÷
 	char inverterid[13] = {'\0'};
 	int temp_size,size;
 
-	if(selectZigbee(10) <= 0)
+	if(selectZigbee(1000) <= 0)
 	{
 		printmsg(ECU_DBG_MAIN,"Get reply time out");
 		return -1;
@@ -300,7 +340,7 @@ int zb_get_reply_restore(char *data,inverter_info *inverter)			//¶ÁÈ¡Äæ±äÆ÷Ô¶³Ì¸
 	char inverterid[13] = {'\0'};
 	int temp_size,size;
 
-	if(selectZigbee(200) <= 0)
+	if(selectZigbee(20000) <= 0)
 	{
 		printmsg(ECU_DBG_MAIN,"Get reply time out");
 		return -1;
@@ -332,7 +372,7 @@ int zb_get_reply_from_module(char *data)			//¶ÁÈ¡zigbeeÄ£¿éµÄ·µ»ØÖ¡
 {
 	int size = 0;
 
-	if(selectZigbee(1) <= 0)
+	if(selectZigbee(100) <= 0)
 	{
 		printmsg(ECU_DBG_MAIN,"Get reply time out");
 		return -1;
@@ -748,6 +788,8 @@ int zb_broadcast_cmd(char *buff, int length)		//zigbee¹ã²¥°üÍ·
 int zb_query_inverter_info(inverter_info *inverter)		//ÇëÇóÄæ±äÆ÷µÄ»úĞÍÂë
 {
 	int i = 0;
+	int old_version = inverter->version;
+	int old_model = inverter->model;
 	char sendbuff[256];
 	char recvbuff[256];
 	
@@ -778,6 +820,10 @@ int zb_query_inverter_info(inverter_info *inverter)		//ÇëÇóÄæ±äÆ÷µÄ»úĞÍÂë
 			&& (0xFE == recvbuff[15])) {
 		inverter->model = recvbuff[4];
 		inverter->version = (recvbuff[5]*256 + recvbuff[6])*1000+(recvbuff[8]*256+recvbuff[9]);
+		if((old_version != inverter->version) ||(old_model != inverter->model))
+		{
+			ecu.idUpdateFlag = 1;
+		}
 		/*
 		if(turn_on_flag==1)
 		{
@@ -1514,7 +1560,7 @@ int getalldata(inverter_info *firstinverter,int time_linux)		//»ñÈ¡Ã¿¸öÄæ±äÆ÷µÄÊ
 	curinverter = firstinverter;
 	for(curenergy=0, i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++, curinverter++){		//¼ÆËãµ±Ç°Ò»ÂÖ·¢µçÁ¿
 		if(1 == curinverter->inverterstatus.dataflag){
-			if((curinverter->model==5) || (curinverter->model==6) || (curinverter->model==7))
+			if((curinverter->model==5) || (curinverter->model==6) || (curinverter->model==7) || (curinverter->model==0x17))
 				{
 					curenergy += curinverter->curgeneration;
 					curenergy += curinverter->curgenerationb;
@@ -1749,7 +1795,7 @@ int zb_off_report_id_and_bind(int short_addr)
 int zigbeeRecvMsg(char *data, int timeout_sec)
 {
 	int count;
-	if (selectZigbee(timeout_sec) <= 0) {
+	if (selectZigbee(timeout_sec*100) <= 0) {
 		printmsg(ECU_DBG_MAIN,"Get reply time out");
 		return -1;
 	} else {

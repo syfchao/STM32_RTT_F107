@@ -31,6 +31,18 @@
 #define UPDATE_PATH_SUFFIX "ecu-r-m3.bin"
 #define UPDATE_PATH "/FTP/ecu.bin"
 
+#define UPDATE_PATH_YC600_SUFFIX "YC600.BIN"
+#define UPDATE_PATH_YC600_TEMP "/FTP/YC600UP.BIN"
+#define UPDATE_PATH_YC600 "/ftp/UPYC600.BIN"
+
+#define UPDATE_PATH_YC1000_SUFFIX "YC1000.BIN"
+#define UPDATE_PATH_YC1000_TEMP "/FTP/YC1000UP.BIN"
+#define UPDATE_PATH_YC1000 "/ftp/UPYC1000.BIN"
+
+#define UPDATE_PATH_QS1200_SUFFIX "QS1200.BIN"
+#define UPDATE_PATH_QS1200_TEMP "/FTP/QS1200.BIN"
+#define UPDATE_PATH_QS1200 "/ftp/UPQS1200.BIN"
+
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
 /*****************************************************************************/
@@ -115,6 +127,109 @@ int updateECUByID(void)
 	return ret;
 }
 
+
+
+int updateYC600ByID(void)	//获取YC600升级包
+{
+	int ret = 0;
+	char domain[100]={'\0'};		//服务器域名
+	char IPFTPadd[50] = {'\0'};
+	char remote_path[100] = {'\0'};
+	int port = 0;
+	char user[20]={'\0'};
+	char password[20]={'\0'};
+	
+	
+	getFTPConf(domain,IPFTPadd,&port,user,password);
+	print2msg(ECU_DBG_UPDATE,"Domain",domain);
+	print2msg(ECU_DBG_UPDATE,"FTPIP",IPFTPadd);
+	printdecmsg(ECU_DBG_UPDATE,"port",port);
+	print2msg(ECU_DBG_UPDATE,"user",user);
+	print2msg(ECU_DBG_UPDATE,"password",password);
+	
+	//获取服务器IP地址
+	sprintf(remote_path,"/ECU_R_M3/%s/%s",ecu.id,UPDATE_PATH_YC600_SUFFIX);
+	print2msg(ECU_DBG_UPDATE,"ID Path",remote_path);
+	ret=ftpgetfile(domain,IPFTPadd, port, user, password,remote_path,UPDATE_PATH_YC600_TEMP);
+	if(!ret)
+	{
+		unlink(UPDATE_PATH_YC600);
+		rename(UPDATE_PATH_YC600_TEMP,UPDATE_PATH_YC600);
+		deletefile(remote_path);
+	}else
+	{
+
+	}
+	return ret;
+}
+
+int updateYC1000ByID(void)	//获取YC1000升级包
+{
+	int ret = 0;
+	char domain[100]={'\0'};		//服务器域名
+	char IPFTPadd[50] = {'\0'};
+	char remote_path[100] = {'\0'};
+	int port = 0;
+	char user[20]={'\0'};
+	char password[20]={'\0'};
+	
+	
+	getFTPConf(domain,IPFTPadd,&port,user,password);
+	print2msg(ECU_DBG_UPDATE,"Domain",domain);
+	print2msg(ECU_DBG_UPDATE,"FTPIP",IPFTPadd);
+	printdecmsg(ECU_DBG_UPDATE,"port",port);
+	print2msg(ECU_DBG_UPDATE,"user",user);
+	print2msg(ECU_DBG_UPDATE,"password",password);
+	
+	//获取服务器IP地址
+	sprintf(remote_path,"/ECU_R_M3/%s/%s",ecu.id,UPDATE_PATH_YC1000_SUFFIX);
+	print2msg(ECU_DBG_UPDATE,"ID Path",remote_path);
+	ret=ftpgetfile(domain,IPFTPadd, port, user, password,remote_path,UPDATE_PATH_YC1000_TEMP);
+	if(!ret)
+	{
+		unlink(UPDATE_PATH_YC1000);
+		rename(UPDATE_PATH_YC1000_TEMP,UPDATE_PATH_YC1000);
+		deletefile(remote_path);
+	}else
+	{
+
+	}
+	return ret;
+}
+
+int updateQS1200ByID(void)	//获取QS1200升级包
+{
+	int ret = 0;
+	char domain[100]={'\0'};		//服务器域名
+	char IPFTPadd[50] = {'\0'};
+	char remote_path[100] = {'\0'};
+	int port = 0;
+	char user[20]={'\0'};
+	char password[20]={'\0'};
+	
+	
+	getFTPConf(domain,IPFTPadd,&port,user,password);
+	print2msg(ECU_DBG_UPDATE,"Domain",domain);
+	print2msg(ECU_DBG_UPDATE,"FTPIP",IPFTPadd);
+	printdecmsg(ECU_DBG_UPDATE,"port",port);
+	print2msg(ECU_DBG_UPDATE,"user",user);
+	print2msg(ECU_DBG_UPDATE,"password",password);
+	
+	//获取服务器IP地址
+	sprintf(remote_path,"/ECU_R_M3/%s/%s",ecu.id,UPDATE_PATH_QS1200_SUFFIX);
+	print2msg(ECU_DBG_UPDATE,"ID Path",remote_path);
+	ret=ftpgetfile(domain,IPFTPadd, port, user, password,remote_path,UPDATE_PATH_QS1200_TEMP);
+	if(!ret)
+	{
+		unlink(UPDATE_PATH_QS1200);
+		rename(UPDATE_PATH_QS1200_TEMP,UPDATE_PATH_QS1200);
+		deletefile(remote_path);
+	}else
+	{
+
+	}
+	return ret;
+}
 void remote_update_thread_entry(void* parameter)
 {
 	int i = 0;
@@ -130,6 +245,21 @@ void remote_update_thread_entry(void* parameter)
 		for(i = 0;i<2;i++)
 		{
 			if(-1 != updateECUByID())
+				break;
+		}
+				for(i = 0;i<2;i++)
+		{
+			if(-1 != updateYC600ByID())
+				break;
+		}
+						for(i = 0;i<2;i++)
+		{
+			if(-1 != updateYC1000ByID())
+				break;
+		}
+								for(i = 0;i<2;i++)
+		{
+			if(-1 != updateQS1200ByID())
 				break;
 		}
 		

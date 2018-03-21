@@ -165,6 +165,8 @@ typedef struct ecu_info_t{
 	int no_assigned_shortaddr_count;	//没有获取到短地址的逆变器数量
 	int flag_ten_clock_getshortaddr;	//每天10点有没有重新获取短地址标志
 	int polling_total_times;			//ECU一天之中总的轮询次数 ZK
+	unsigned char idUpdateFlag;		//id更新标志
+
 }ecu_info;
 
 

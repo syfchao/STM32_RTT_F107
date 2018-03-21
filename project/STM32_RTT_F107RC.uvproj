@@ -1121,6 +1121,11 @@
               <FileType>1</FileType>
               <FilePath>..\ECU\main\src\remote_update.c</FilePath>
             </File>
+            <File>
+              <FileName>crc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ECU\main\src\crc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
