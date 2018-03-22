@@ -271,7 +271,7 @@ int zb_get_reply_new(char *data,inverter_info *inverter,int second)			//¶ÁÈ¡Äæ±ä
 	}
 	else
 	{
-		temp_size = ZIGBEE_SERIAL.read(&ZIGBEE_SERIAL,0, data, 255);
+		temp_size = ZIGBEE_SERIAL.read(&ZIGBEE_SERIAL,0, data_all, 255);
 		size = temp_size -12;
 
 		for(i=0;i<size;i++)

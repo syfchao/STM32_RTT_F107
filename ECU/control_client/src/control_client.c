@@ -1991,3 +1991,12 @@ void control_client_thread_entry(void* parameter)
 	}
 
 }
+
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+void comm(void)
+{
+	communication_with_EMA(0);
+}
+FINSH_FUNCTION_EXPORT(comm, eg:comm());
+#endif

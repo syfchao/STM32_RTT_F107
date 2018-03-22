@@ -1049,7 +1049,7 @@ int remote_update_single(inverter_info *inverter)
 		sprintf(update_file_name,"/ftp/UPQS1200.BIN");
 	
 	Update_success_end(inverter);
-	ret=Sendupdatepackage_start(inverter);
+	ret=Sendupdatepackage_start(inverter);	//判断升级是否带断电续传功能
 	if(32==ret)	//存在断点续传功能
 	{
 		nxt_sector=set_update_new(inverter,&sector_all);	//获取接下来需要发送的扇区
@@ -1266,7 +1266,7 @@ int remote_update(inverter_info *firstinverter)
 							curinverter->updating_time=acquire_time();
 							printdecmsg(ECU_DBG_MAIN,"shutdown time",curinverter->updating_time);
 						}
-						//continue;
+						continue;
 					}
 					else
 					{	
@@ -1283,7 +1283,7 @@ int remote_update(inverter_info *firstinverter)
 				if(0 == update_result)	//升级成功
 				{	//只有成功了才查询版本号
 					//sprintf(data,"%s,%s,%s,0\n",curinverter->id,splitdata[1],splitdata[2]);
-					for(j=0;j<3;j++)
+					for(j=0;j<5;j++)
 					{
 						if(1 == zb_query_inverter_info(curinverter)) //读取逆变器版本号
 						{
