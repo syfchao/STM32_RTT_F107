@@ -18,4 +18,7 @@ int set_inverter_ac_protection_17(const char *recvbuffer, char *sendbuffer);
 int response_ecu_ac_protection_17(const char *recvbuffer, char *sendbuffer);
 int read_inverter_ac_protection_17(const char *recvbuffer, char *sendbuffer);
 
+int response_inverter_protection_all(const char *recvbuffer, char *sendbuffer);
+
+
 #endif	/*__INVERTER_AC_PROTECTION_H__*/

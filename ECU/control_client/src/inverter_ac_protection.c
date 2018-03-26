@@ -31,7 +31,7 @@ id,parameter_name, parameter_value,set_flag         primary key(id, parameter_na
 /*****************************************************************************/
 /*  Definitions                                                              */
 /*****************************************************************************/
-#define NUM 17
+#define PRO_NAME_NUM 19
 
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
@@ -40,27 +40,36 @@ extern rt_mutex_t record_data_lock;
 extern inverter_info inverter[MAXINVERTERCOUNT];
 extern ecu_info ecu;
 
-static const char pro_name[NUM][32] = {
-		"under_voltage_fast",
-		"over_voltage_fast",
-		"under_voltage_slow",
-		"over_voltage_slow",
-		"under_frequency_fast",
-		"over_frequency_fast",
-		"under_frequency_slow",
-		"over_frequency_slow",
-		"voltage_triptime_fast",
-		"voltage_triptime_slow",
-		"frequency_triptime_fast",
-		"frequency_triptime_slow",
-		"grid_recovery_time",
-		"regulated_dc_working_point",
-		"under_voltage_stage_2",
-		"voltage_3_clearance_time",
-		"start_time",
+static const char pro_name[PRO_NAME_NUM][32] = {
+		//17���������
+		"under_voltage_fast",		//AH		0
+		"over_voltage_fast",			//AI		0
+		"under_voltage_slow",		//AC		0
+		"over_voltage_slow",		//AD		0
+		"under_frequency_fast",		//AJ		1
+		"over_frequency_fast",		//AK		1
+		"under_frequency_slow",		//AE		1
+		"over_frequency_slow",		//AF		1
+		"voltage_triptime_fast",		//AL		2
+		"voltage_triptime_slow",		//AM	2
+		"frequency_triptime_fast",	//AN		2
+		"frequency_triptime_slow",	//AO		2
+		"grid_recovery_time",		//AG		0
+		"regulated_dc_working_point",	//AP		0
+		"under_voltage_stage_2",	//AQ		0
+		"voltage_3_clearance_time",	//AR		2
+		"start_time",				//AS		0
+		//19���������
+		"active_antiisland_time",		//AA		1
+		"ac_600s",				//AB 	1
 };
-static float pro_value[NUM] = {0};
-static int pro_flag[NUM] = {0};
+//��Ӧ����
+char pro_code[PRO_NAME_NUM][3] = {"AH","AI","AC","AD","AJ","AK","AE","AF","AL","AM","AN","AO","AG","AP","AQ","AR","AS","AA","AB"};
+
+int decimals[PRO_NAME_NUM]   =  { 0,   0,  0 ,  0,  1 ,  1 ,  1 ,  1 ,   2,   2,   2,   2,  0 ,   0,  0 ,   2,  0 ,   1,   1};
+
+static float pro_value[PRO_NAME_NUM] = {0};
+static int pro_flag[PRO_NAME_NUM] = {0};
 
 
 /*****************************************************************************/
@@ -79,7 +88,7 @@ int get_ac_protection(const char *name, const char *s, int len, int decimal)
 {
 	int i, j, value;
 
-	for(i=0; i<NUM; i++)
+	for(i=0; i<PRO_NAME_NUM; i++)
 	{
 		if(!strcmp(name, pro_name[i])){
 			value = msg_get_int(s, len);
@@ -102,7 +111,7 @@ int get_ac_protection(const char *name, const char *s, int len, int decimal)
 /* 从数据库中查询ECU级别的交流保护参数 */
 int query_ecu_ac_protection()
 {
-	get_protection_from_file(pro_name,pro_value,pro_flag,NUM);
+	get_protection_from_file(pro_name,pro_value,pro_flag,PRO_NAME_NUM);
 	return 0;
 }
 
@@ -112,7 +121,7 @@ int format_ecu_ac_protection(const char *name, int decimal)
 	int i, j;
 	float temp = 0.0;
 
-	for (i=0; i<NUM; i++) {
+	for (i=0; i<PRO_NAME_NUM; i++) {
 		if (!strcmp(name, pro_name[i])) {
 			if (pro_flag[i] != 1) {
 				return -1;
@@ -151,7 +160,7 @@ int save_ac_protection_all()
 	fd = open("/home/data/setpropa", O_WRONLY | O_TRUNC | O_CREAT,0);
 	if(fd >= 0)
 	{
-		for(i=0; i<NUM; i++)
+		for(i=0; i<PRO_NAME_NUM; i++)
 		{
 			if(pro_flag[i] == 1){
 			
@@ -184,7 +193,7 @@ int save_ac_protection_num(const char *msg, int num)
 			//获取一台逆变器的ID号
 			strncpy(inverter_id, &msg[i*12], 12);
 
-			for(j=0; j<NUM; j++)
+			for(j=0; j<PRO_NAME_NUM; j++)
 			{
 				if(pro_flag[j] == 1){
 					//如果存在该逆变器数据则删除该记录
@@ -334,6 +343,25 @@ int read_inverter_ac_protection_17(const char *recvbuffer, char *sendbuffer)
 
 	//拼接应答消息
 	msg_ACK(sendbuffer, "A131", timestamp, ack_flag);
+	rt_mutex_release(record_data_lock);
+	return 0;
+}
+
+int response_inverter_protection_all(const char *recvbuffer, char *sendbuffer)
+{
+	int ack_flag = SUCCESS;
+	char timestamp[15] = {'\0'};
+	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
+	//读取逆变器交流保护参数
+	if(file_set_one("2", "/tmp/presdata.con")){
+		ack_flag = FILE_ERROR;
+	}
+
+	//获取时间戳
+	strncpy(timestamp, &recvbuffer[34], 14);
+
+	//拼接应答消息
+	msg_ACK(sendbuffer, "A161", timestamp, ack_flag);
 	rt_mutex_release(record_data_lock);
 	return 0;
 }

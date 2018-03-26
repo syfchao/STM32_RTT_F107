@@ -74,7 +74,8 @@ enum CommandID{
 	A120, A121, A122, A123, A124, A125, A126, A127, A128, A129, //20-29
 	A130, A131, A132, A133, A134, A135, A136, A137, A138, A139, //30-39
 	A140, A141, A142, A143, A144, A145, A146, A147, A148, A149,
-	A150,A151,
+	A150, A151, A152, A153, A154, A155, A156, A157, A158, A159,
+	A160, A161, A162, A163, A164, A165, A166, A167, A168, A169,
 };
 int (*pfun[100])(const char *recvbuffer, char *sendbuffer);
 Socket_Cfg sockcfg = {'\0'};
@@ -85,7 +86,6 @@ Socket_Cfg sockcfg = {'\0'};
 
 void add_functions()
 {
-	
 	pfun[A102] = response_inverter_id; 			//上报逆变器ID  										OK
 	pfun[A103] = set_inverter_id; 				//设置逆变器ID												OK
 	pfun[A106] = response_comm_config;			//上报ECU的通信配置参数
@@ -104,7 +104,11 @@ void add_functions()
 	pfun[A136] = set_inverter_update;			//设置逆变器的升级标志																	
 	pfun[A145] = response_inverter_power_factor;//上报逆变器级别功率因数
 	pfun[A146] = set_all_inverter_power_factor; //设置ecu级别功率因数
-	
+
+	pfun[A161] = response_inverter_protection_all;//读取逆变器保护参数
+	//pfun[A162] = set_inverter_protection_new;	//设置逆变器保护参数
+	//pfun[A168] = query_ecu_ac_protection_all;	//设置电表和防逆流开关
+
 }
 
 /* [A118] ECU初次连接EMA需要执行的打包命令 */
@@ -511,7 +515,7 @@ int search_statusflag(char *data,char * time, int *flag,char sendflag)
 										data[strlen(buff)-18] = '\n';
 										//print2msg(ECU_DBG_CONTROL_CLIENT,"search_readflag time",time);
 										//print2msg(ECU_DBG_CONTROL_CLIENT,"search_readflag data",data);
-										rt_hw_s_delay(1);
+										//rt_hw_s_delay(1);
 										while(NULL != fgets(buff,(MAXINVERTERCOUNT*RECORDLENGTH+RECORDTAIL+18),fp))	//再往下读数据，寻找是否还有要发送的数据
 										{
 											if(strlen(buff) > 18)
@@ -944,7 +948,7 @@ int search_pro_result_flag(char *data,char * item, int *flag,char sendflag)
 										data[strlen(buff)-7] = '\n';
 										//print2msg(ECU_DBG_CONTROL_CLIENT,"search_readflag time",time);
 										//print2msg(ECU_DBG_CONTROL_CLIENT,"search_readflag data",data);
-										rt_hw_s_delay(1);
+										//rt_hw_s_delay(1);
 										while(NULL != fgets(buff,(MAXINVERTERCOUNT*RECORDLENGTH+RECORDTAIL+18),fp))	
 										{
 											if(strlen(buff) > 18)	
@@ -1066,7 +1070,7 @@ int search_inv_pro_result_flag(char *data,char * item,char *inverterid, int *fla
 										data[strlen(buff)-20] = '\n';
 										//print2msg(ECU_DBG_CONTROL_CLIENT,"search_readflag time",time);
 										//print2msg(ECU_DBG_CONTROL_CLIENT,"search_readflag data",data);
-										rt_hw_s_delay(1);
+										//rt_hw_s_delay(1);
 										while(NULL != fgets(buff,(MAXINVERTERCOUNT*RECORDLENGTH+RECORDTAIL+18),fp))
 										{
 											if(strlen(buff) > 18)

@@ -97,7 +97,7 @@ int set_protection_yc600(int order,int data,int num)
 	printhexmsg(ECU_DBG_MAIN,"Set yc600 all", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -329,7 +329,7 @@ int set_regulated_dc_working_point_yc1000(char *value)  			//直流稳压设置
 	printhexmsg(ECU_DBG_MAIN,"Set dc voltage stabilization", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -369,7 +369,7 @@ int set_undervoltage_slow_yc1000(char *value)  //内围电压下限值
 	printhexmsg(ECU_DBG_MAIN,"Set undervoltage slow", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -408,7 +408,7 @@ int set_overvoltage_slow_yc1000(char *value)  //内围电压上限值
 	printhexmsg(ECU_DBG_MAIN,"Set overvoltage slow", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -445,7 +445,7 @@ int set_overvoltage_fast_yc1000(char *value)		//外围电压上限值
 	printhexmsg(ECU_DBG_MAIN,"Set overvoltage fast", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -482,7 +482,7 @@ int set_undervoltage_fast_yc1000(char *value)		//外围电压下限值
 	printhexmsg(ECU_DBG_MAIN,"Set undervoltage fast", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 	return 0;
 }
 
@@ -521,7 +521,7 @@ int set_underfrequency_fast_yc1000(char *value)				//外围频率下限
 	printhexmsg(ECU_DBG_MAIN,"Set underfrequency fast", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -559,7 +559,7 @@ int set_overfrequency_fast_yc1000(char *value)				//外围频率上限
 	printhexmsg(ECU_DBG_MAIN,"Set overfrequency fast", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -597,7 +597,7 @@ int set_underfrequency_slow_yc1000(char *value)				//内围频率下限
 	printhexmsg(ECU_DBG_MAIN,"Set underfrequency slow", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -635,7 +635,7 @@ int set_overfrequency_slow_yc1000(char *value)				//内围频率上限
 	printhexmsg(ECU_DBG_MAIN,"Set overfrequency slow", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -674,7 +674,7 @@ int set_voltage_triptime_fast_yc1000(char *value)				//外围电压延迟保护时间
 	printhexmsg(ECU_DBG_MAIN,"Set voltage triptime fast", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -712,7 +712,7 @@ int set_voltage_triptime_slow_yc1000(char *value)				//内围电压延迟保护时间
 	printhexmsg(ECU_DBG_MAIN,"Set voltage triptime slow", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -751,7 +751,7 @@ int set_frequency_triptime_fast_yc1000(char *value)				//外围频率延迟保护时间
 	printhexmsg(ECU_DBG_MAIN,"Set frequency triptime fast", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -790,7 +790,7 @@ int set_frequency_triptime_slow_yc1000(char *value)				//内围频率延迟保护时间
 	printhexmsg(ECU_DBG_MAIN,"Set frequency triptime slow", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -829,7 +829,7 @@ int set_grid_recovery_time_yc1000(char *value)						//并网恢复时间设置
 	printhexmsg(ECU_DBG_MAIN,"Set grid recovery time", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -868,7 +868,7 @@ int set_under_voltage_stage_2_yc1000(char *value)  			//内内围电压设置
 	printhexmsg(ECU_DBG_MAIN,"Set voltage slow2", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -907,7 +907,7 @@ int set_voltage_3_clearance_time_yc1000(char *value)				//内内围电压延迟保护时间
 	printhexmsg(ECU_DBG_MAIN,"Set voltage triptime slow2", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -944,7 +944,7 @@ int set_start_time_yc1000(char *value)				//直流启动时间
 	printhexmsg(ECU_DBG_MAIN,"Set DC startime ", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -981,7 +981,7 @@ int set_active_antiisland_time_yc1000(char *value)				//直流启动时间
 	printhexmsg(ECU_DBG_MAIN,"Set active antiisland time ", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -1467,7 +1467,7 @@ int resolve_protection_paras_YC600(inverter_info *inverter, char *readbuff, int 
 		{
 			if(1 == insert_line("/home/data/proparas",data))
 				break;
-			rt_hw_s_delay(1);
+			rt_thread_delay(100);
 		}
 		
 		sprintf(inverter_result, "%s018AA%06dAC%06dAD%06dAE%06dAF%06dAG%06dAH%06dAI%06dAJ%06dAK%06dAL%06dAM%06dAN%06dAO%06dAP%06dAQ%06dAR%06dAS%06dEND",
@@ -1614,7 +1614,7 @@ int resolve_protection_paras_YC1000(inverter_info *inverter, char *readbuff, int
 		{
 			if(1 == insert_line("/home/data/proparas",data))
 				break;
-			rt_hw_s_delay(1);
+			rt_thread_delay(100);
 		}
 		
 //		//A161代替A131
@@ -1693,7 +1693,7 @@ int resolve_protection_paras5(inverter_info *inverter, char *readbuff, int size)
 		{
 			if(1 == insert_line("/home/data/proparas",data))
 				break;
-			rt_hw_s_delay(1);
+			rt_thread_delay(100);
 		}
 
 		//A161代替A131
@@ -1953,7 +1953,7 @@ int set_undervoltage_slow_yc1000_5(char *value)
 	printhexmsg(ECU_DBG_MAIN,"Set undervoltage slow (5)", (char *)sendbuff, 23);
 
 	zb_broadcast_cmd((char *)sendbuff, 23);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -2002,7 +2002,7 @@ int set_overvoltage_slow_yc1000_5(char *value)
 	printhexmsg(ECU_DBG_MAIN,"Set overvoltage slow (5)", (char *)sendbuff, 23);
 
 	zb_broadcast_cmd((char *)sendbuff, 23);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -2051,7 +2051,7 @@ int set_underfrequency_slow_yc1000_5(char *value)
 	printhexmsg(ECU_DBG_MAIN,"Set underfrequency slow (5)", (char *)sendbuff, 23);
 
 	zb_broadcast_cmd((char *)sendbuff, 23);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -2100,7 +2100,7 @@ int set_overfrequency_slow_yc1000_5(char *value)
 	printhexmsg(ECU_DBG_MAIN,"Set overfrequency slow (5)", (char *)sendbuff, 23);
 
 	zb_broadcast_cmd((char *)sendbuff, 23);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -2149,7 +2149,7 @@ int set_grid_recovery_time_yc1000_5(char *value)
 	printhexmsg(ECU_DBG_MAIN,"Set grid recovery time (5)", (char *)sendbuff, 23);
 
 	zb_broadcast_cmd((char *)sendbuff, 23);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }
@@ -2187,7 +2187,7 @@ int set_under_voltage_stage_3_yc1000(char *value)
 	printhexmsg(ECU_DBG_MAIN,"Set under voltage (stage 3)", (char *)sendbuff, 13);
 
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 
 	return 0;
 }

@@ -106,7 +106,7 @@ eRemoteType getResult(int ret)
 /*    32 ：下发成功,存在 断点续传功能                                                         */
 /*    24 ：下发成功，不存在断点续传功能                                                          */
 /*****************************************************************************/
-int Sendupdatepackage_start(inverter_info *inverter)	//发送单点开始数据包
+int Sendupdatepackage_start(inverter_info *inverter)	//更新起始帧
 {
 	int ret;
 	int i=0,crc=0;
@@ -301,7 +301,7 @@ int Complementupdatepackage_single(inverter_info *inverter)	//检查漏掉的数据包并
 					return -1;		//补单包3次没响应的情况
 				}
 				printdecmsg(ECU_DBG_MAIN,"Complement_package",(data[6]*256+data[7]));
-				rt_hw_us_delay(30000);
+				rt_thread_delay(3);
 				check = 0x00;
 			}
 			close(fd);
@@ -366,7 +366,7 @@ int Update_start(inverter_info *inverter)		//发送更新指令
 
 }
 
-int Update_success_end(inverter_info *inverter)		//更新成功结束指令
+int Update_success_end(inverter_info *inverter)		//退出远程升级功
 {
 	int ret;
 	int i=0;
@@ -454,37 +454,42 @@ int save_sector(char *id,int sector)
 /*   -1 :没有对应型号的逆变器                                         */
 /*     other : 获取到接下来需要升级的扇区                                                    */
 /*****************************************************************************/
-int set_update_new(inverter_info *inverter,int *sector_all)
+int set_update_new(inverter_info *inverter,int *sector_all,unsigned short *crc_update_file)
 {
-	int K1=1,K6=0,crc=0;
+	int K1=1,K6=0;
+	unsigned short crc=0;
 	char sendbuff[256]={'\0'};
 	char readbuff[256];
 	int i,ret,sector_num;
 	int pos = 0;
 	FILE *fp = NULL;
 	int fd = -1;
-	
+	//根据不同的机型码，打开不同的文件，计算校验值
 	if(inverter->model==7)
 	{
-		crc=crc_file("/ftp/UP600.BIN");
+		crc=crc_file("/ftp/UPYC600.BIN");
+		*crc_update_file = crc;
 		fd=open("/ftp/UPYC600.BIN",O_RDONLY, 0);
 		
 	}
 	else if(inverter->model==23)
 	{
 		crc=crc_file("/ftp/UPQS1200.BIN");
+		*crc_update_file = crc;
 		fd=open("/ftp/UPQS1200.BIN",O_RDONLY, 0);
 		
 	}
 	else if((inverter->model==5)||(inverter->model==6))
 	{
 		crc=crc_file("/ftp/UPYC1000.BIN");
+		*crc_update_file = crc;
 		fd=open("/ftp/UPYC1000.BIN",O_RDONLY, 0);
 		
 	}
 	else
 	{
 		printmsg(ECU_DBG_MAIN,"Inverter's model Error");
+		*crc_update_file = 0;
 		return -1;
 	}
 
@@ -495,7 +500,7 @@ int set_update_new(inverter_info *inverter,int *sector_all)
 		return -2;
 	}
 	
-	pos = lseek(fd,0,SEEK_END);
+	pos = lseek(fd,0,SEEK_END);		//查看文件大小
 	close(fd);
 	sector_num=pos/4096;
 	*sector_all=sector_num;
@@ -569,15 +574,15 @@ int set_update_new(inverter_info *inverter,int *sector_all)
 /*   -1 :文件不存在                                         */
 /*     0 : 发送成功                                                    */
 /*****************************************************************************/
-int send_package_to_single_new(inverter_info *inverter, int speed,int cur_sector,char *file_name)
+int send_package_to_single_new(inverter_info *inverter, int speed,int cur_sector,char *file_name,unsigned short *crc_4k)
 {
 
 	int i, fd, package_num=0;
 	char sendbuff[256]={'\0'};
 	unsigned char package_buff[128];
-//	unsigned short check = 0x00;
 	int package_count;
 	int crc;
+	unsigned short crc_4k_temp = 0xFFFF;
 
 	sendbuff[0] = 0xFC;
 	sendbuff[1] = 0xFC;
@@ -591,6 +596,7 @@ int send_package_to_single_new(inverter_info *inverter, int speed,int cur_sector
 	if(fd>=0)
 	{
 		lseek(fd,cur_sector*4096,SEEK_SET);
+		
 		for(package_count=4096/speed;package_count>0;package_count--)
 		{
 			read(fd,package_buff,speed);
@@ -604,20 +610,20 @@ int send_package_to_single_new(inverter_info *inverter, int speed,int cur_sector
 			sendbuff[6+speed]=crc/256;
 			sendbuff[7+speed]=crc%256;
 
-//			check=0x00;
-//			for(i=2; i<(26+speed); i++)
-//				check = check + sendbuff[i];
-//
-//			sendbuff[26+speed] = check >> 8;		//CHK
-//			sendbuff[27+speed] = check;		//CHK
 
 			zb_send_cmd(inverter,sendbuff,74);
 
 			package_num++;
 			printdecmsg(ECU_DBG_MAIN,"package_num",package_num);
 			printhexmsg(ECU_DBG_MAIN,"sendbuff", sendbuff, 10+speed);
+
+			for(i = 0;i<64;i++)
+			{
+				crc_4k_temp = UpdateCRC(crc_4k_temp, package_buff[i]);
+			}
 		}
 		close(fd);
+		*crc_4k = crc_4k_temp;
 		return 0;
 	}
 
@@ -667,7 +673,7 @@ int send_crc_cmd(inverter_info *inverter,unsigned short crc_result,int file_or_4
 	{
 		for(i=0;i<5;i++)
 		{
-			rt_hw_s_delay(1);
+			rt_thread_delay(100);
 			zb_send_cmd(inverter,sendbuff,74);
 			printhexmsg(ECU_DBG_MAIN,"***CRC",sendbuff,74);
 			if(13 == zb_get_reply_new(readbuff,inverter,90))
@@ -678,7 +684,7 @@ int send_crc_cmd(inverter_info *inverter,unsigned short crc_result,int file_or_4
 	{
 		for(i=0;i<5;i++)
 		{
-			rt_hw_s_delay(1);
+			rt_thread_delay(100);
 			zb_send_cmd(inverter,sendbuff,74);
 			printhexmsg(ECU_DBG_MAIN,"***CRC",sendbuff,74);
 			if(13 == zb_get_reply(readbuff,inverter))
@@ -717,22 +723,29 @@ int send_crc_cmd(inverter_info *inverter,unsigned short crc_result,int file_or_4
 
 }
 
-int crc_4k(char *file,int sector,inverter_info *inverter)
+int crc_4k(char *file,int sector,inverter_info *inverter,unsigned short crc_update_4k,int flag)
 {
 	unsigned short result = 0xFFFF;
 	char package_buff[128];
 	int fd,i;
-	fd = open(file, O_RDONLY,0);
-	if(fd>=0)
+	if(flag == 0)
 	{
-		lseek(fd,4096*sector,SEEK_SET);
-		for(i=0;i<4096;i++)
+		fd = open(file, O_RDONLY,0);
+		if(fd>0)
 		{
-			read(fd, package_buff, 1);
-			result = UpdateCRC(result, package_buff[0]);
+			lseek(fd,4096*sector,SEEK_SET);
+			for(i=0;i<4096;i++)
+			{
+				read(fd, package_buff, 1);
+				result = UpdateCRC(result, package_buff[0]);
+			}
+			close(fd);
 		}
-		close(fd);
+	}else
+	{
+		result = crc_update_4k;
 	}
+
 	return send_crc_cmd(inverter,result,0,sector);			//0:4k; 1:file_all  return 1代表SUCCESS
 }
 
@@ -751,7 +764,7 @@ int crc_4k(char *file,int sector,inverter_info *inverter)
 /*   -2 :扇区不匹配                                         */
 /*   -1 :补包发起问询帧失败                                          */
 /*****************************************************************************/
-int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,char *file_name)
+int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,char *file_name,unsigned short crc_update_4k)
 {
 
 	int i, fd, ret, mark, resend_packet_flag;
@@ -776,7 +789,7 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 	printhexmsg(ECU_DBG_MAIN,inverter->id, sendbuff, 74);
 	for(i=0;i<5;i++)
 	{
-		rt_hw_s_delay(1);
+		rt_thread_delay(100);
 		zb_send_cmd(inverter,sendbuff,74);
 		printhexmsg(ECU_DBG_MAIN,"***bubaowenxun",sendbuff,74);
 		if(13==zb_get_reply(readbuff,inverter))
@@ -812,7 +825,7 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 		{
 			if((readbuff[7]*256 + readbuff[8]) == 0)	//当前操作的扇区码为0
 			{
-				return crc_4k(file_name,cur_sector,inverter);		//SUCCESS
+				return crc_4k(file_name,cur_sector,inverter,crc_update_4k,1);		//SUCCESS
 
 			}
 			else //if((readbuff[7]*256 + readbuff[8]) > 0)//当前操作的扇区码大于0
@@ -823,7 +836,7 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 				{
 					while((readbuff[7]*256 + readbuff[8]) > 0)
 					{
-						rt_hw_s_delay(2);
+						rt_thread_delay(200);
 						lseek(fd,(readbuff[5]*256 + readbuff[6])*speed, SEEK_SET);
 						memset(package_buff, 0, sizeof(package_buff));
 						read(fd, package_buff, speed);
@@ -841,7 +854,7 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 						sendbuff[8+speed] = 0xFE;
 						sendbuff[9+speed] = 0xFE;
 
-						for(i=0;i<5;i++)
+						for(i=0;i<10;i++)
 						{
 							zb_send_cmd(inverter,sendbuff,74);
 							printhexmsg(ECU_DBG_MAIN,"sendbuff", sendbuff, 10+speed);
@@ -860,7 +873,7 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 									(readbuff[12] == 0xFE))
 								break;
 						}
-						if(i>=5)
+						if(i>=10)
 						{
 							printmsg(ECU_DBG_MAIN,"debug33333333333333333333333");
 							printmsg(ECU_DBG_MAIN,"Resend the lost packet over 5 times");
@@ -874,7 +887,7 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 					resend_packet_flag = 1;
 					print2msg(ECU_DBG_MAIN,inverter->id, "All of the lost packets have been resent");
 					close(fd);
-					return crc_4k(file_name,cur_sector,inverter);
+					return crc_4k(file_name,cur_sector,inverter,crc_update_4k,1);
 
 				}
 				else
@@ -896,21 +909,9 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 	}
 }
 
-int crc_bin_file_new(char *file,inverter_info *inverter)
+int crc_bin_file_new(inverter_info *inverter,unsigned short crc_update_file)
 {
-	unsigned short result = 0xFFFF;
-	char package_buff[128];
-	int fd;
-
-	fd = open(file, O_RDONLY,0);
-	if(fd>=0)
-	{
-		while(read(fd, package_buff, 1)>0)
-			result = UpdateCRC(result, package_buff[0]);
-		close(fd);
-	}
-
-	return send_crc_cmd(inverter,result,1,0);
+	return send_crc_cmd(inverter,crc_update_file,1,0);
 }
 
 
@@ -936,7 +937,7 @@ int cover_atob(inverter_info *inverter,int source_addr,int to_addr)
 	printhexmsg(ECU_DBG_MAIN,inverter->id, sendbuff, 74);
 	for(i=0;i<5;i++)
 	{
-		rt_hw_s_delay(10);
+		rt_thread_delay(1000);
 		zb_send_cmd(inverter,sendbuff,74);
 		printhexmsg(ECU_DBG_MAIN,"***Cover",sendbuff,74);
 		if(13 <= zb_get_reply_new(readbuff,inverter,90))
@@ -992,7 +993,7 @@ int stop_update_new(inverter_info *inverter)
 
 	for(i=0; i<3; i++){
 		zb_send_cmd(inverter,sendbuff,74);
-		rt_hw_us_delay(500000);
+		rt_thread_delay(50);
 
 		ret = zb_get_reply(readbuff,inverter);
 
@@ -1034,11 +1035,14 @@ int stop_update_new(inverter_info *inverter)
  * 		 	7 更新无响应CRC校验无响应
  *			8 获取升级扇区失败
  *			9 升级扇区失败
+ *			>=10  表示当前升级失败的扇区 
  */
 int remote_update_single(inverter_info *inverter)
 {
 	int ret_sendsingle,ret_complement,ret_update_start=0;
 	int i,ret,nxt_sector,j,sector_all,k;
+	unsigned short crc_update_file=0;	//升级文件整个文件的校验值
+	unsigned short crc_update_4k=0;
 	int cur_crc=0;
 	char update_file_name[100]={'\0'};
 	if(inverter->model==7)
@@ -1049,18 +1053,18 @@ int remote_update_single(inverter_info *inverter)
 		sprintf(update_file_name,"/ftp/UPQS1200.BIN");
 	
 	Update_success_end(inverter);
-	ret=Sendupdatepackage_start(inverter);	//判断升级是否带断电续传功能
+	ret=Sendupdatepackage_start(inverter);	//判断升级是否带断点续传功能
 	if(32==ret)	//存在断点续传功能
 	{
-		nxt_sector=set_update_new(inverter,&sector_all);	//获取接下来需要发送的扇区
+		nxt_sector=set_update_new(inverter,&sector_all,&crc_update_file);	//获取接下来需要发送的扇区
 		if(nxt_sector >= 0)
 		{
 			for(j=nxt_sector;j<sector_all;j++)
 			{
 				printdecmsg(ECU_DBG_MAIN,"Sector:",j);
-				if(!send_package_to_single_new(inverter,64,j,update_file_name))	//更新数据帧
+				if(!send_package_to_single_new(inverter,64,j,update_file_name,&crc_update_4k))	//更新数据帧
 				{
-					ret=resend_lost_packets_new(inverter, 64,j,update_file_name);	//补包发起问询帧
+					ret=resend_lost_packets_new(inverter, 64,j,update_file_name,crc_update_4k);	//补包发起问询帧
 					if(ret==10)	//4K校验成功
 					{
 						cur_crc=0;
@@ -1075,24 +1079,27 @@ int remote_update_single(inverter_info *inverter)
 				}
 				//save_sector(inverter->id,j);
 				stop_update_new(inverter);	//结束更新
-				return 9;
+				if(j<10)
+					return 10;
+				else
+					return j;
 			}
 			cur_crc=0;
-			ret=crc_bin_file_new(update_file_name,inverter);
+			ret=crc_bin_file_new(inverter,crc_update_file);
 			if(ret==19)	//整个文件校验失败
 			{
 				for(j=0;j<sector_all;j++)	//每个扇区进行校验
 				{
-					if(10!=crc_4k(update_file_name,j,inverter))	//扇区校验失败
+					if(10!=crc_4k(update_file_name,j,inverter,crc_update_4k,0))	//扇区校验失败
 					{
 
-						if(!send_package_to_single_new(inverter,64,j,update_file_name))
+						if(!send_package_to_single_new(inverter,64,j,update_file_name,&crc_update_4k))
 						{
-							ret=resend_lost_packets_new(inverter, 64,j,update_file_name);printf("ret==%d\n",ret);
+							ret=resend_lost_packets_new(inverter, 64,j,update_file_name,crc_update_4k);printf("ret==%d\n",ret);
 							if(ret==10)													//补包成功
 							{
 								cur_crc=0;
-								ret=crc_bin_file_new(update_file_name,inverter);
+								ret=crc_bin_file_new(inverter,crc_update_file);
 								if(ret==20)
 									break;
 								else continue;
@@ -1241,6 +1248,7 @@ int remote_update(inverter_info *firstinverter)
 	char data[200];
 	char splitdata[4][32];
 	char Time[15] = {"/0"};
+	char pre_Time[15] = {"/0"};
 	char inverter_result[128];
 	eRemoteType remoteTypeRet = Remote_UpdateSuccessful; 
 	inverter_info *curinverter = firstinverter;
@@ -1266,7 +1274,7 @@ int remote_update(inverter_info *firstinverter)
 							curinverter->updating_time=acquire_time();
 							printdecmsg(ECU_DBG_MAIN,"shutdown time",curinverter->updating_time);
 						}
-						continue;
+						//continue;
 					}
 					else
 					{	
@@ -1276,6 +1284,7 @@ int remote_update(inverter_info *firstinverter)
 					}
 				}
 				
+				apstime(pre_Time);
 				update_result = remote_update_single(curinverter);
 				printdecmsg(ECU_DBG_MAIN,"Update",update_result);
 				apstime(Time);
@@ -1312,11 +1321,21 @@ int remote_update(inverter_info *firstinverter)
 				{		
 					if(1 == insert_line("/home/data/upinv",data))
 						break;
-					rt_hw_s_delay(1);
+					rt_thread_delay(100);
 				}
 				remoteTypeRet = getResult(update_result);
 				sprintf(inverter_result, "%s%02d%06d%sEND", curinverter->id, remoteTypeRet,curinverter->version, Time);
 				save_inverter_parameters_result2(curinverter->id, 147,inverter_result);
+
+				memset(inverter_result,0x00,128);
+				sprintf(inverter_result, "%s,%02d,%06d,%s,%s\n", curinverter->id, remoteTypeRet,curinverter->version, pre_Time,Time);
+				for(j=0;j<3;j++)
+				{		
+					if(1 == insert_line("/tmp/update.tst",inverter_result))
+						break;
+					rt_thread_delay(RT_TICK_PER_SECOND);
+				}	
+
 			}
 		}
 	}	
