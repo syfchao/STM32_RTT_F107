@@ -21,7 +21,7 @@
 /*****************************************************************************/
 unsigned short UpdateCRC(unsigned short CRC_acc, unsigned char CRC_input);
 unsigned short crc_array(unsigned char *buff, int len);
-unsigned short crc_file(char *file);
+unsigned short crc_file(int crc_fd);
 
 
 #endif /*__REMOTE_UPDATE_H__*/

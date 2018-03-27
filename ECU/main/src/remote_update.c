@@ -32,6 +32,9 @@
 
 extern inverter_info inverter[MAXINVERTERCOUNT];
 
+int remote_update_fd = -1;		//升级普通包文件描述符
+
+
 /*********************************************************************
 upinv表格字段:
 id,update_result,update_time,update_flag
@@ -463,28 +466,31 @@ int set_update_new(inverter_info *inverter,int *sector_all,unsigned short *crc_u
 	int i,ret,sector_num;
 	int pos = 0;
 	FILE *fp = NULL;
-	int fd = -1;
+	
+	if(remote_update_fd >= 0)
+	{
+		close(remote_update_fd);
+		remote_update_fd = -1;
+	}
+	
 	//根据不同的机型码，打开不同的文件，计算校验值
 	if(inverter->model==7)
 	{
-		crc=crc_file("/ftp/UPYC600.BIN");
+		remote_update_fd=open("/ftp/UPYC600.BIN",O_RDONLY, 0);
+		crc=crc_file(remote_update_fd);
 		*crc_update_file = crc;
-		fd=open("/ftp/UPYC600.BIN",O_RDONLY, 0);
-		
 	}
 	else if(inverter->model==23)
 	{
-		crc=crc_file("/ftp/UPQS1200.BIN");
-		*crc_update_file = crc;
-		fd=open("/ftp/UPQS1200.BIN",O_RDONLY, 0);
-		
+		remote_update_fd=open("/ftp/UPQS1200.BIN",O_RDONLY, 0);
+		crc=crc_file(remote_update_fd);
+		*crc_update_file = crc;	
 	}
 	else if((inverter->model==5)||(inverter->model==6))
 	{
-		crc=crc_file("/ftp/UPYC1000.BIN");
+		remote_update_fd=open("/ftp/UPYC1000.BIN",O_RDONLY, 0);
+		crc=crc_file(remote_update_fd);
 		*crc_update_file = crc;
-		fd=open("/ftp/UPYC1000.BIN",O_RDONLY, 0);
-		
 	}
 	else
 	{
@@ -494,14 +500,15 @@ int set_update_new(inverter_info *inverter,int *sector_all,unsigned short *crc_u
 	}
 
 	
-	if(fd < 0)
+	if(remote_update_fd < 0)
 	{
 		printmsg(ECU_DBG_MAIN,"No BIN");
 		return -2;
 	}
 	
-	pos = lseek(fd,0,SEEK_END);		//查看文件大小
-	close(fd);
+	pos = lseek(remote_update_fd,0,SEEK_END);		//查看文件大小
+	
+	//close(remote_update_fd);
 	sector_num=pos/4096;
 	*sector_all=sector_num;
 
@@ -538,7 +545,7 @@ int set_update_new(inverter_info *inverter,int *sector_all,unsigned short *crc_u
 	sendbuff[72]=0xFE;
 	sendbuff[73]=0xFE;
 
-	for(i=0;i<5;i++)
+	for(i=0;i<10;i++)
 	{
 		memset(readbuff,'\0',256);
 		zb_send_cmd(inverter,sendbuff,74);
@@ -577,7 +584,7 @@ int set_update_new(inverter_info *inverter,int *sector_all,unsigned short *crc_u
 int send_package_to_single_new(inverter_info *inverter, int speed,int cur_sector,char *file_name,unsigned short *crc_4k)
 {
 
-	int i, fd, package_num=0;
+	int i, package_num=0;
 	char sendbuff[256]={'\0'};
 	unsigned char package_buff[128];
 	int package_count;
@@ -590,16 +597,19 @@ int send_package_to_single_new(inverter_info *inverter, int speed,int cur_sector
 	sendbuff[3] = 0x40;
 	sendbuff[72] = 0xFE;
 	sendbuff[73] = 0xFE;
-
-	fd = open(file_name, O_RDONLY,0);
-
-	if(fd>=0)
+	if(remote_update_fd < 0)
 	{
-		lseek(fd,cur_sector*4096,SEEK_SET);
-		
+		close(remote_update_fd);
+		remote_update_fd = -1;
+		return -1;
+	}else
+	{
+		lseek(remote_update_fd,cur_sector*4096,SEEK_SET);
+
+		read(remote_update_fd,package_buff,speed);
 		for(package_count=4096/speed;package_count>0;package_count--)
 		{
-			read(fd,package_buff,speed);
+			
 			sendbuff[4]=(package_num+(4096*cur_sector)/speed)/256;
 			sendbuff[5]=(package_num+(4096*cur_sector)/speed)%256;
 
@@ -612,22 +622,20 @@ int send_package_to_single_new(inverter_info *inverter, int speed,int cur_sector
 
 
 			zb_send_cmd(inverter,sendbuff,74);
-
-			package_num++;
-			printdecmsg(ECU_DBG_MAIN,"package_num",package_num);
-			printhexmsg(ECU_DBG_MAIN,"sendbuff", sendbuff, 10+speed);
-
 			for(i = 0;i<64;i++)
 			{
 				crc_4k_temp = UpdateCRC(crc_4k_temp, package_buff[i]);
 			}
+			read(remote_update_fd,package_buff,speed);
+			package_num++;
+			//printdecmsg(ECU_DBG_MAIN,"package_num",package_num);
+			//printhexmsg(ECU_DBG_MAIN,"sendbuff", sendbuff, 10+speed);
+
+			
 		}
-		close(fd);
 		*crc_4k = crc_4k_temp;
 		return 0;
 	}
-
-	return -1;
 }
 
 /*****************************************************************************/
@@ -668,12 +676,12 @@ int send_crc_cmd(inverter_info *inverter,unsigned short crc_result,int file_or_4
 	crc=crc_array((unsigned char *)&sendbuff[2],68);
 	sendbuff[70] = crc/256;
 	sendbuff[71] = crc%256;
-	printhexmsg(ECU_DBG_MAIN,inverter->id, sendbuff, 74);
+	//printhexmsg(ECU_DBG_MAIN,inverter->id, sendbuff, 74);
 	if(file_or_4k==1)
 	{
 		for(i=0;i<5;i++)
 		{
-			rt_thread_delay(100);
+			//rt_thread_delay(100);
 			zb_send_cmd(inverter,sendbuff,74);
 			printhexmsg(ECU_DBG_MAIN,"***CRC",sendbuff,74);
 			if(13 == zb_get_reply_new(readbuff,inverter,90))
@@ -684,7 +692,7 @@ int send_crc_cmd(inverter_info *inverter,unsigned short crc_result,int file_or_4
 	{
 		for(i=0;i<5;i++)
 		{
-			rt_thread_delay(100);
+			//rt_thread_delay(100);
 			zb_send_cmd(inverter,sendbuff,74);
 			printhexmsg(ECU_DBG_MAIN,"***CRC",sendbuff,74);
 			if(13 == zb_get_reply(readbuff,inverter))
@@ -726,21 +734,27 @@ int send_crc_cmd(inverter_info *inverter,unsigned short crc_result,int file_or_4
 int crc_4k(char *file,int sector,inverter_info *inverter,unsigned short crc_update_4k,int flag)
 {
 	unsigned short result = 0xFFFF;
-	char package_buff[128];
-	int fd,i;
+	char *package_buff = NULL;
+	int ret_size,i;
+
 	if(flag == 0)
 	{
-		fd = open(file, O_RDONLY,0);
-		if(fd>0)
+		package_buff = malloc(4096);
+		memset(package_buff,0x00,4096);
+
+		if(remote_update_fd >= 0)
 		{
-			lseek(fd,4096*sector,SEEK_SET);
-			for(i=0;i<4096;i++)
+			lseek(remote_update_fd,4096*sector,SEEK_SET);
+			ret_size = read(remote_update_fd, package_buff, 4096);
+			for(i=0;i<ret_size;i++)
 			{
-				read(fd, package_buff, 1);
-				result = UpdateCRC(result, package_buff[0]);
+				result = UpdateCRC(result, package_buff[i]);
 			}
-			close(fd);
 		}
+		
+		free(package_buff);
+		package_buff = NULL;
+		
 	}else
 	{
 		result = crc_update_4k;
@@ -767,7 +781,7 @@ int crc_4k(char *file,int sector,inverter_info *inverter,unsigned short crc_upda
 int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,char *file_name,unsigned short crc_update_4k)
 {
 
-	int i, fd, ret, mark, resend_packet_flag;
+	int i,ret, mark, resend_packet_flag;
 	char sendbuff[256]={'\0'};
 	char readbuff[256];
 	unsigned char package_buff[129];
@@ -787,16 +801,16 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 
 
 	printhexmsg(ECU_DBG_MAIN,inverter->id, sendbuff, 74);
-	for(i=0;i<5;i++)
+	printmsg(ECU_DBG_MAIN,"***bubaowenxun");
+	for(i=0;i<10;i++)
 	{
-		rt_thread_delay(100);
+		//rt_thread_delay(100);
 		zb_send_cmd(inverter,sendbuff,74);
-		printhexmsg(ECU_DBG_MAIN,"***bubaowenxun",sendbuff,74);
 		if(13==zb_get_reply(readbuff,inverter))
 			break;
 	}
 
-	if(i>=5)
+	if(i>=10)
 	{
 		printmsg(ECU_DBG_MAIN,"Query the lost packet over 5 times");	//查询补包数5次没响应的情况
 		return -1;
@@ -811,7 +825,7 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 	sendbuff[73] = 0xFE;
 
 	crc=crc_array((unsigned char *)&readbuff[2],7);
-	printdecmsg(ECU_DBG_MAIN,"crc",crc);
+	//printdecmsg(ECU_DBG_MAIN,"crc",crc);
 	if((readbuff[0] == 0xFB) &&
 			(readbuff[1] == 0xFB) &&
 			(readbuff[2] == 0x06) &&
@@ -830,16 +844,15 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 			}
 			else //if((readbuff[7]*256 + readbuff[8]) > 0)//当前操作的扇区码大于0
 			{
-				fd = open(file_name, O_RDONLY,0);
 
-				if(fd>=0)
+				if(remote_update_fd >= 0)
 				{
 					while((readbuff[7]*256 + readbuff[8]) > 0)
 					{
-						rt_thread_delay(200);
-						lseek(fd,(readbuff[5]*256 + readbuff[6])*speed, SEEK_SET);
+						//rt_thread_delay(200);
+						lseek(remote_update_fd,(readbuff[5]*256 + readbuff[6])*speed, SEEK_SET);
 						memset(package_buff, 0, sizeof(package_buff));
-						read(fd, package_buff, speed);
+						read(remote_update_fd, package_buff, speed);
 						sendbuff[4] = readbuff[5];
 						sendbuff[5] = readbuff[6];
 						for(i=0; i<speed; i++)
@@ -857,11 +870,11 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 						for(i=0;i<10;i++)
 						{
 							zb_send_cmd(inverter,sendbuff,74);
-							printhexmsg(ECU_DBG_MAIN,"sendbuff", sendbuff, 10+speed);
+							//printhexmsg(ECU_DBG_MAIN,"sendbuff", sendbuff, 10+speed);
 
 							memset(readbuff, 0, sizeof(readbuff));
 							mark++;
-							printdecmsg(ECU_DBG_MAIN,"mark=",mark);
+							//printdecmsg(ECU_DBG_MAIN,"mark=",mark);
 							ret = zb_get_reply(readbuff,inverter);
 							if((13 == ret) &&
 									(readbuff[0] == 0xFB) &&
@@ -875,18 +888,15 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 						}
 						if(i>=10)
 						{
-							printmsg(ECU_DBG_MAIN,"debug33333333333333333333333");
 							printmsg(ECU_DBG_MAIN,"Resend the lost packet over 5 times");
 							resend_packet_flag=0;
 							printdecmsg(ECU_DBG_MAIN,"resend_packet_flag", resend_packet_flag);
-							close(fd);
 							return -1;		//补单包5次没响应的情况
 						}
 						printdecmsg(ECU_DBG_MAIN,"Resend the lost packet", (readbuff[7]*256 + readbuff[8]));
 					}
 					resend_packet_flag = 1;
 					print2msg(ECU_DBG_MAIN,inverter->id, "All of the lost packets have been resent");
-					close(fd);
 					return crc_4k(file_name,cur_sector,inverter,crc_update_4k,1);
 
 				}
@@ -1022,6 +1032,14 @@ int stop_update_new(inverter_info *inverter)
 }
 
 
+void closeRemoteUpdateFD(void)
+{
+	if(remote_update_fd >= 0)
+	{
+		close(remote_update_fd);
+		remote_update_fd = -1;
+	}
+}
 
 /* 升级单台逆变器
  *
@@ -1286,6 +1304,7 @@ int remote_update(inverter_info *firstinverter)
 				
 				apstime(pre_Time);
 				update_result = remote_update_single(curinverter);
+				closeRemoteUpdateFD();
 				printdecmsg(ECU_DBG_MAIN,"Update",update_result);
 				apstime(Time);
 
@@ -1349,5 +1368,60 @@ void remote(void)
 	remote_update(inverter);
 }
 FINSH_FUNCTION_EXPORT(remote, eg:remote());
+
+void testfile1(const char * file)
+{
+	int fd,i;
+	char Time[15] = {"/0"};
+	char pre_Time[15] = {"/0"};
+	apstime(pre_Time);
+	for(i = 0;i<15616;i++)
+	{
+		fd = open(file, O_RDONLY,0);
+		if(fd>=0)
+		{
+			lseek(fd,4096*(i/10),SEEK_SET);
+
+			close(fd);
+		}else
+		{
+			printf("open file failed");
+		}
+	}
+	apstime(Time);
+
+	printf("%s %s \n",pre_Time,Time);
+
+}
+FINSH_FUNCTION_EXPORT(testfile1, eg:testfile1());
+
+
+void testfile2(const char * file)
+{
+	int fd,i;
+	char Time[15] = {"/0"};
+	char pre_Time[15] = {"/0"};
+	apstime(pre_Time);
+	fd = open(file, O_RDONLY,0);
+	for(i = 0;i<15616;i++)
+	{
+		
+		if(fd>=0)
+		{
+			lseek(fd,4096*(i/10),SEEK_SET);
+
+			
+		}else
+		{
+			printf("open file failed");
+		}
+	}
+	close(fd);
+	apstime(Time);
+
+	printf("%s %s \n",pre_Time,Time);
+
+}
+FINSH_FUNCTION_EXPORT(testfile2, eg:testfile2());
 #endif
 

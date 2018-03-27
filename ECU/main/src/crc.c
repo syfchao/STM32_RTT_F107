@@ -46,19 +46,25 @@ unsigned short crc_array(char *buff, int len)
 	return result;
 }
 
-unsigned short crc_file(char *file)
+unsigned short crc_file(int crc_fd)
 {
 	unsigned short result = 0xFFFF;
-	char package_buff[128];
-	int fd;
-
-	fd = open(file, O_RDONLY,0);
-	if(fd>=0)
+	char *package_buff =NULL;
+	int ret_size,i;
+	package_buff = malloc(4096);
+	memset(package_buff,0x00,4096);
+	
+	if(crc_fd>=0)
 	{
-		while(read(fd, package_buff, 1)>0)
-			result = UpdateCRC(result, package_buff[0]);
-		close(fd);
+		while((ret_size = read(crc_fd, package_buff, 4096))>0)
+		{
+			for(i = 0;i<ret_size;i++)
+			{
+				result = UpdateCRC(result, package_buff[i]);
+			}
+		}		
 	}
-
+	free(package_buff);
+	package_buff = NULL;
 	return result;
 }

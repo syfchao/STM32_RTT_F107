@@ -736,12 +736,12 @@ int zb_send_cmd(inverter_info *inverter, char *buff, int length)		//zigbee°üÍ·
 	sendbuff[13] = check%256;
 	sendbuff[14] = length;
 
-	printdecmsg(ECU_DBG_MAIN,"shortaddr",inverter->shortaddr);
+	//printdecmsg(ECU_DBG_MAIN,"shortaddr",inverter->shortaddr);
 	for(i=0; i<length; i++)
 	{
 		sendbuff[15+i] = buff[i];
 	}
-	rt_thread_delay(5);
+	//rt_thread_delay(5);
 	if(0!=inverter->shortaddr)
 	{
 		ZIGBEE_SERIAL.write(&ZIGBEE_SERIAL,0, sendbuff, length+15);
