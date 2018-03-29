@@ -49,7 +49,7 @@
 /*****************************************************************************/
 #define ARRAYNUM 6
 #define MAXBUFFER (MAXINVERTERCOUNT*RECORDLENGTH+RECORDTAIL+18)
-#define FIRST_TIME_CMD_NUM 6
+#define FIRST_TIME_CMD_NUM 8
 
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
@@ -106,8 +106,9 @@ void add_functions()
 	pfun[A146] = set_all_inverter_power_factor; //设置ecu级别功率因数
 
 	pfun[A161] = response_inverter_protection_all;//读取逆变器保护参数
-	//pfun[A162] = set_inverter_protection_new;	//设置逆变器保护参数
-	//pfun[A168] = query_ecu_ac_protection_all;	//设置电表和防逆流开关
+	pfun[A162] = set_inverter_protection_new;	//设置逆变器保护参数
+	pfun[A168] = query_ecu_ac_protection_all;	//设置电表和防逆流开关
+
 
 }
 
@@ -116,7 +117,7 @@ int first_time_info(const char *recvbuffer, char *sendbuffer)
 {
 	static int command_id = 0;
 	int functions[FIRST_TIME_CMD_NUM] = {
-			A102, A106, A117,A126, A130, A131,
+			A102, A106, A117,A126, A130, A131,A161,A168
 	};
 	printdecmsg(ECU_DBG_CONTROL_CLIENT,"first_time_info",(command_id));
 	printdecmsg(ECU_DBG_CONTROL_CLIENT,"first_time_info A",functions[(command_id)]+100);

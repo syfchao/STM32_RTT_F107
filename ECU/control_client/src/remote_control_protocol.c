@@ -31,7 +31,7 @@ extern ecu_info ecu;
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
-/* ç”Ÿæˆåè®®å¤´ */
+/* Éú³ÉĞ­ÒéÍ· */
 int msg_Header(char *sendbuffer, const char *cmd_id)
 {
 	memset(sendbuffer, 0, sizeof(sendbuffer));
@@ -40,10 +40,10 @@ int msg_Header(char *sendbuffer, const char *cmd_id)
 }
 
 /*
- * ECUå‘EMAè¯·æ±‚æ¶ˆæ¯
+ * ECUÏòEMAÇëÇóÏûÏ¢
  *
- * è¾“å…¥ï¼šå¾…å‘é€ç¼“å­˜æŒ‡é’ˆï¼šsendbuffer
- * 		ECUå·ç ï¼šecuid
+ * ÊäÈë£º´ı·¢ËÍ»º´æÖ¸Õë£ºsendbuffer
+ * 		ECUºÅÂë£ºecuid
  * */
 int msg_REQ(char *sendbuffer)
 {
@@ -59,13 +59,13 @@ int msg_REQ(char *sendbuffer)
 }
 
 /*
- * ECUå‘EMAåº”ç­”æ¶ˆæ¯
+ * ECUÏòEMAÓ¦´ğÏûÏ¢
  *
- * è¾“å…¥ï¼šå¾…å‘é€ç¼“å­˜æŒ‡é’ˆï¼šsendbuffer
- * 		ECUå·ç ï¼šecuid
- * 		åè®®å‘½ä»¤å·ï¼šcmd_id
- * 		åè®®æ—¶é—´æˆ³ï¼štimestamp
- * 		åº”ç­”æ ‡å¿—ä½ï¼šack_flag
+ * ÊäÈë£º´ı·¢ËÍ»º´æÖ¸Õë£ºsendbuffer
+ * 		ECUºÅÂë£ºecuid
+ * 		Ğ­ÒéÃüÁîºÅ£ºcmd_id
+ * 		Ğ­ÒéÊ±¼ä´Á£ºtimestamp
+ * 		Ó¦´ğ±êÖ¾Î»£ºack_flag
  * */
 int msg_ACK(char *sendbuffer,
 		const char *cmd_id, const char *timestamp, int ack_flag)
@@ -83,11 +83,11 @@ int msg_ACK(char *sendbuffer,
 }
 
 /*
- *  ä»åè®®ä¸­è§£æå‡ºæ•´å‹å˜é‡(å…¼å®¹ä»¥â€˜Aâ€™å¡«å……çš„æ•´æ•°)
+ *  ´ÓĞ­ÒéÖĞ½âÎö³öÕûĞÍ±äÁ¿(¼æÈİÒÔ¡®A¡¯Ìî³äµÄÕûÊı)
  *
- *  è¾“å…¥ï¼šæ•´å‹å˜é‡åœ¨å­—ç¬¦ä¸²ä¸­çš„èµ·å§‹æŒ‡é’ˆï¼šs
- *  	 æ•´å‹å˜é‡æ‰€å å­—ç¬¦ä¸²çš„é•¿åº¦ï¼šlen *
- *  è¾“å‡ºï¼šæ•´å‹å˜é‡
+ *  ÊäÈë£ºÕûĞÍ±äÁ¿ÔÚ×Ö·û´®ÖĞµÄÆğÊ¼Ö¸Õë£ºs
+ *  	 ÕûĞÍ±äÁ¿ËùÕ¼×Ö·û´®µÄ³¤¶È£ºlen *
+ *  Êä³ö£ºÕûĞÍ±äÁ¿
  */
 int msg_get_int(const char *s, int len)
 {
@@ -108,19 +108,19 @@ int msg_get_int(const char *s, int len)
 		return atoi(buffer);
 }
 
-/* è·å–åè®®ä¿¡æ¯ç‰ˆæœ¬å· */
+/* »ñÈ¡Ğ­ÒéĞÅÏ¢°æ±¾ºÅ */
 int msg_version(const char *msg)
 {
 	return msg_get_int(&msg[3], 2);
 }
 
-/* åè®®ä¿¡æ¯é•¿åº¦ */
+/* Ğ­ÒéĞÅÏ¢³¤¶È */
 int msg_length(const char *msg)
 {
 	return msg_get_int(&msg[5], 5);
 }
 
-/* è·å–åè®®å‘½ä»¤å· */
+/* »ñÈ¡Ğ­ÒéÃüÁîºÅ */
 int msg_cmd_id(const char *msg)
 {
 	int cmd_id;
@@ -132,30 +132,30 @@ int msg_cmd_id(const char *msg)
 	return cmd_id;
 }
 
-/* è·å–åè®®æ¶ˆæ¯æµæ°´å· */
+/* »ñÈ¡Ğ­ÒéÏûÏ¢Á÷Ë®ºÅ */
 int msg_seq_id(const char *msg)
 {
 	return msg_get_int(&msg[14], 4);
 }
 
 /*
- * 	æ£€æŸ¥æ¯æ¡ä¿¡æ¯é€šç”¨éƒ¨åˆ†çš„æ ¼å¼
+ * 	¼ì²éÃ¿ÌõĞÅÏ¢Í¨ÓÃ²¿·ÖµÄ¸ñÊ½
  *
- * 	è¾“å…¥ï¼šä¿¡æ¯å­—ç¬¦ä¸²æŒ‡é’ˆï¼šmsg
- * 	è¾“å‡ºï¼šæ­£ç¡®ï¼š0 , é”™è¯¯ï¼š-1
+ * 	ÊäÈë£ºĞÅÏ¢×Ö·û´®Ö¸Õë£ºmsg
+ * 	Êä³ö£ºÕıÈ·£º0 , ´íÎó£º-1
  * */
 int msg_format_check(const char *msg)
 {
-	//åè®®å¤´APS
+	//Ğ­ÒéÍ·APS
 	if(strncmp(msg, "APS", 3)){
 		printmsg(ECU_DBG_CONTROL_CLIENT,"Format Error: APS");
 		return -1;
 	}
 
-	//ç‰ˆæœ¬å·
+	//°æ±¾ºÅ
 	//msg_version(msg);
 
-	//åè®®é•¿åº¦
+	//Ğ­Òé³¤¶È
 	if(msg_length(msg) != strlen(msg)){
 		printmsg(ECU_DBG_CONTROL_CLIENT,"Format Error: length");
 		return -1;
@@ -163,25 +163,25 @@ int msg_format_check(const char *msg)
 
 	//ECU_ID
 	if(strncmp(&msg[18], ecu.id, 12)){
-		if(msg_get_int(&msg[10], 4) != 123){ //A123åº”ç­”æ²¡æœ‰ECU_ID
+		if(msg_get_int(&msg[10], 4) != 123){ //A123Ó¦´ğÃ»ÓĞECU_ID
 			printmsg(ECU_DBG_CONTROL_CLIENT,"Format Error: ecu_id");
 			return -1;
 		}
 	}
 
-	//åè®®å°¾END
+	//Ğ­ÒéÎ²END
 
 	return 0;
 }
 
 /*
- * 	æ£€æŸ¥é€†å˜å™¨ä¿¡æ¯æ¡æ•°æ˜¯å¦ä¸ECUä¿¡æ¯ä¸­çš„NUMå˜é‡ç›¸åŒ
+ * 	¼ì²éÄæ±äÆ÷ĞÅÏ¢ÌõÊıÊÇ·ñÓëECUĞÅÏ¢ÖĞµÄNUM±äÁ¿ÏàÍ¬
  *
- * 	è¾“å…¥ï¼šé€†å˜å™¨ä¿¡æ¯èµ·å§‹ç‚¹çš„å­—ç¬¦ä¸²æŒ‡é’ˆï¼šs
- * 		 ECUä¿¡æ¯ä¸­çš„NUMå˜é‡ï¼šnum
- * 		 æ¯æ¡é€†å˜å™¨ä¿¡æ¯çš„é•¿åº¦(ä¸åŒ…æ‹¬END)ï¼šlen
- *		 æ˜¯å¦æ¯æ¡é€†å˜å™¨ä¿¡æ¯éƒ½ä»¥ENDç»“å°¾ï¼šflag
- * 	è¾“å‡ºï¼šæ­£ç¡®ï¼štrue , é”™è¯¯ï¼šfalse
+ * 	ÊäÈë£ºÄæ±äÆ÷ĞÅÏ¢ÆğÊ¼µãµÄ×Ö·û´®Ö¸Õë£ºs
+ * 		 ECUĞÅÏ¢ÖĞµÄNUM±äÁ¿£ºnum
+ * 		 Ã¿ÌõÄæ±äÆ÷ĞÅÏ¢µÄ³¤¶È(²»°üÀ¨END)£ºlen
+ *		 ÊÇ·ñÃ¿ÌõÄæ±äÆ÷ĞÅÏ¢¶¼ÒÔEND½áÎ²£ºflag
+ * 	Êä³ö£ºÕıÈ·£ºtrue , ´íÎó£ºfalse
  * */
 int msg_num_check(const char *s, int num, int len, int flag)
 {
@@ -193,7 +193,7 @@ int msg_num_check(const char *s, int num, int len, int flag)
 	}
 }
 
-/* å°†å­—ç¬¦ä¸²è¿æ¥åˆ°åè®®å­—ç¬¦ä¸² */
+/* ½«×Ö·û´®Á¬½Óµ½Ğ­Òé×Ö·û´® */
 char *msgcat_s(char *s, int size, const char *value)
 {
 	int i, length;
@@ -210,7 +210,7 @@ char *msgcat_s(char *s, int size, const char *value)
 	return s;
 }
 
-/* å°†æ•´å‹æ•°æ®è¿æ¥åˆ°åè®®å­—ç¬¦ä¸² */
+/* ½«ÕûĞÍÊı¾İÁ¬½Óµ½Ğ­Òé×Ö·û´® */
 char *msgcat_d(char *s, int size, int value)
 {
 	int i, length;
@@ -234,7 +234,7 @@ char *msgcat_d(char *s, int size, int value)
 	return s;
 }
 
-/* ä»ç»™å®šå­—ç¬¦ä¸²ä¸­å¤åˆ¶å‡ºä¸€æ®µåˆ°ENDä¸ºæ­¢çš„å­—ç¬¦ä¸² */
+/* ´Ó¸ø¶¨×Ö·û´®ÖĞ¸´ÖÆ³öÒ»¶Îµ½ENDÎªÖ¹µÄ×Ö·û´® */
 int msg_get_one_section(char *s, const char *msg)
 {
 	memset(s, 0, sizeof(s));

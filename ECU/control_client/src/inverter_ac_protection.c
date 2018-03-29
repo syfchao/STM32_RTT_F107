@@ -21,10 +21,10 @@
 #include "rtthread.h"
 #include "dfs_posix.h"
 /*********************************************************************
-setpropaè¡¨æ ¼å­—æ®µï¼š
+setpropa±í¸ñ¶ÔÓ¦×Ö¶Î
 parameter_name,parameter_value,set_flag             primary key(parameter_name)
 
-setpropiè¡¨æ ¼å­—æ®µï¼š
+setpropi ±í¸ñ¶ÔÓ¦×Ö¶Î
 id,parameter_name, parameter_value,set_flag         primary key(id, parameter_name)
 **********************************************************************/
 
@@ -76,12 +76,12 @@ static int pro_flag[PRO_NAME_NUM] = {0};
 /*  Function Implementations                                                 */
 /*****************************************************************************/
 
-/* ä»åè®®æ¶ˆæ¯ä¸­è§£æå‡ºäº¤æµä¿æŠ¤å‚æ•°
+/* ´ÓĞ­ÒéÏûÏ¢ÖĞ½âÎö³ö½»Á÷±£»¤²ÎÊı
  *
- * name   : äº¤æµä¿æŠ¤å‚æ•°åç§°
- * s      : æ¶ˆæ¯å­—ç¬¦ä¸²æŒ‡é’ˆ
- * len    : äº¤æµä¿æŠ¤å‚æ•°æ‰€å å­—èŠ‚
- * decimal: äº¤æµä¿æŠ¤å‚æ•°å°æ•°ä½æ•°
+ * name   : ½»Á÷±£»¤²ÎÊıÃû³Æ
+ * s      : ÏûÏ¢×Ö·û´®Ö¸Õë
+ * len    : ½»Á÷±£»¤²ÎÊıËùÕ¼×Ö½Ú
+ * decimal: ½»Á÷±£»¤²ÎÊıĞ¡ÊıÎ»Êı
  *
  */
 int get_ac_protection(const char *name, const char *s, int len, int decimal)
@@ -108,14 +108,14 @@ int get_ac_protection(const char *name, const char *s, int len, int decimal)
 	return 0;
 }
 
-/* ä»æ•°æ®åº“ä¸­æŸ¥è¯¢ECUçº§åˆ«çš„äº¤æµä¿æŠ¤å‚æ•° */
+/* ´ÓÎÄ¼ş±í¸ñÖĞ²éÑ¯ECU¼¶±ğµÄ½»Á÷±£»¤²ÎÊı */
 int query_ecu_ac_protection()
 {
 	get_protection_from_file(pro_name,pro_value,pro_flag,PRO_NAME_NUM);
 	return 0;
 }
 
-/* æ ¹æ®å‚æ•°åè·å–ç¼“å­˜çš„å‚æ•°å€¼,å¹¶æ ¼å¼åŒ–ä¸ºæ•´æ•°ï¼ˆå»æ‰å°æ•°ç‚¹ï¼‰ */
+/* ¸ù¾İ²ÎÊıÃû»ñÈ¡»º´æµÄ²ÎÊıÖµ,²¢¸ñÊ½»¯ÎªÕûÊı£¨È¥µôĞ¡Êıµã£© */
 int format_ecu_ac_protection(const char *name, int decimal)
 {
 	int i, j;
@@ -136,14 +136,14 @@ int format_ecu_ac_protection(const char *name, int decimal)
 	return -1;
 }
 
-/* åœ¨æ¶ˆæ¯æœ«å°¾æ‹¼æ¥ç”µå‹é¢‘ç‡ä¸Šä¸‹é™åŠåŠŸç‡è®¾ç½®èŒƒå›´ */
+/* ÔÚÏûÏ¢Ä©Î²Æ´½ÓµçÑ¹ÆµÂÊÉÏÏÂÏŞ¼°¹¦ÂÊÉèÖÃ·¶Î§ */
 int msgcat_parameter_range(char *msg)
 {
 	msgcat_s(msg, 30, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
 	return 0;
 }
 
-/* æŸ¥è¯¢ECUçº§åˆ«çš„æœ€å¤§åŠŸç‡ */
+/* ²éÑ¯ECU¼¶±ğµÄ×î´ó¹¦ÂÊ */
 int query_ecu_maxpower()
 {
 	int maxpower = -1;
@@ -151,7 +151,7 @@ int query_ecu_maxpower()
 	return maxpower;
 }
 
-/* è®¾ç½®æ‰€æœ‰é€†å˜å™¨çš„äº¤æµä¿æŠ¤å‚æ•° */
+/* ÉèÖÃËùÓĞÄæ±äÆ÷µÄ½»Á÷±£»¤²ÎÊı */
 int save_ac_protection_all()
 {
 	int i, err_count = 0;
@@ -163,8 +163,6 @@ int save_ac_protection_all()
 		for(i=0; i<PRO_NAME_NUM; i++)
 		{
 			if(pro_flag[i] == 1){
-			
-				//å¦‚æœå­˜åœ¨è¯¥é€†å˜å™¨æ•°æ®åˆ™åˆ é™¤è¯¥è®°å½•
 				sprintf(str,"%s,%.2f,1\n",pro_name[i], pro_value[i]);
 				if(write(fd,str,strlen(str)) <= 0)
 				{
@@ -177,7 +175,7 @@ int save_ac_protection_all()
 	return err_count;
 }
 
-/* è®¾ç½®æŒ‡å®šé€†å˜å™¨çš„äº¤æµä¿æŠ¤å‚æ•° */
+/* ÉèÖÃÖ¸¶¨Äæ±äÆ÷µÄ½»Á÷±£»¤²ÎÊı */
 int save_ac_protection_num(const char *msg, int num)
 {
 
@@ -190,15 +188,13 @@ int save_ac_protection_num(const char *msg, int num)
 	{
 		for(i=0; i<num; i++)
 		{
-			//è·å–ä¸€å°é€†å˜å™¨çš„IDå·
+			//»ñÈ¡Ò»Ì¨Äæ±äÆ÷µÄIDºÅ
 			strncpy(inverter_id, &msg[i*12], 12);
 
 			for(j=0; j<PRO_NAME_NUM; j++)
 			{
 				if(pro_flag[j] == 1){
-					//å¦‚æœå­˜åœ¨è¯¥é€†å˜å™¨æ•°æ®åˆ™åˆ é™¤è¯¥è®°å½•
 					sprintf(str,"%s,%s,%f,1\n",inverter_id, pro_name[j], pro_value[j]);
-					//æ’å…¥æ•°æ®
 					if(write(fd,str,strlen(str)) <= 0)
 					{
 						err_count++;
@@ -213,18 +209,18 @@ int save_ac_protection_num(const char *msg, int num)
 }
 
 
-/*ã€A130ã€‘ECUä¸ŠæŠ¥(ECUçº§åˆ«çš„)äº¤æµä¿æŠ¤å‚æ•°ï¼ˆ17é¡¹ï¼‰*/
+/*¡¾A130¡¿ECUÉÏ±¨(ECU¼¶±ğµÄ)½»Á÷±£»¤²ÎÊı£¨17Ïî£©*/
 int response_ecu_ac_protection_17(const char *recvbuffer, char *sendbuffer)
 {
 	char timestamp[15] = {'\0'};
 	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
-	//è·å–å‚æ•°
+	//»ñÈ¡²ÎÊı
 	strncpy(timestamp, &recvbuffer[34], 14);
 	memset(pro_value, 0, sizeof(pro_value));
 	memset(pro_flag, 0, sizeof(pro_flag));
-	query_ecu_ac_protection(); //æŸ¥è¯¢ECUçº§åˆ«çš„äº¤æµä¿æŠ¤å‚æ•°
+	query_ecu_ac_protection();  //²éÑ¯ECU¼¶±ğµÄ½»Á÷±£»¤²ÎÊı
 
-	//æ‹¼æ¥ä¿¡æ¯
+	//Æ´½ÓĞÅÏ¢
 	msg_Header(sendbuffer, "A130");
 	msgcat_s(sendbuffer, 12, ecu.id);
 	msgcat_s(sendbuffer, 14, timestamp);
@@ -253,7 +249,7 @@ int response_ecu_ac_protection_17(const char *recvbuffer, char *sendbuffer)
 	return 0;
 }
 
-/*ã€A132ã€‘EMAè®¾ç½®é€†å˜å™¨çš„äº¤æµä¿æŠ¤å‚æ•°ï¼ˆ17é¡¹ï¼‰*/
+/*¡¾A132¡¿EMAÉèÖÃÄæ±äÆ÷µÄ½»Á÷±£»¤²ÎÊı£¨17Ïî£©*/
 int set_inverter_ac_protection_17(const char *recvbuffer, char *sendbuffer)
 {
 	int ack_flag = SUCCESS;
@@ -263,50 +259,50 @@ int set_inverter_ac_protection_17(const char *recvbuffer, char *sendbuffer)
 	memset(pro_value, 0, sizeof(pro_value));
 	memset(pro_flag, 0, sizeof(pro_flag));
 
-	//æ—¶é—´æˆ³
+	//Ê±¼ä´Á
 	strncpy(timestamp, &recvbuffer[30], 14);
-	//é€†å˜å™¨æ•°é‡
+	//Äæ±äÆ÷ÊıÁ¿
 	inverter_num = msg_get_int(&recvbuffer[44], 3);
-	//å†…å†…å›´ç”µå‹ä¸‹é™
+	//ÄÚÄÚÎ§µçÑ¹ÏÂÏŞ
 	get_ac_protection("under_voltage_slow", &recvbuffer[50], 3, 0);
-	//å†…å›´ç”µå‹ä¸Šé™
+	//ÄÚÎ§µçÑ¹ÉÏÏŞ
 	get_ac_protection("over_voltage_slow", &recvbuffer[53], 3, 0);
-	//å†…å›´é¢‘ç‡ä¸‹é™
+	//ÄÚÎ§ÆµÂÊÏÂÏŞ
 	get_ac_protection("under_frequency_slow", &recvbuffer[56], 3, 1);
-	//å†…å›´é¢‘ç‡ä¸Šé™
+	//ÄÚÎ§ÆµÂÊÉÏÏŞ
 	get_ac_protection("over_frequency_slow", &recvbuffer[59], 3, 1);
-	//å¹¶ç½‘æ¢å¤æ—¶é—´
+	//²¢Íø»Ö¸´Ê±¼ä
 	get_ac_protection("grid_recovery_time", &recvbuffer[62], 5, 0);
-	//å¤–å›´ç”µå‹ä¸‹é™
+	//ÍâÎ§µçÑ¹ÏÂÏŞ
 	get_ac_protection("under_voltage_fast", &recvbuffer[67], 3, 0);
-	//å¤–å›´ç”µå‹ä¸Šé™
+	//ÍâÎ§µçÑ¹ÉÏÏŞ
 	get_ac_protection("over_voltage_fast", &recvbuffer[70], 3, 0);
-	//å¤–å›´é¢‘ç‡ä¸‹é™
+	//ÍâÎ§ÆµÂÊÏÂÏŞ
 	get_ac_protection("under_frequency_fast", &recvbuffer[73], 3, 1);
-	//å¤–å›´é¢‘ç‡ä¸Šé™
+	//ÍâÎ§ÆµÂÊÉÏÏŞ
 	get_ac_protection("over_frequency_fast", &recvbuffer[76], 3, 1);
-	//å¤–å›´ç”µå‹å»¶è¿Ÿä¿æŠ¤æ—¶é—´
+	//ÍâÎ§µçÑ¹ÑÓ³Ù±£»¤Ê±¼ä
 	get_ac_protection("voltage_triptime_fast", &recvbuffer[79], 6, 2);
-	//å†…å›´ç”µå‹å»¶è¿Ÿä¿æŠ¤æ—¶é—´
+	//ÄÚÎ§µçÑ¹ÑÓ³Ù±£»¤Ê±¼ä
 	get_ac_protection("voltage_triptime_slow", &recvbuffer[85], 6, 2);
-	//å¤–å›´é¢‘ç‡å»¶è¿Ÿä¿æŠ¤æ—¶é—´
+	//ÍâÎ§ÆµÂÊÑÓ³Ù±£»¤Ê±¼ä
 	get_ac_protection("frequency_triptime_fast", &recvbuffer[91], 6, 2);
-	//å†…å›´é¢‘ç‡å»¶è¿Ÿä¿æŠ¤æ—¶é—´
+	//ÄÚÎ§ÆµÂÊÑÓ³Ù±£»¤Ê±¼ä
 	get_ac_protection("frequency_triptime_slow", &recvbuffer[97], 6, 2);
-	//ç›´æµç¨³å‹ç”µå‹
+	//Ö±Á÷ÎÈÑ¹µçÑ¹
 	get_ac_protection("regulated_dc_working_point", &recvbuffer[103], 3, 1);
-	//å†…å›´ç”µå‹ä¸‹é™
+	//ÄÚÎ§µçÑ¹ÏÂÏŞ
 	get_ac_protection("under_voltage_stage_2", &recvbuffer[106], 3, 0);
-	//å†…å†…å›´ç”µå‹å»¶è¿Ÿä¿æŠ¤æ—¶é—´
+	//ÄÚÄÚÎ§µçÑ¹ÑÓ³Ù±£»¤Ê±¼ä
 	get_ac_protection("voltage_3_clearance_time", &recvbuffer[109], 6, 2);
-	//ç›´æµå¯åŠ¨æ—¶é—´
+	//Ö±Á÷Æô¶¯Ê±¼ä
 	get_ac_protection("start_time", &recvbuffer[115], 5, 0);
 
 	if(inverter_num == 0)
 	{
 		if(save_ac_protection_all() > 0)
 			ack_flag = DB_ERROR;
-		//æ‹¼æ¥åº”ç­”æ¶ˆæ¯
+		//Æ´½ÓÓ¦´ğÏûÏ¢
 		msg_ACK(sendbuffer, "A132", timestamp, ack_flag);
 		rt_mutex_release(record_data_lock);
 		return 130;
@@ -320,48 +316,164 @@ int set_inverter_ac_protection_17(const char *recvbuffer, char *sendbuffer)
 			if(save_ac_protection_num(&recvbuffer[123], inverter_num) > 0)
 				ack_flag = DB_ERROR;
 		}
-		//æ‹¼æ¥åº”ç­”æ¶ˆæ¯
+		//Æ´½ÓÓ¦´ğÏûÏ¢
 		msg_ACK(sendbuffer, "A132", timestamp, ack_flag);
 		rt_mutex_release(record_data_lock);
 		return 0;
 	}
 }
 
-/*ã€A131ã€‘EMAè¯»å–é€†å˜å™¨çš„äº¤æµä¿æŠ¤å‚æ•°ï¼ˆ17é¡¹ï¼‰*/
+/*¡¾A131¡¿EMA¶ÁÈ¡Äæ±äÆ÷µÄ½»Á÷±£»¤²ÎÊı£¨17Ïî£©*/
 int read_inverter_ac_protection_17(const char *recvbuffer, char *sendbuffer)
 {
 	int ack_flag = SUCCESS;
 	char timestamp[15] = {'\0'};
 	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
-	//è¯»å–é€†å˜å™¨äº¤æµä¿æŠ¤å‚æ•°
+	//¶ÁÈ¡Äæ±äÆ÷½»Á÷±£»¤²ÎÊı
 	if(file_set_one("2", "/tmp/presdata.con")){
 		ack_flag = FILE_ERROR;
 	}
 
-	//è·å–æ—¶é—´æˆ³
+	//»ñÈ¡Ê±¼ä´Á
 	strncpy(timestamp, &recvbuffer[34], 14);
 
-	//æ‹¼æ¥åº”ç­”æ¶ˆæ¯
+	//Æ´½ÓÓ¦´ğÏûÏ¢
 	msg_ACK(sendbuffer, "A131", timestamp, ack_flag);
 	rt_mutex_release(record_data_lock);
 	return 0;
 }
 
+/*¡¾A161¡¿ÉÏ±¨±£»¤ĞÅÏ¢£¨ĞÂ£©*/
 int response_inverter_protection_all(const char *recvbuffer, char *sendbuffer)
 {
 	int ack_flag = SUCCESS;
 	char timestamp[15] = {'\0'};
 	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
-	//è¯»å–é€†å˜å™¨äº¤æµä¿æŠ¤å‚æ•°
+	//¶ÁÈ¡Äæ±äÆ÷½»Á÷±£»¤²ÎÊı
 	if(file_set_one("2", "/tmp/presdata.con")){
 		ack_flag = FILE_ERROR;
 	}
 
-	//è·å–æ—¶é—´æˆ³
+	//»ñÈ¡Ê±¼ä´Á
 	strncpy(timestamp, &recvbuffer[34], 14);
 
-	//æ‹¼æ¥åº”ç­”æ¶ˆæ¯
+	//Æ´½ÓÓ¦´ğÏûÏ¢
 	msg_ACK(sendbuffer, "A161", timestamp, ack_flag);
 	rt_mutex_release(record_data_lock);
 	return 0;
 }
+
+
+/*¡¾A162¡¿ÉèÖÃ±£»¤²ÎÊı£¨ĞÂ£©*/
+int set_inverter_protection_new(const char *recvbuffer, char *sendbuffer)
+{
+	int ack_flag = SUCCESS;
+	int count,num,i,j,k;
+	char timestamp[15] = {'\0'};
+	char name[2];
+	int value,Multiple = 0;
+	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
+
+	strncpy(timestamp, &recvbuffer[30], 14);		
+	count = msg_get_int(&recvbuffer[44],3);		//Äæ±äÆ÷¸öÊı
+	num = msg_get_int(&recvbuffer[50],3);		//²ÎÊı¸öÊı
+	for(i = 0;i < PRO_NAME_NUM;i++)
+	{
+		pro_flag[i] = 0;
+	}
+	
+	if(count == 0)	//¹ã²¥·¢ËÍ
+	{
+		for(i=0;i<num;i++)
+		{
+			memset(name,'\0',sizeof(name));
+			value=0;
+			strncpy(name,&recvbuffer[53+8*i],2);
+			value = msg_get_int(&recvbuffer[55+8*i],6);
+			for(j=0;j<PRO_NAME_NUM;j++)
+			{
+				//parameter_name, parameter_value,set_flag 
+				if(!strncmp(name,&pro_code[j][0],2))	//¶Ô±È±£»¤±êÖ¾codeÂë
+				{
+					pro_flag[j] = 1;
+					Multiple = 1;
+					for(k=0;k<decimals[j];k++)
+						Multiple *= 10;
+					pro_value[j] = ((float)value)/Multiple;
+					break;
+				}
+			}
+		}
+		if(save_ac_protection_all() > 0)
+			ack_flag = DB_ERROR;
+
+	}
+	else if(count>0)	//ÉèÖÃÖ¸¶¨Äæ±äÆ÷
+	{
+		for(i=0;i<num;i++)
+		{
+			memset(name,'\0',sizeof(name));
+			value=0;
+			strncpy(name,&recvbuffer[53+8*i],2);
+			value = msg_get_int(&recvbuffer[55+8*i],6);
+			for(j=0;j<PRO_NAME_NUM;j++)
+			{
+				if(!strncmp(name,&pro_code[j][0],2))
+				{
+					pro_flag[j] = 1;
+					Multiple = 1;
+					for(k=0;k<decimals[j];k++)
+						Multiple *= 10;
+					pro_value[j] = ((float)value)/Multiple;
+					break;
+				}
+			}
+		}
+		if(!msg_num_check(&recvbuffer[56+8*num], count, 12, 0)){
+			ack_flag = FORMAT_ERROR;
+		}
+		else{
+			if(save_ac_protection_num(&recvbuffer[56+8*num], count) > 0)
+				ack_flag = DB_ERROR;
+		}
+		
+	}
+
+	msg_ACK(sendbuffer, "A162", timestamp, ack_flag);
+	rt_mutex_release(record_data_lock);
+	return 0;
+
+}
+
+/*¡¾A168¡¿ÉÏ±¨ECU¼¶±ğ±£»¤²ÎÊı£¨ĞÂ£©*/
+int query_ecu_ac_protection_all(const char *recvbuffer, char *sendbuffer)
+{
+	char timestamp[15] = {'\0'};
+	int i =0;
+	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
+	//»ñÈ¡²ÎÊı
+	strncpy(timestamp, &recvbuffer[34], 14);
+	memset(pro_value, 0, sizeof(pro_value));
+	memset(pro_flag, 0, sizeof(pro_flag));
+	query_ecu_ac_protection();  //²éÑ¯ECU¼¶±ğµÄ½»Á÷±£»¤²ÎÊı
+
+	//Æ´½ÓĞÅÏ¢
+	msg_Header(sendbuffer, "A168");
+	msgcat_s(sendbuffer, 12, ecu.id);
+	msgcat_s(sendbuffer, 14, timestamp);
+	msgcat_s(sendbuffer, 3, "END");
+	msgcat_d(sendbuffer, 3, PRO_NAME_NUM);
+
+	for(i = 0;i <PRO_NAME_NUM ; i++)
+	{
+		msgcat_s(sendbuffer, 2, pro_code[i]);
+		msgcat_d(sendbuffer, 6, format_ecu_ac_protection(pro_name[i], decimals[i]));
+	}
+	
+	msgcat_s(sendbuffer, 3, "END");
+	rt_mutex_release(record_data_lock);
+	return 0;
+
+}
+
+

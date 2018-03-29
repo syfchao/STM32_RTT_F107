@@ -55,7 +55,7 @@ typedef enum  remotetype{
 }eRemoteType;
 
 //将升级返回的错误转换为传送给EMA的错误号
-eRemoteType getResult(int ret)
+int getResult(int ret)
 {
 	if(0 == ret)
 	{
@@ -89,7 +89,7 @@ eRemoteType getResult(int ret)
 		return Remote_UpdateFailed_UpdateSector;
 	}else
 	{
-		return Remote_UpdateFailed_Other;
+		return ret;
 	}
 }
 
@@ -545,7 +545,7 @@ int set_update_new(inverter_info *inverter,int *sector_all,unsigned short *crc_u
 	sendbuff[72]=0xFE;
 	sendbuff[73]=0xFE;
 
-	for(i=0;i<10;i++)
+	for(i=0;i<15;i++)
 	{
 		memset(readbuff,'\0',256);
 		zb_send_cmd(inverter,sendbuff,74);
@@ -802,7 +802,7 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 
 	printhexmsg(ECU_DBG_MAIN,inverter->id, sendbuff, 74);
 	printmsg(ECU_DBG_MAIN,"***bubaowenxun");
-	for(i=0;i<10;i++)
+	for(i=0;i<15;i++)
 	{
 		//rt_thread_delay(100);
 		zb_send_cmd(inverter,sendbuff,74);
@@ -810,7 +810,7 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 			break;
 	}
 
-	if(i>=10)
+	if(i>=15)
 	{
 		printmsg(ECU_DBG_MAIN,"Query the lost packet over 5 times");	//查询补包数5次没响应的情况
 		return -1;
@@ -867,7 +867,7 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 						sendbuff[8+speed] = 0xFE;
 						sendbuff[9+speed] = 0xFE;
 
-						for(i=0;i<10;i++)
+						for(i=0;i<15;i++)
 						{
 							zb_send_cmd(inverter,sendbuff,74);
 							//printhexmsg(ECU_DBG_MAIN,"sendbuff", sendbuff, 10+speed);
@@ -886,7 +886,7 @@ int resend_lost_packets_new(inverter_info *inverter, int speed,int cur_sector,ch
 									(readbuff[12] == 0xFE))
 								break;
 						}
-						if(i>=10)
+						if(i>=15)
 						{
 							printmsg(ECU_DBG_MAIN,"Resend the lost packet over 5 times");
 							resend_packet_flag=0;
@@ -1268,7 +1268,7 @@ int remote_update(inverter_info *firstinverter)
 	char Time[15] = {"/0"};
 	char pre_Time[15] = {"/0"};
 	char inverter_result[128];
-	eRemoteType remoteTypeRet = Remote_UpdateSuccessful; 
+	int remoteTypeRet = Remote_UpdateSuccessful; 
 	inverter_info *curinverter = firstinverter;
 
 	for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++,curinverter++)

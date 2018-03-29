@@ -186,7 +186,7 @@ void APP_Response_PowerGeneration(char mapping,unsigned char *ID,inverter_info *
 
 			//逆变器类型
 			SendData[packlength++] = '0';
-			SendData[packlength++] = '2';
+			SendData[packlength++] = '3';
 			
 			//电网频率
 			SendData[packlength++] = (int)(curinverter->gf * 10) / 256;
@@ -209,12 +209,12 @@ void APP_Response_PowerGeneration(char mapping,unsigned char *ID,inverter_info *
 			SendData[packlength++] = curinverter->opb % 256;
 
 			//逆变器功率  C 
-			SendData[packlength++] = curinverter->opb / 256;
-			SendData[packlength++] = curinverter->opb % 256;
+			SendData[packlength++] = curinverter->opc / 256;
+			SendData[packlength++] = curinverter->opc % 256;
 
 			//逆变器功率  D
-			SendData[packlength++] = curinverter->opb / 256;
-			SendData[packlength++] = curinverter->opb % 256;
+			SendData[packlength++] = curinverter->opd / 256;
+			SendData[packlength++] = curinverter->opd % 256;
 
 			
 		}else if((curinverter->model == 7))

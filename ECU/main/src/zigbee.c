@@ -741,7 +741,7 @@ int zb_send_cmd(inverter_info *inverter, char *buff, int length)		//zigbee°üÍ·
 	{
 		sendbuff[15+i] = buff[i];
 	}
-	//rt_thread_delay(5);
+	rt_thread_delay(1);
 	if(0!=inverter->shortaddr)
 	{
 		ZIGBEE_SERIAL.write(&ZIGBEE_SERIAL,0, sendbuff, length+15);
