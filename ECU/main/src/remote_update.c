@@ -1346,6 +1346,7 @@ int remote_update(inverter_info *firstinverter)
 				sprintf(inverter_result, "%s%02d%06d%sEND", curinverter->id, remoteTypeRet,curinverter->version, Time);
 				save_inverter_parameters_result2(curinverter->id, 147,inverter_result);
 
+#if 0
 				memset(inverter_result,0x00,128);
 				sprintf(inverter_result, "%s,%02d,%06d,%s,%s\n", curinverter->id, remoteTypeRet,curinverter->version, pre_Time,Time);
 				for(j=0;j<3;j++)
@@ -1353,7 +1354,8 @@ int remote_update(inverter_info *firstinverter)
 					if(1 == insert_line("/tmp/update.tst",inverter_result))
 						break;
 					rt_thread_delay(RT_TICK_PER_SECOND);
-				}	
+				}
+#endif
 
 			}
 		}

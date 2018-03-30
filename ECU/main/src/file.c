@@ -669,7 +669,7 @@ void delete_system_power_2_month_ago(char *date_time)
 	if(dirp == RT_NULL)
 	{
 		printmsg(ECU_DBG_CLIENT,"delete_system_power_2_month_ago open directory error");
-		mkdir("/home/data/power",0);
+		mkdir("/home/record/power",0);
 	}
 	else
 	{
