@@ -69,6 +69,7 @@ int init_ecu()
 	printecuinfo(&ecu);
 	zb_change_ecu_panid();
 	readconnecttime();
+	ecu.idUpdateFlag = 0;
 	return 1;
 }
 
@@ -284,6 +285,16 @@ int init_all(inverter_info *inverter)
 	return 0;
 }
 
+int process_IDUpdate(void)
+{
+	if(1 == ecu.idUpdateFlag)
+	{
+		updateID();
+		ecu.idUpdateFlag = 0;
+	}
+	return 0;
+}
+
 int reset_inverter(inverter_info *inverter)
 {
 	int i;
@@ -366,7 +377,7 @@ void main_thread_entry(void* parameter)
 				delete_system_power_2_month_ago(ecu.broadcast_time);
 			}
 
-			optimizeFileSystem(300);
+			optimizeFileSystem(1000);
 			if(ecu.count>0)
 			{
 				protocol_APS18(inverter, ecu.broadcast_time);
@@ -375,7 +386,8 @@ void main_thread_entry(void* parameter)
 			}
 
 			//reset_inverter(inverter);											//重置每个逆变器		
-			//remote_update(inverter);
+			remote_update(inverter);
+			process_IDUpdate();
 			if((cur_time_hour>9)&&(1 == ecu.flag_ten_clock_getshortaddr))
 			{
 				get_inverter_shortaddress(inverter);

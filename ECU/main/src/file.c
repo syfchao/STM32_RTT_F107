@@ -669,7 +669,7 @@ void delete_system_power_2_month_ago(char *date_time)
 	if(dirp == RT_NULL)
 	{
 		printmsg(ECU_DBG_CLIENT,"delete_system_power_2_month_ago open directory error");
-		mkdir("/home/data/power",0);
+		mkdir("/home/record/power",0);
 	}
 	else
 	{
@@ -1430,12 +1430,12 @@ void initPath(void)
 	mkdir("/home/record/inversta",0x777);
 	mkdir("/home/record/power",0x777);
 	mkdir("/home/record/energy",0x777);
-	echo("/yuneng/area.con","NA");
+	//echo("/yuneng/area.con","NA");
 	echo("/yuneng/channel.con","0x10");
 	echo("/yuneng/limiteid.con","1");
 	echo("/yuneng/control.con","Timeout=10\nReport_Interval=15\nDomain=ecu.apsema.com\nIP=60.190.131.190\nPort1=8997\nPort2=8997\n");
 	//echo("/yuneng/control.con","Timeout=15\nReport_Interval=15\nDomain=eee.apsema.com\nIP=60.190.131.190\nPort1=8997\nPort2=8997\n");
-	echo("/yuneng/vernum.con","2\n");
+	//echo("/yuneng/vernum.con","3\n");
 	echo("/yuneng/ftpadd.con", "Domain=ecu.apsema.com\nIP=60.190.131.190\nPort=9219\nuser=zhyf\npassword=yuneng\n");
 	//echo("/yuneng/ftpadd.con", "IP=192.168.1.103\nPort=21\nuser=admin\npassword=admin\n");
 	echo("/yuneng/datacent.con","Domain=ecu.apsema.com\nIP=60.190.131.190\nPort1=8995\nPort2=8996\n");

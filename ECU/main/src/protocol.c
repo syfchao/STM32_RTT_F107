@@ -480,7 +480,7 @@ int protocol_APS18(struct inverter_info_t *firstinverter, char *sendcommanddatet
 				transpower(buff, inverter->opd);
 				strcat(buff, "END");
 			}
-			else //if((7 == inverter->model))	//YC550机型
+			else if((7 == inverter->model))	//YC600机型
 			{
 				strcat(buff, inverter->id);
 				strcat(buff, "07");
@@ -507,6 +507,43 @@ int protocol_APS18(struct inverter_info_t *firstinverter, char *sendcommanddatet
 				//transstatus(buff, inverter->statusb);
 				strcat(buff, "END");
 
+			}
+			else if((0x17 == inverter->model))
+			{
+				strcat(buff, inverter->id);
+				strcat(buff, "08");
+				transgridvolt(buff, inverter->gv);
+				transfrequency(buff, inverter->gf*10.0);
+				sprintf(wendu,"%03d",inverter->it+100);
+				strcat(buff,wendu);
+				transreactivepower(buff, inverter->reactive_power);
+				transactivepower(buff, inverter->active_power);
+				transsyscurgen(buff, inverter->output_energy);
+				strcat(buff, "1");
+				transdv(buff, inverter->dv*10.0);
+				transdi(buff, inverter->di*10.0);
+				transcurgen(buff, inverter->curgeneration*1000000.0);
+				transpower(buff, inverter->op);
+				
+				strcat(buff, "2");
+				transdv(buff, inverter->dvb*10.0);
+				transdi(buff, inverter->dib*10.0);
+				transcurgen(buff, inverter->curgenerationb*1000000.0);
+				transpower(buff, inverter->opb);
+				
+				strcat(buff, "3");
+				transdv(buff, inverter->dvc*10.0);
+				transdi(buff, inverter->dic*10.0);
+				transcurgen(buff, inverter->curgenerationc*1000000.0);
+				transpower(buff, inverter->opc);
+				
+				strcat(buff, "4");
+				transdv(buff, inverter->dvd*10.0);
+				transdi(buff, inverter->did*10.0);
+				transcurgen(buff, inverter->curgenerationd*1000000.0);
+				transpower(buff, inverter->opd);
+
+				strcat(buff, "END");
 			}
 
 		}
@@ -577,7 +614,7 @@ int saveevent(inverter_info *inverter, char *sendcommanddatatime)			//淇濆瓨绯荤
 	for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(inverter->id)); i++){
 		if(1 == inverter->inverterstatus.dataflag)
 		{
-			if(0 != strcmp(inverter->status_web, "0000000000000000000000000000000000000"))
+			if(0 != strcmp(inverter->status_web, "000000000000000000000000000000000000000000000000000"))
 			{
 				memset(event_buff, '\0', 200);
 			

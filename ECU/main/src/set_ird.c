@@ -64,7 +64,7 @@ int send_ird_command_single(int shortaddr, char value)		//单台设置逆变器i
 	printhexmsg(ECU_DBG_MAIN,"Set IRD to single", (char *)sendbuff, 13);
 
 	zb_shortaddr_cmd(shortaddr, (char *)sendbuff, 13);
-	rt_hw_s_delay(2);
+	rt_thread_delay(200);
 
 	return 0;
 }
@@ -97,7 +97,7 @@ int send_ird_command_all(char value)		//广播设置逆变器ird
 
 	printhexmsg(ECU_DBG_MAIN,"Set IRD to all", (char *)sendbuff, 13);
 	zb_broadcast_cmd((char *)sendbuff, 13);
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 	
 	return 0;
 }

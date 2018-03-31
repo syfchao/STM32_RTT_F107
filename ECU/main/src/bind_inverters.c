@@ -150,7 +150,7 @@ void send11order(char *inverterid,int count)
 	sendbuff[22]=(2*count)%256;
 	ZIGBEE_SERIAL.write(&ZIGBEE_SERIAL, 0,sendbuff, 21);
 	printhexmsg(ECU_DBG_MAIN,"Ready Change Inverter Panid (11order)", sendbuff, 23);
-	rt_hw_s_delay(1);
+	rt_thread_delay(100);
 }
 
 void send22order()
@@ -169,7 +169,7 @@ void send22order()
 	for(i=0;i<3;i++){
 		ZIGBEE_SERIAL.write(&ZIGBEE_SERIAL, 0,sendbuff, 15);
 		printhexmsg(ECU_DBG_MAIN,"Change Panid Now (22order)", sendbuff, 15);
-		rt_hw_s_delay(1);
+		rt_thread_delay(100);
 	}
 }
 
@@ -253,7 +253,7 @@ void bind_inverters()
 				if((curinverter->shortaddr == 0) && (curinverter->inverterstatus.bindflag == 0))
 				{
 					zb_change_inverter_channel_one(curinverter->id,ecu.channel);//所有逆变器设置成0xFFFF
-					rt_hw_s_delay(3);//zigbeeRecvMsg(recvbuff,5);
+					rt_thread_delay(300);//zigbeeRecvMsg(recvbuff,5);
 				}
 			}
 			
@@ -269,7 +269,7 @@ void bind_inverters()
 							if(rateOfProgress >= 64) rateOfProgress = 64;
 							break;
 						}
-						rt_hw_s_delay(2);
+						rt_thread_delay(200);
 					}
 				
 //					if(-1!=zigbeeRecvMsg(recvbuff,5))
@@ -323,11 +323,11 @@ void bind_inverters()
 		ecu.panid=0xFFFF;
 		rateOfProgress = 95;
 		send22order();
-		rt_hw_s_delay(10);
+		rt_thread_delay(1000);
 		ecu.panid=temppanid;
 		zb_change_ecu_panid();
 	}
-	rt_hw_s_delay(10);
+	rt_thread_delay(1000);
 	rateOfProgress = 100;
 	updateID();
 

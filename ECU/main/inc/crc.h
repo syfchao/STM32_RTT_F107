@@ -1,13 +1,13 @@
-#ifndef __CHECHDATA_H__
-#define __CHECHDATA_H__
+#ifndef __CRC_H__
+#define __CRC_H__
 /*****************************************************************************/
-/*  File      : checkdata.h                                                  */
+/*  File      : crc.h                                                        */
 /*****************************************************************************/
 /*  History:                                                                 */
 /*****************************************************************************/
 /*  Date       * Author          * Changes                                   */
 /*****************************************************************************/
-/*  2017-03-05 * Shengfeng Dong  * Creation of the file                      */
+/*  2018-03-15 * Shengfeng Dong  * Creation of the file                      */
 /*             *                 *                                           */
 /*****************************************************************************/
 
@@ -15,14 +15,13 @@
 /*  Include Files                                                            */
 /*****************************************************************************/
 #include "variation.h"
-#include "debug.h"
 
 /*****************************************************************************/
 /*  Function Declarations                                                    */
 /*****************************************************************************/
-int check_yc500(struct inverter_info_t *inverter);		//在解析函数的最后调用
-int check_yc1000(struct inverter_info_t *inverter);		//在解析函数的最后调用
-int check_qs1200(struct inverter_info_t *inverter);
-int check_optimizer_YC500(struct inverter_info_t *inverter);
+unsigned short UpdateCRC(unsigned short CRC_acc, unsigned char CRC_input);
+unsigned short crc_array(unsigned char *buff, int len);
+unsigned short crc_file(int crc_fd);
 
-#endif /*__CHECHDATA_H__*/
+
+#endif /*__REMOTE_UPDATE_H__*/

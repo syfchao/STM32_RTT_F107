@@ -402,7 +402,52 @@ void APP_Response_PowerGeneration(char mapping,inverter_info *inverter,int Vaild
 		
 	for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)
 	{
-		if((curinverter->model == 7))
+		if((curinverter->model == 0x17))
+		{
+			//UID
+			SendData[packlength++] = ((curinverter->id[0]-'0') << 4) + (curinverter->id[1]-'0');
+			SendData[packlength++] = ((curinverter->id[2]-'0') << 4) + (curinverter->id[3]-'0');
+			SendData[packlength++] = ((curinverter->id[4]-'0') << 4) + (curinverter->id[5]-'0');
+			SendData[packlength++] = ((curinverter->id[6]-'0') << 4) + (curinverter->id[7]-'0');
+			SendData[packlength++] = ((curinverter->id[8]-'0') << 4) + (curinverter->id[9]-'0');
+			SendData[packlength++] = ((curinverter->id[10]-'0') << 4)+ (curinverter->id[11]-'0');
+
+			SendData[packlength++] = (curinverter->inverterstatus.dataflag & 0x01);
+
+			//逆变器类型
+			SendData[packlength++] = '0';
+			SendData[packlength++] = '3';
+			
+			//电网频率
+			SendData[packlength++] = (int)(curinverter->gf * 10) / 256;
+			SendData[packlength++] = (int)(curinverter->gf * 10) % 256;
+
+			//机内温度
+			SendData[packlength++] = (curinverter->it + 100) /256;
+			SendData[packlength++] = (curinverter->it + 100) %256;		
+			
+			//逆变器功率  A 
+			SendData[packlength++] = curinverter->op / 256;
+			SendData[packlength++] = curinverter->op % 256;
+				
+			//电网电压    A
+			SendData[packlength++] = curinverter->gv / 256;
+			SendData[packlength++] = curinverter->gv % 256;
+			
+			//逆变器功率  B 
+			SendData[packlength++] = curinverter->opb / 256;
+			SendData[packlength++] = curinverter->opb % 256;
+
+			//逆变器功率  C 
+			SendData[packlength++] = curinverter->opc / 256;
+			SendData[packlength++] = curinverter->opc % 256;
+
+			//逆变器功率  D
+			SendData[packlength++] = curinverter->opd / 256;
+			SendData[packlength++] = curinverter->opd % 256;
+
+			
+		}else if((curinverter->model == 7))
 		{
 			//UID
 			SendData[packlength++] = ((curinverter->id[0]-'0') << 4) + (curinverter->id[1]-'0');

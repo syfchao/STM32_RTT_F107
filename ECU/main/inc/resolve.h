@@ -24,10 +24,12 @@
 int resolvedata_1000(char *data, struct inverter_info_t *inverter);
 int resolvedata_600(char *data, struct inverter_info_t *inverter);
 int resolvedata_600_new(char *data, struct inverter_info_t *inverter);
+int resolvedata_1200(char *data, struct inverter_info_t *inverter);
 
 int yc600_status(struct inverter_info_t *inverter);
 
 int yc1000_status(struct inverter_info_t *inverter);
+int qs1200_status(struct inverter_info_t *inverter);
 
 
 #endif /*__RESOLVE_H__*/

@@ -167,7 +167,7 @@ int resolvedata_1000(char *data, struct inverter_info_t *inverter)
 		inverter->opd = (int)(inverter->dvd*inverter->did/100.0);
 
 
-	for(i=0;i<37;i++)
+	for(i=0;i<44;i++)
 		inverter->status_web[i] = 0x30;
 	inverter->status_web[0]=(data[6]&0x01)+0x30;			//AC Frequency exceeding Range 1bit
 	inverter->status_web[1]=((data[6]>>1)&0x01)+0x30;		//AC Frequency under Range 1bit
@@ -374,7 +374,7 @@ int resolvedata_600(char *data, struct inverter_info_t *inverter)
 	printf("prtm=%d\n",inverter->preacctime);
 #endif
 #endif
-	for(i=0;i<37;i++)
+	for(i=0;i<44;i++)
 		inverter->status_web[i] = 0x30;
 	inverter->status_web[0]=((data[25]>>6)&0x01)+0x30;		//AC Frequency exceeding Range 1bit"浜ゆ祦棰戠巼澶珮"
 	inverter->status_web[1]=((data[25]>>7)&0x01)+0x30;			//AC Frequency under Range 1bit"浜ゆ祦棰戠巼澶綆";
@@ -572,7 +572,7 @@ int resolvedata_600_new(char *data, struct inverter_info_t *inverter)
 	printf("sm=%d dvb=%f dib=%f opb=%d gv=%d curaccgenb=%f reactive_power=%f active_power=%f cur_output_energy=%f\n",seconds,inverter->dvb,inverter->dib,inverter->opb,inverter->gv,inverter->curaccgenb,inverter->reactive_power,inverter->active_power,inverter->cur_output_energy);
 	printf("prtm=%d\n",inverter->preacctime);
 
-	for(i=0;i<37;i++)
+	for(i=0;i<44;i++)
 		inverter->status_web[i] = 0x30;
 	inverter->status_web[0]=((data[25]>>6)&0x01)+0x30;		//AC Frequency exceeding Range 1bit"浜ゆ祦棰戠巼澶珮"
 	inverter->status_web[1]=((data[25]>>7)&0x01)+0x30;			//AC Frequency under Range 1bit"浜ゆ祦棰戠巼澶綆";
@@ -683,6 +683,244 @@ int resolvedata_600_new(char *data, struct inverter_info_t *inverter)
 
 }
 
+int resolvedata_1200(char *data, struct inverter_info_t *inverter)
+{
+	char temp[2] = {'\0'};
+	int i, seconds=0;
+	float factor1 = 0;
+	float factor2 = 0;
+	//有功系数
+	if(data[47]==0x1F)
+	{
+		factor1 = 1;
+		factor2 = 0;
+	}
+	else if((data[47]>=11)&&(data[47]<=20))
+	{
+		factor1 = (data[47]-11)/10.0;
+		factor2 = sqrt(1-(factor1*factor1));
+	}
+	else if((data[47]>0)&&(data[47]<11))
+	{
+		factor2 = (data[47]-1)/10.0;
+		factor1 = sqrt(1-(factor2*factor2));
+	}
+	//温度
+	inverter->it = ((data[0]*256+data[1])*3300/4092-757)/2.85;
+	//电网频率
+	if((0==data[2])&&(0==data[3])&&(0==data[4]))								//防止空数据传过来导致主程序出错
+		inverter->gf = 0;
+	else
+	{
+		inverter->gf =50000000.0/(data[2]*256*256+data[3]*256+data[4]);
+	}
+	//累计时间
+	inverter->curacctime = data[20]*256 + data[21];
+
+	//电压
+	inverter->dvd = ((data[8]<<4) + (data[7] & 0xF0)) * 82.5 / 4096.0;
+	inverter->dvc = ((data[11]<<4) + (data[10] & 0xF0)) * 82.5 / 4096.0;
+	inverter->dvb = ((data[14]<<4) + (data[13] & 0xF0)) * 82.5 / 4096.0;
+	inverter->dv = ((data[17]<<4) + (data[16] & 0xF0)) * 82.5 / 4096.0;
+	//电流
+	inverter->did = ((data[7] & 0x0F) * 256 + data[6]) * 27.5 / 4096.0;
+	inverter->dic = ((data[10] & 0x0F) * 256 + data[9]) * 27.5 / 4096.0;
+	inverter->dib = ((data[13] & 0x0F) * 256 + data[12]) * 27.5 / 4096.0;
+	inverter->di = ((data[16] & 0x0F) * 256 + data[15]) * 27.5 / 4096.0;
+	//电网电压
+	inverter->gv = (data[18]*256+data[19])/1.33;
+	//累计电量
+	inverter->curaccgend = ((data[42]*256*10.095)*220+(data[43]*10.095)*220+(data[44]*256*256+data[45]*256+data[46])/1661900.0*220.0)/3600.0/1000.0;
+	inverter->curaccgenc = ((data[37]*256*10.095)*220+(data[38]*10.095)*220+(data[39]*256*256+data[40]*256+data[41])/1661900.0*220.0)/3600.0/1000.0;
+	inverter->curaccgenb = ((data[32]*256*10.095)*220+(data[33]*10.095)*220+(data[34]*256*256+data[35]*256+data[36])/1661900.0*220.0)/3600.0/1000.0;
+	inverter->curaccgen = ((data[27]*256*10.095)*220+(data[28]*10.095)*220+(data[29]*256*256+data[30]*256+data[31])/1661900.0*220.0)/3600.0/1000.0;
+	
+	//无功功率 暂时填0
+	inverter->reactive_power = 0;
+	//有功功率 暂时填0
+	inverter->active_power = 0;
+	//inverter->reactive_power = (factor2)*0.94*(inverter->dv*inverter->di+inverter->dvb*inverter->dib);
+	//inverter->active_power = (factor1)*0.94*(inverter->dv*inverter->di+inverter->dvb*inverter->dib);
+    inverter->cur_output_energy = (inverter->curaccgen+inverter->curaccgenb+inverter->curaccgenc+inverter->curaccgend)*0.94*data[47];
+
+
+	if((inverter->cur_output_energy >= inverter->pre_output_energy)&&(inverter->curacctime >= inverter->preacctime))
+	{
+		inverter->output_energy=inverter->cur_output_energy-inverter->pre_output_energy;
+	}
+	else
+	{
+		inverter->output_energy=inverter->cur_output_energy;
+	}
+	inverter->pre_output_energy=inverter->cur_output_energy;
+
+	if((inverter->curaccgen >= inverter->preaccgen)&&
+		(inverter->curaccgenb >= inverter->preaccgenb)&&
+		(inverter->curaccgenc >= inverter->preaccgenc)&&
+		(inverter->curaccgend >= inverter->preaccgend)&&
+		(inverter->curacctime >= inverter->preacctime))
+	{
+		seconds = inverter->curacctime - inverter->preacctime;
+		inverter->curgeneration = inverter->curaccgen - inverter->preaccgen;
+		inverter->curgenerationb = inverter->curaccgenb - inverter->preaccgenb;
+		inverter->curgenerationc = inverter->curaccgenc - inverter->preaccgenc;
+		inverter->curgenerationd = inverter->curaccgend - inverter->preaccgend;
+	}
+	else
+	{
+		seconds = inverter->curacctime;
+		inverter->curgeneration = inverter->curaccgen;
+		inverter->curgenerationb = inverter->curaccgenb;
+		inverter->curgenerationc = inverter->curaccgenc;
+		inverter->curgenerationd = inverter->curaccgend;
+	}
+
+	inverter->preacctime = inverter->curacctime;
+	inverter->preaccgen = inverter->curaccgen;
+	inverter->preaccgenb = inverter->curaccgenb;
+	inverter->preaccgenc = inverter->curaccgenc;
+	inverter->preaccgend = inverter->curaccgend;
+
+	if(0==seconds)//防止空数据传过来导致主程序出错
+	{
+		inverter->op = 0;
+		inverter->opb = 0;
+		inverter->opc= 0;
+		inverter->opd = 0;
+	}
+
+
+	if(inverter->curacctime > 600)		//防止早上起来功率爆点，所以在启动10分钟后才采用时间差的功率计算模式，ZK
+	{
+		inverter->op = inverter->curgeneration * 1000.0 * 3600.0 / seconds;
+		inverter->opb = inverter->curgenerationb * 1000.0 * 3600.0 / seconds;
+		inverter->opc = inverter->curgenerationc * 1000.0 * 3600.0 / seconds;
+		inverter->opd = inverter->curgenerationd * 1000.0 * 3600.0 / seconds;
+	}
+	else
+	{
+		inverter->op = (int)(inverter->dv*inverter->di);
+		inverter->opb = (int)(inverter->dvb*inverter->dib);
+		inverter->opc = (int)(inverter->dvc*inverter->dic);
+		inverter->opd = (int)(inverter->dvd*inverter->did);
+	}
+
+
+	if(inverter->op>360)
+		inverter->op = (int)(inverter->dv*inverter->di);
+	if(inverter->opb>360)
+		inverter->opb = (int)(inverter->dvb*inverter->dib);
+	if(inverter->opc>360)
+		inverter->opc = (int)(inverter->dvc*inverter->dic);
+	if(inverter->opd>360)
+		inverter->opd = (int)(inverter->dvb*inverter->did);
+
+	printf("tm=%d dv=%f  di=%f  op=%d  gv=%d curaccgen=%f reactive_power=%f active_power=%f cur_output_energy=%f\n",inverter->curacctime,inverter->dv,inverter->di,inverter->op,inverter->gv,inverter->curaccgen,inverter->reactive_power,inverter->active_power,inverter->cur_output_energy);
+	printf("sm=%d dvb=%f dib=%f opb=%d gv=%d curaccgenb=%f reactive_power=%f active_power=%f cur_output_energy=%f\n",seconds,inverter->dvb,inverter->dib,inverter->opb,inverter->gv,inverter->curaccgenb,inverter->reactive_power,inverter->active_power,inverter->cur_output_energy);
+	printf("dvc=%f dic=%f opc=%d curaccgenc=%f\n",inverter->dvc,inverter->dic,inverter->opc,inverter->curaccgenc);
+	printf("dvd=%f did=%f opd=%d curaccgend=%f\n",inverter->dvd,inverter->did,inverter->opd,inverter->curaccgend);
+	printf("prtm=%d\n",inverter->preacctime);
+
+	for(i=0;i<44;i++)
+		inverter->status_web[i] = 0x30;
+	inverter->status_web[0]='0';		//AC Frequency exceeding Range 1bit"交流频率太高"
+	inverter->status_web[1]='0';		//AC Frequency under Range 1bit"交流频率太低";
+	inverter->status_web[2]='0';//((data[25]>>5)&0x01)+0x30;//AC-A Voltage exceeding Range 1bit"A路交流电压太高
+	inverter->status_web[3]='0';//((data[25]>>4)&0x01)+0x30;//AC-A Voltage under Range 1bit"A路交流电压太低
+	inverter->status_web[4]='0';//((data[25]>>5)&0x01)+0x30;//B路交流电压太高
+	inverter->status_web[5]='0';//((data[25]>>4)&0x01)+0x30;//B路交流电压太低"
+	inverter->status_web[6]='0';//((data[25]>>5)&0x01)+0x30;//"C路交流电压太高"
+	inverter->status_web[7]='0';//((data[25]>>4)&0x01)+0x30;//"C路交流电压太低"
+
+	inverter->status_web[8]=((data[25]>>2)&0x01)+0x30;		//DC-A Voltage Too High 1bitA路直流电压太高	OK
+	inverter->status_web[9]=((data[25]>>3)&0x01)+0x30;		//DC-A Voltage Too Low 1bitA路直流电压太低	OK
+	inverter->status_web[10]=((data[25]>>4)&0x01)+0x30;		//DC-B Voltage Too High 1bitB路直流电压太高	OK
+	inverter->status_web[11]=((data[25]>>5)&0x01)+0x30;		//DC-B Voltage Too Low 1bitB路直流电压太低	OK
+//	inverter->status_web[12]=((data[24]>>4)&0x01)+0x30;		//
+//	inverter->status_web[13]=((data[24]>>5)&0x01)+0x30;		//
+//	inverter->status_web[14]=((data[24]>>6)&0x01)+0x30;		//
+//	inverter->status_web[15]=data[48]+0x30;					//gfdi状态
+	inverter->status_web[16]=((data[23]>>3)&0x01)+0x30;		 //Over Critical Temperature 1bit超出温度范围
+	inverter->status_web[17]=((data[23]>>1)&0x01)+0x30;		//GFDI"GFDI锁住"
+	inverter->status_web[18]=((data[23]>>2)&0x01)+0x30;		//Remote-shut"远程关闭"
+	inverter->status_web[19]=((data[23]>>4)&0x01)+0x30;		//AC-Disconnect"交流断开
+	inverter->status_web[21]=((data[24]>>3)&0x01)+0x30;		//"主动孤岛保护
+	inverter->status_web[22]=((data[24]>>4)&0x01)+0x30;		//"CP保护
+	inverter->status_web[23]='0';		//交流电压太高
+	inverter->status_web[24]='0';		//交流电压太低
+
+	inverter->status_web[25]=((data[23])&0x01)+0x30;		//十分钟平均保护
+	inverter->status_web[26]=((data[24]>>7)&0x01)+0x30;;		//母线欠压保护
+	inverter->status_web[27]=((data[24]>>5)&0x01)+0x30;;		//母线过压保护
+	inverter->status_web[28]=((data[24]>>6)&0x01)+0x30;;		//继电器故障保护
+	inverter->status_web[29]=((data[26])&0x01)+0x30;		//交流外围频率太高	OK
+	inverter->status_web[30]=((data[26]>>1)&0x01)+0x30;		//交流外围频率太低	OK
+	inverter->status_web[31]=((data[26]>>2)&0x01)+0x30;		//交流内围频率太高	OK
+	inverter->status_web[32]=((data[26]>>3)&0x01)+0x30;		//交流内围频率太低	OK
+	inverter->status_web[33]=((data[26]>>4)&0x01)+0x30;		//交流外围电压太高	OK
+	inverter->status_web[34]=((data[26]>>5)&0x01)+0x30;		//交流外围电压太低	OK
+	inverter->status_web[35]=((data[26]>>6)&0x01)+0x30;		//交流内围电压太高	OK
+	inverter->status_web[36]=((data[26]>>7)&0x01)+0x30;		//交流内围电压太低	OK
+	inverter->status_web[37]=((data[25])&0x01)+0x30;		//交流内内围电压太高OK
+	inverter->status_web[38]=((data[25]>>1)&0x01)+0x30;		//交流内内围电压太低OK
+	inverter->status_web[39]=((data[25]>>6)&0x01)+0x30;		//C路直流电压太高	OK
+	inverter->status_web[40]=((data[25]>>7)&0x01)+0x30;		//C路直流电压太低	OK
+	inverter->status_web[41]=((data[24])&0x01)+0x30;		//D路直流电压太高	OK
+	inverter->status_web[42]=((data[24]>>1)&0x01)+0x30;		//D路直流电压太高	OK
+	inverter->status_web[43]=((data[24]>>2)&0x01)+0x30;		//参数读取失败		OK
+
+	if('1'==inverter->status_web[19])
+	{
+		if(3==inverter->model)
+			inverter->gf = 50.0;
+		if(4==inverter->model)
+			inverter->gf = 60.0;
+		if(7==inverter->model)
+		{
+			if(ecu_type==1)
+				inverter->gf = 50;
+			else
+				inverter->gf = 60;
+		}
+		
+		if(0x17==inverter->model)
+		{
+			if(ecu_type==1)
+				inverter->gf = 50;
+			else
+				inverter->gf = 60;
+		}
+
+		inverter->gv=0;
+	}
+
+	temp[0] = inverter->status_web[17];
+	temp[1] = '\0';
+	if(inverter->inverterstatus.last_gfdi_flag != atoi(temp))
+		inverter->inverterstatus.gfdi_changed_flag = 1;
+	else
+		inverter->inverterstatus.gfdi_changed_flag = 0;
+	inverter->inverterstatus.last_gfdi_flag = (inverter->status_web[17]=='1')?1:0;
+	
+	temp[0] = inverter->status_web[18];
+	temp[1] = '\0';
+	if(inverter->inverterstatus.last_turn_on_off_flag != atoi(temp))
+		inverter->inverterstatus.turn_on_off_changed_flag = 1;
+	else
+		inverter->inverterstatus.turn_on_off_changed_flag = 0;
+	
+	inverter->inverterstatus.last_turn_on_off_flag = (inverter->status_web[18]=='1')?1:0;
+
+
+	check_qs1200(inverter);				//ZK
+
+	qs1200_status(inverter);
+
+	strcpy(inverter->last_report_time , ecu.broadcast_time);
+
+	return 1;
+
+}
 
 int yc600_status(struct inverter_info_t *inverter)
 {
@@ -802,4 +1040,82 @@ int yc1000_status(struct inverter_info_t *inverter)
 	}
 	return 0;
 }
+
+int qs1200_status(struct inverter_info_t *inverter)
+{
+	memset(inverter->status_ema, '\0', sizeof(inverter->status_ema));
+	inverter->status_send_flag=0;
+
+	if(('1' == inverter->status_web[19]) || ('1' == inverter->status_web[21]) || ('1' == inverter->status_web[22]) || 
+			('1' == inverter->status_web[29]) || ('1' == inverter->status_web[30]) || ('1' == inverter->status_web[31]) ||
+			('1' == inverter->status_web[32]) || ('1' == inverter->status_web[33]) || ('1' == inverter->status_web[34]) ||
+			('1' == inverter->status_web[35]) || ('1' == inverter->status_web[36]) || ('1' == inverter->status_web[37]) ||
+			('1' == inverter->status_web[38]) || ('1' == inverter->status_web[25]) ||  ('1' == inverter->status_web[26])||
+			('1' == inverter->status_web[27]) || ('1' == inverter->status_web[17]) || ('1' == inverter->status_web[28]) ||
+			('1' == inverter->status_web[18]) || ('1' == inverter->status_web[43]) || ('1' == inverter->status_web[16])
+			){
+		strcat(inverter->status_ema, inverter->id);
+		strcat(inverter->status_ema, "08");
+		if( ('1' == inverter->status_web[19]) || ('1' == inverter->status_web[21]) || ('1' == inverter->status_web[22]) || 
+			('1' == inverter->status_web[29]) || ('1' == inverter->status_web[30]) || ('1' == inverter->status_web[31]) ||
+			('1' == inverter->status_web[32]) || ('1' == inverter->status_web[33]) || ('1' == inverter->status_web[34]) ||
+			('1' == inverter->status_web[35]) || ('1' == inverter->status_web[36]) || ('1' == inverter->status_web[37]) ||
+			('1' == inverter->status_web[38]) || ('1' == inverter->status_web[25]) ||  ('1' == inverter->status_web[26])||
+			('1' == inverter->status_web[27])
+			)
+			strcat(inverter->status_ema, "1");		//AC保护
+		else
+			strcat(inverter->status_ema, "0");
+		if('1' == inverter->status_web[16])			//温度保护
+			strcat(inverter->status_ema, "1");
+		else
+			strcat(inverter->status_ema, "0");		
+		if(('1' == inverter->status_web[17])||('1' == inverter->status_web[28]))		//组件接地故障保护
+			strcat(inverter->status_ema, "1");
+		else
+			strcat(inverter->status_ema, "0");
+		if(('1' == inverter->status_web[18]) ||('1' == inverter->status_web[43]))			//控制状态保护
+			strcat(inverter->status_ema, "1");
+		else
+			strcat(inverter->status_ema, "0");
+
+		inverter->status_ema[18] = inverter->status_web[29];
+		inverter->status_ema[19] = inverter->status_web[30];
+		inverter->status_ema[20] = inverter->status_web[31];
+		inverter->status_ema[21] = inverter->status_web[32];
+		inverter->status_ema[22] = inverter->status_web[19];
+		inverter->status_ema[23] = inverter->status_web[22];
+		inverter->status_ema[24] = inverter->status_web[21];
+		inverter->status_ema[25] = inverter->status_web[16];
+		inverter->status_ema[26] = inverter->status_web[17];
+		inverter->status_ema[27] = inverter->status_web[18];
+		inverter->status_ema[28] = inverter->status_web[43];
+		
+		inverter->status_ema[29] = inverter->status_web[33];
+		inverter->status_ema[30] = inverter->status_web[34];
+		inverter->status_ema[31] = inverter->status_web[35];
+		inverter->status_ema[32] = inverter->status_web[36];
+		inverter->status_ema[33] = inverter->status_web[37];
+		inverter->status_ema[34] = inverter->status_web[38];
+		
+		inverter->status_ema[35] = inverter->status_web[25];
+		inverter->status_ema[36] = inverter->status_web[26];
+		inverter->status_ema[37] = inverter->status_web[27];
+		inverter->status_ema[38] = inverter->status_web[28];		
+		
+		inverter->status_ema[39] = '0';
+		inverter->status_ema[40] = '0';
+		inverter->status_ema[41] = '0';
+		inverter->status_ema[42] = '0';
+		inverter->status_ema[43] = '0';
+		inverter->status_ema[44] = '0';
+		inverter->status_ema[45] = '0';
+		inverter->status_ema[46] = '0';
+		strcat(inverter->status_ema, "END");
+
+		inverter->status_send_flag=1;
+	}
+	return 0;
+}
+
 

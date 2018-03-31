@@ -49,12 +49,12 @@ void usart485_init(unsigned int bound){
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;	//复用推挽输出
 	GPIO_Init(TX485_GPIO, &GPIO_InitStructure); 
    
-    	//485RX
+    //485RX
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;//浮空输入
 	GPIO_Init(GPIOD, &GPIO_InitStructure);  //初始化PD2
 	
-   	//USART TX 初始化设置
+   //USART TX 初始化设置
 	USART_InitStructure.USART_BaudRate = bound;//一般设置为115200;
 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;//字长为8位数据格式
 	USART_InitStructure.USART_StopBits = USART_StopBits_1;//一个停止位
@@ -91,7 +91,7 @@ void USART2_IRQHandler(void)                	//串口1中断服务程序
 {
 	if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
 	{
-		SEGGER_RTT_printf(0, "%c\n",USART_ReceiveData(USART2));
+		//SEGGER_RTT_printf(0, "%c\n",USART_ReceiveData(USART2));
 	}
 } 
 

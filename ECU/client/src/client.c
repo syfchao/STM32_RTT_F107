@@ -82,7 +82,7 @@ int clear_send_flag(char *readbuff)
 					}
 					else
 						print2msg(ECU_DBG_CLIENT,"Clear send flag into database", "0");
-					//rt_hw_s_delay(1);
+					//rt_thread_delay(100);
 				}
 			}
 		}
@@ -101,7 +101,7 @@ int update_send_flag(char *send_date_time)
 			print2msg(ECU_DBG_CLIENT,"Update send flag into database", "1");
 			break;
 		}
-		rt_hw_s_delay(1);
+		rt_thread_delay(100);
 	}
 
 	return 0;
@@ -304,7 +304,7 @@ int search_readflag(char *data,char * time, int *flag,char sendflag)
 										data[strlen(buff)-18] = '\n';
 										//print2msg(ECU_DBG_CLIENT,"search_readflag time",time);
 										//print2msg(ECU_DBG_CLIENT,"search_readflag data",data);
-										rt_hw_s_delay(1);
+										//rt_hw_s_delay(1);
 										while(NULL != fgets(buff,(MAXINVERTERCOUNT*RECORDLENGTH+RECORDTAIL+18),fp))	//再往下读数据，寻找是否还有要发送的数据
 										{
 											if(strlen(buff) > 18)
@@ -498,8 +498,8 @@ int preprocess()			//发送头信息到EMA,读取已经存在EMA的记录时间
 	char *readbuff = NULL;
 	char sendbuff[50] = {'\0'};
 
-	//if(0 == detection_resendflag2())		//	检测是否有resendflag='2'的记录
-		//return 0;
+	if(0 == detection_resendflag2())		//	检测是否有resendflag='2'的记录
+		return 0;
 	readbuff = malloc((4+99*14));
 	memset(readbuff,0x00,(4+99*14));
 	readbytes = 4+99*14;
@@ -623,8 +623,4 @@ void client_thread_entry(void* parameter)
 	}
 }
 
-#ifdef RT_USING_FINSH
-#include <finsh.h>
-FINSH_FUNCTION_EXPORT(preprocess ,preprocess)
-#endif
 

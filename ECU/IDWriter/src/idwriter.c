@@ -241,6 +241,8 @@ void idwrite_thread_entry(void* parameter)
 	int row;
 	char sendbuff[3];
 	char gettime[14]={'\0'};
+	char strportflag[2]={'\0'};
+	int portflag = 0;
 	int ret = 0;
 	
 	rt_thread_delay(START_TIME_IDWRITE * RT_TICK_PER_SECOND);
@@ -268,6 +270,10 @@ void idwrite_thread_entry(void* parameter)
 			print2msg(ECU_DBG_IDWRITE,"ECU id",ecu.id);
 			printdecmsg(ECU_DBG_IDWRITE,"length",strlen(ecu.id));
 			ecu.id[12] = '\0';
+			memcpy(strportflag,&ecu.id[11],1);
+			strportflag[1] = '\0';
+			portflag = atoi(strportflag)%2;
+			printf("portflag:%d\n",portflag);
 			
 			ret = 0;
 			if(InitWorkMode() < 0){
@@ -472,10 +478,3 @@ void idwrite_thread_entry(void* parameter)
 		closesocket(clientfd);
 	}
 }
-
-#ifdef RT_USING_FINSH
-#include <finsh.h>
-
-FINSH_FUNCTION_EXPORT(clearrecord, eg:clearrecord());
-#endif
-
