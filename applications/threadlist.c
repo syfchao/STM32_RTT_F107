@@ -552,14 +552,20 @@ void restartThread(threadType type)
 			break;
 #endif 
 
+
+#ifdef THREAD_PRIORITY_DRM
+		case TYPE_DRM:
+			rt_thread_detach(&DRM_thread);
+			/* init DRM thread */
+			result = rt_thread_init(&DRM_thread,"DRM",DRM_Connect_thread_entry,RT_NULL,(rt_uint8_t*)&DRM_stack[0],sizeof(DRM_stack),THREAD_PRIORITY_DRM,5);
+  			if (result == RT_EOK)	rt_thread_startup(&DRM_thread);
+			break;
+#endif 
+
 		default:
 			break;
 	}
 }
-
-
-
-
 
 //定时器启动
 rt_timer_t threadRestarttimer;	//线程重启定时器

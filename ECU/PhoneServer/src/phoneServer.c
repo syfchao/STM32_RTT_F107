@@ -331,7 +331,7 @@ void Phone_RegisterID(unsigned char * ID,int Data_Len,const char *recvbuffer) 		
 		
 		//÷ÿ∆Ùmainœﬂ≥Ã
 		restartThread(TYPE_MAIN);					
-					
+		restartThread(TYPE_DRM);		
 	}else
 	{
 		APP_Response_RegisterID(0x01,ID);

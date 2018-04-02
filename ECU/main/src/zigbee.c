@@ -955,7 +955,7 @@ int zb_turnon_inverter_broadcast(void)		//开机指令广播,OK
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
+	sendbuff[i++] = 0xA7;
 	sendbuff[i++] = 0xFE;
 	sendbuff[i++] = 0xFE;
 	
@@ -1006,7 +1006,7 @@ int zb_shutdown_broadcast(void)		//关机指令广播,OK
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
+	sendbuff[i++] = 0xA8;
 	sendbuff[i++] = 0xFE;
 	sendbuff[i++] = 0xFE;
 	

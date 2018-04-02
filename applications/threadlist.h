@@ -30,7 +30,8 @@ typedef enum THREADTYPE {
   TYPE_MAIN = 5,
   TYPE_CLIENT = 6,
   TYPE_CONTROL_CLIENT = 7,
-	TYPE_NTP = 8
+	TYPE_NTP = 8,
+	TYPE_DRM = 9
 }threadType;
 
 typedef struct IPConfig
@@ -127,11 +128,11 @@ typedef struct IPConfig
 #define START_TIME_UPDATE									10
 #define START_TIME_NTP										10
 #define START_TIME_IDWRITE									5
-#define START_TIME_MAIN										0			//90
+#define START_TIME_MAIN										5			//90
 #define START_TIME_CONTROL_CLIENT							20			//120
 #define START_TIME_CLIENT									60			//180
 #define START_TIME_PHONE_SERVER								20
-#define START_TIME_DRM									10
+#define START_TIME_DRM									5
 
 /*****************************************************************************/
 /*  Function Declarations                                                    */
