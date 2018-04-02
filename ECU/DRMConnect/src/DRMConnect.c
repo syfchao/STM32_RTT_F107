@@ -8,6 +8,7 @@
 #include "threadlist.h"
 #include "rthw.h"
 
+extern unsigned char initAllFlag;
 
 #define DRM0_IN1_RCC                    RCC_APB2Periph_GPIOB
 #define DRM0_IN1_GPIO                   GPIOB
@@ -74,22 +75,25 @@ void DRM_Connect_thread_entry(void* parameter)
 	
 	while(1)
 	{		
-		if((DRM0_IN1 != DRM0_IN2) && (status !=1))
+		if(1 == initAllFlag)		//只有组网成功后，才发送。
 		{
-			status = 1;
-			rt_hw_s_delay(1);
-			zb_turnon_inverter_broadcast();
-			printmsg(ECU_DBG_OTHER,"DRM connect all!\n");
+			if((DRM0_IN1 != DRM0_IN2) && (status !=1))
+			{
+				status = 1;
+				rt_hw_s_delay(1);
+				zb_turnon_inverter_broadcast();
+				printmsg(ECU_DBG_OTHER,"DRM connect all!\n");
+			}
+			
+			if((DRM0_IN1 == DRM0_IN2) && (status != 0))
+			{
+				status = 0;
+				rt_hw_s_delay(1);
+				zb_shutdown_broadcast();
+				printmsg(ECU_DBG_OTHER,"DRM disconnect all!\n");
+				rt_thread_delay(RT_TICK_PER_SECOND*10);
+			}
 		}
-		
-		if((DRM0_IN1 == DRM0_IN2) && (status != 0))
-		{
-			status = 0;
-			rt_hw_s_delay(1);
-			zb_shutdown_broadcast();
-			printmsg(ECU_DBG_OTHER,"DRM disconnect all!\n");
-			rt_thread_delay(RT_TICK_PER_SECOND*10);
-		}	
 		
 		rt_thread_delay(RT_TICK_PER_SECOND);
 	}

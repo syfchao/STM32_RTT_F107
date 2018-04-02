@@ -42,7 +42,7 @@
 inverter_info inverter[MAXINVERTERCOUNT];
 ecu_info ecu;
 extern unsigned char rateOfProgress;
-
+unsigned char initAllFlag = 0;
 
 /*****************************************************************************/
 /*  Function Implementations                                                 */
@@ -339,8 +339,10 @@ void main_thread_entry(void* parameter)
 	printf("\n---********** main.exe %s_%s.%s Internal:%d**********---\n", ECU_VERSION,MAJORVERSION,MINORVERSION,INTERNAL_TEST_VERSION);
 #endif
 #endif
+	initAllFlag = 0;
 	init_all(inverter);   //初始化所有逆变器
 	rt_thread_delay(RT_TICK_PER_SECOND * START_TIME_MAIN);
+	initAllFlag = 1;
 	printmsg(ECU_DBG_MAIN,"Start-------------------------------------------------");
 	
 	while(1)

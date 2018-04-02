@@ -369,7 +369,8 @@ void Phone_RegisterID(int Data_Len,const char *recvbuffer) 			//逆变器ID注册
 		}
 		
 		get_id_from_file(inverter);
-		
+
+		restartThread(TYPE_DRM);
 		//重启main线程
 		restartThread(TYPE_MAIN);					
 					
