@@ -90,7 +90,7 @@ void add_Phone_functions(void)
 	//pfun_Phone[P0027] = Phone_InverterGFDI;		//读取和设置GFDI控制
 	//pfun_Phone[P0028] = Phone_InverterIRD;		//读取和设置IRD控制标志
 	//pfun_Phone[P0029] = Phone_ACProtection;		//读取和设置保护参数
-	//pfun_Phone[P0030] = Phone_RSSI;			//获取逆变器信号强度
+	pfun_Phone[P0030] = Phone_RSSI;			//获取逆变器信号强度
 	//pfun_Phone[P0031] = Phone_ClearEnergy;		//清空数据库（清空历史发电量）
 	//pfun_Phone[P0032] = Phone_ProtectionStatus;		//查看逆变器保护状态
 
@@ -760,6 +760,29 @@ void Phone_ServerInfo(int Data_Len,const char *recvbuffer)
 	int ret = 0;
 	ECUServerInfo_t serverInfo;
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 24 ",(char *)recvbuffer);
+	if(!memcmp(&recvbuffer[13],ecu.id,12))
+	{
+		//判断是具体哪条命令
+		ret = ResolveServerInfo(recvbuffer,&serverInfo);
+		if(ret == 0)
+		{	
+			APP_Response_ServerInfo(0x00,&serverInfo);
+		}else
+		{
+			return;
+		}	
+	}else
+	{
+		APP_Response_ServerInfo(0x01,&serverInfo);
+	}
+	
+}
+
+//获取信号强度
+void Phone_RSSI(int Data_Len,const char *recvbuffer) 			
+{
+	int ret = 0;
+	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 30 ",(char *)recvbuffer);
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
 	{
 		//判断是具体哪条命令

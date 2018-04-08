@@ -92,9 +92,8 @@ void DRM_Connect_thread_entry(void* parameter)
 				zb_shutdown_broadcast();
 				printmsg(ECU_DBG_OTHER,"DRM disconnect all!\n");
 				rt_thread_delay(RT_TICK_PER_SECOND*10);
-			}
+			}	
 		}
-		
 		rt_thread_delay(RT_TICK_PER_SECOND);
 	}
 	

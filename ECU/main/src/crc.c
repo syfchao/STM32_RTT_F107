@@ -1,7 +1,7 @@
 /*
  * Created by zhyf
  * Created on 2016.07.06
- * Description: ???CRC????ECU-C?,?Sensor??????
+ * Description: 此版本CRC校验用于ECU-C上，与Sensor的单片机通信
  */
 
 #include <stdio.h>

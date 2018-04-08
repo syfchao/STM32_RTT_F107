@@ -19,6 +19,8 @@
 #include "myfile.h"
 #include "rtthread.h"
 #include "mycommand.h"
+#include "threadlist.h"
+#include "dfs_posix.h"
 
 /*********************************************************************
 upinv表格字段：
@@ -36,24 +38,26 @@ extern rt_mutex_t record_data_lock;
 /* 设置指定台数逆变器的升级标志 */
 int set_update_num(const char *msg, int num)
 {
-
 	int i, err_count = 0;
 	char inverter_id[13] = {'\0'};
 	char str[100] = {'\0'};
-	
-	for(i=0; i<num; i++)
-	{
-		//获取一台逆变器的ID号
-		strncpy(inverter_id, &msg[i*13], 12);
-			
-		//如果存在该逆变器数据则删除该记录
-		delete_line("/home/data/upinv","/home/data/upinv.t",inverter_id,12);
-		sprintf(str,"%s,,,1\n",inverter_id);
-		//插入数据
-		if(-1 == insert_line("/home/data/upinv",str))
+	int fd;
+	char updateNum[2] = {'\0'};
+	fd = open("/home/data/upinv", O_WRONLY  |O_TRUNC  | O_CREAT,0);
+	if (fd >= 0)
+	{		
+		for(i=0; i<num; i++)
 		{
-			err_count++;
-		}	
+			//获取一台逆变器的ID号
+			strncpy(inverter_id, &msg[i*13], 12);
+			updateNum[0] = msg[i*13 + 12];
+			updateNum[1] = '\0';
+			sprintf(str,"%s,,,%s\n",inverter_id,updateNum);
+			write(fd,str,strlen(str));
+		}
+
+		
+		close(fd);
 	}
 
 	return err_count;
@@ -87,7 +91,8 @@ int set_inverter_update(const char *recvbuffer, char *sendbuffer)
 				//升级指定逆变器，存入数据库
 				if(set_update_num(&recvbuffer[52], num) > 0)
 					ack_flag = DB_ERROR;
-				reboot_timer(10);
+				//reboot_timer(10);
+				restartThread(TYPE_UPDATE);
 			}
 			break;
 		default:
