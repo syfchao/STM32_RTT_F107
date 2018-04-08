@@ -42,6 +42,7 @@ int set_update_num(const char *msg, int num)
 	char inverter_id[13] = {'\0'};
 	char str[100] = {'\0'};
 	int fd;
+	char updateNum[2] = {'\0'};
 	fd = open("/home/data/upinv", O_WRONLY  | O_CREAT,0);
 	if (fd >= 0)
 	{		
@@ -49,8 +50,9 @@ int set_update_num(const char *msg, int num)
 		{
 			//获取一台逆变器的ID号
 			strncpy(inverter_id, &msg[i*13], 12);
-				
-			sprintf(str,"%s,,,1\n",inverter_id);
+			updateNum[0] = msg[i*13 + 12];
+			updateNum[1] = '\0';
+			sprintf(str,"%s,,,%s\n",inverter_id,updateNum);
 			write(fd,str,strlen(str));
 		}
 
