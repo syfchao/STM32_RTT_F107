@@ -281,7 +281,7 @@ int get_recovery_time_from_inverter(inverter_info *inverter)
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
+	sendbuff[i++] = 0xE3;
 	sendbuff[i++] = 0xFE;
 	sendbuff[i++] = 0xFE;
 

@@ -1293,11 +1293,13 @@ int remote_update(inverter_info *firstinverter)
 							curinverter->updating_time=acquire_time();
 							printdecmsg(ECU_DBG_MAIN,"shutdown time",curinverter->updating_time);
 						}
-						//continue;
+						continue;
 					}
 					else
 					{	
-						if(compareTime(acquire_time() ,curinverter->updating_time,1800))
+						//每次判断30分钟是否到，到了升级
+						printdecmsg(ECU_DBG_MAIN,"shutdown time",curinverter->updating_time);
+						if(!compareTime(acquire_time() ,curinverter->updating_time,1800))
 							continue;
 						else curinverter->inverterstatus.updating=0;
 					}
@@ -1354,6 +1356,10 @@ int remote_update(inverter_info *firstinverter)
 				sprintf(inverter_result, "%s%02d%06d%sEND", curinverter->id, remoteTypeRet,curinverter->version, Time);
 				save_inverter_parameters_result2(curinverter->id, 147,inverter_result);
 
+				for(j=0;j<3;j++){
+					if(1==zb_boot_single(curinverter))		//升级结束后发送开机命令
+						break;
+				}
 #if 0
 				memset(inverter_result,0x00,128);
 				sprintf(inverter_result, "%s,%02d,%06d,%s,%s\n", curinverter->id, remoteTypeRet,curinverter->version, pre_Time,Time);

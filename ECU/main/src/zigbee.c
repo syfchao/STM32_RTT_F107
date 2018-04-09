@@ -968,7 +968,7 @@ int zb_query_protect_parameter(inverter_info *inverter, char *protect_data_DD_re
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
+	sendbuff[i++] = 0xE3;
 	sendbuff[i++] = 0xFE;
 	sendbuff[i++] = 0xFE;
 	
@@ -1028,7 +1028,7 @@ int zb_boot_single(inverter_info *inverter)		//¿ª»úÖ¸Áîµ¥²¥,OK
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
+	sendbuff[i++] = 0xC7;
 	sendbuff[i++] = 0xFE;
 	sendbuff[i++] = 0xFE;
 	printmsg(ECU_DBG_MAIN,"zb_boot_single");
@@ -1079,7 +1079,7 @@ int zb_shutdown_single(inverter_info *inverter)		//¹Ø»úÖ¸Áîµ¥²¥,OK
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
+	sendbuff[i++] = 0xC8;
 	sendbuff[i++] = 0xFE;
 	sendbuff[i++] = 0xFE;
 	printmsg(ECU_DBG_MAIN,"zb_shutdown_single");
@@ -1107,7 +1107,7 @@ int zb_boot_waitingtime_single(inverter_info *inverter)		//¿ª»úµÈ´ýÊ±¼äÆô¶¯¿ØÖÆµ
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
+	sendbuff[i++] = 0xD3;
 	sendbuff[i++] = 0xFE;
 	sendbuff[i++] = 0xFE;
 
@@ -1131,7 +1131,7 @@ int zb_clear_gfdi(inverter_info *inverter)		//Çå³ýGFDI,OK
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
+	sendbuff[i++] = 0xB5;
 	sendbuff[i++] = 0xFE;
 	sendbuff[i++] = 0xFE;
 	
@@ -1158,7 +1158,7 @@ int zb_ipp_broadcast(void)		//IPP¹ã²¥
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
+	sendbuff[i++] = 0xAB;
 	sendbuff[i++] = 0xFE;
 	sendbuff[i++] = 0xFE;
 
@@ -1181,7 +1181,7 @@ int zb_ipp_single(inverter_info *inverter)		//IPPµ¥²¥
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
 	sendbuff[i++] = 0x00;
-	sendbuff[i++] = 0x00;
+	sendbuff[i++] = 0xCB;
 	sendbuff[i++] = 0xFE;
 	sendbuff[i++] = 0xFE;
 

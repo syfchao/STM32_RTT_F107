@@ -784,19 +784,11 @@ void Phone_RSSI(int Data_Len,const char *recvbuffer)
 	int ret = 0;
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 30 ",(char *)recvbuffer);
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
-	{
-		//判断是具体哪条命令
-		ret = ResolveServerInfo(recvbuffer,&serverInfo);
-		if(ret == 0)
-		{	
-			APP_Response_ServerInfo(0x00,&serverInfo);
-		}else
-		{
-			return;
-		}	
+	{	
+		APP_Response_RSSI(0x00);
 	}else
 	{
-		APP_Response_ServerInfo(0x01,&serverInfo);
+		APP_Response_RSSI(0x01);
 	}
 	
 }

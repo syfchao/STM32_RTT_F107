@@ -1166,3 +1166,49 @@ void APP_Response_ServerInfo(char mapping,ECUServerInfo_t *serverInfo)
 	}		
 	SendToSocketA(SendData ,packlength);
 }
+
+
+void APP_Response_RSSI(char mapping)
+{
+	int packlength = 0,index = 0;
+	inverter_info *curinverter = inverter;
+	char uid[7];
+	memset(SendData,'\0',MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER);
+	
+	if(mapping == 0x00)
+	{
+		sprintf(SendData,"APS110015003000");
+		packlength = 15;
+		for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)
+		{
+			
+			uid[0] = (curinverter->id[0] - '0')*16+(curinverter->id[1] - '0');
+			uid[1] = (curinverter->id[2] - '0')*16+(curinverter->id[3] - '0');
+			uid[2] = (curinverter->id[4] - '0')*16+(curinverter->id[5] - '0');
+			uid[3] = (curinverter->id[6] - '0')*16+(curinverter->id[7] - '0');
+			uid[4] = (curinverter->id[8] - '0')*16+(curinverter->id[9] - '0');
+			uid[5] = (curinverter->id[10] - '0')*16+(curinverter->id[11] - '0');
+			memcpy(&SendData[packlength],uid,6);	
+			packlength += 6;
+			SendData[packlength++] = curinverter->shortaddr/256;
+			SendData[packlength++] = curinverter->shortaddr%256;
+		}
+		
+		SendData[packlength++] = 'E';
+		SendData[packlength++] = 'N';
+		SendData[packlength++] = 'D';
+		
+		SendData[5] = (packlength/1000) + '0';
+		SendData[6] = ((packlength/100)%10) + '0';
+		SendData[7] = ((packlength/10)%10) + '0';
+		SendData[8] = ((packlength)%10) + '0';
+		SendData[packlength++] = '\n';
+		
+	}else
+	{
+		sprintf(SendData,"APS110015003001\n");
+		packlength = 16;
+	}		
+	SendToSocketA(SendData ,packlength);
+}
+

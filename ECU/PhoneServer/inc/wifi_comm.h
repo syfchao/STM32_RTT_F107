@@ -66,4 +66,6 @@ void APP_Response_GetFunctionStatusInfo(char mapping);
 //24 命令回应
 void APP_Response_ServerInfo(char mapping,ECUServerInfo_t *serverInfo);
 
+// 30 命令回应
+void APP_Response_RSSI(char mapping);
 #endif /*__WIFI_COMM_H__*/
