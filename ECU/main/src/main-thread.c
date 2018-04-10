@@ -132,7 +132,6 @@ int init_inverter(inverter_info *inverter)
 		curinverter->inverterstatus.updating=0;
 		curinverter->raduis=0;
 	}
-
 	get_ecu_type();		//ªÒ»°ECU–Õ∫≈
 	
 
