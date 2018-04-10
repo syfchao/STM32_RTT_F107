@@ -981,14 +981,14 @@ int set_protection_paras_one(inverter_info *firstinverter)
 		model = 0;
 		bb_or_b1_single = 0;
 		shortaddr = get_value_flag_one(inverter_id, para_name, value);
+		clear_flag_one(inverter_id,para_name);	
+		
 		if(shortaddr == -1)
 		{
 			break;
 		}else if(shortaddr==0){
-			clear_flag_one(inverter_id, para_name);
 			continue;
 		}
-		
 		curinverter = firstinverter;
 		for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++,curinverter++)
 		{
@@ -1008,7 +1008,7 @@ int set_protection_paras_one(inverter_info *firstinverter)
 			{
 				if((model==7)||(model==0x17)){
 					data = (int)(atof(value) * 1.3277);
-					if(bb_or_b1_single==0)
+					if((bb_or_b1_single==0)&&(model==7))
 						continue;
 					else if((bb_or_b1_single==2)||(model==0x17))
 						data = (int)(atof(value) * 1.33);
@@ -1016,13 +1016,12 @@ int set_protection_paras_one(inverter_info *firstinverter)
 				}
 				else
 					set_undervoltage_fast_yc1000_one(shortaddr, value);
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("over_voltage_fast", para_name))
 			{
 				if((model==7)||(model==0x17)){
 					data = (int)(atof(value) * 1.3277);
-					if(bb_or_b1_single==0)
+					if((bb_or_b1_single==0)&&(model==7))
 						continue;
 					else if((bb_or_b1_single==2)||(model==0x17))
 						data = (int)(atof(value) * 1.33);
@@ -1030,13 +1029,12 @@ int set_protection_paras_one(inverter_info *firstinverter)
 				}
 				else
 					set_overvoltage_fast_yc1000_one(shortaddr, value);
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("under_voltage_stage_2", para_name))
 			{
 				if((model==7)||(model==0x17)){
 					data = (int)(atof(value) * 1.3277);
-					if(bb_or_b1_single==0)
+					if((bb_or_b1_single==0)&&(model==7))
 						continue;
 					else if((bb_or_b1_single==2)||(model==0x17))
 						data = (int)(atof(value) * 1.33);
@@ -1047,13 +1045,12 @@ int set_protection_paras_one(inverter_info *firstinverter)
 					set_undervoltage_slow_yc1000_one_5(shortaddr, value, inverter_id);
 					set_under_voltage_stage_3_yc1000_one(shortaddr,value);
 				}
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("over_voltage_slow", para_name))
 			{
 				if((model==7)||(model==0x17)){
 					data = (int)(atof(value) * 1.3277);
-					if(bb_or_b1_single==0)
+					if((bb_or_b1_single==0)&&(model==7))
 						continue;
 					else if((bb_or_b1_single==2)||(model==23))
 						data = (int)(atof(value) * 1.33);
@@ -1063,7 +1060,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 					set_overvoltage_slow_yc1000_one(shortaddr, value);
 					set_overvoltage_slow_yc1000_one_5(shortaddr, value, inverter_id);
 				}
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("under_frequency_fast", para_name))
 			{
@@ -1074,7 +1070,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 				}
 				else
 					set_underfrequency_fast_yc1000_one(shortaddr, value);
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("over_frequency_fast", para_name))
 			{
@@ -1085,7 +1080,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 				}
 				else
 					set_overfrequency_fast_yc1000_one(shortaddr, value);
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("under_frequency_slow", para_name))
 			{
@@ -1097,7 +1091,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 					set_underfrequency_slow_yc1000_one(shortaddr, value);
 					set_underfrequency_slow_yc1000_one_5(shortaddr, value, inverter_id);
 				}
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("over_frequency_slow", para_name))
 			{
@@ -1109,7 +1102,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 					set_overfrequency_slow_yc1000_one(shortaddr, value);
 					set_overfrequency_slow_yc1000_one_5(shortaddr, value, inverter_id);
 				}
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("voltage_triptime_fast", para_name))
 			{
@@ -1119,7 +1111,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 				}
 				else
 					set_voltage_triptime_fast_yc1000_one(shortaddr, value);
-					clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("voltage_triptime_slow", para_name))
 			{
@@ -1130,7 +1121,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 				}
 				else
 					set_voltage_triptime_slow_yc1000_one(shortaddr, value);
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("frequency_triptime_fast", para_name))
 			{
@@ -1140,7 +1130,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 				}
 				else
 					set_frequency_triptime_fast_yc1000_one(shortaddr, value);
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("frequency_triptime_slow", para_name))
 			{
@@ -1150,7 +1139,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 				}
 				else
 					set_frequency_triptime_slow_yc1000_one(shortaddr, value);
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("grid_recovery_time", para_name))
 			{
@@ -1162,7 +1150,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 					set_grid_recovery_time_yc1000_one(shortaddr,value);
 					set_grid_recovery_time_yc1000_one_5(shortaddr, value, inverter_id);
 				}
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("regulated_dc_working_point", para_name))
 			{
@@ -1172,13 +1159,12 @@ int set_protection_paras_one(inverter_info *firstinverter)
 				}
 				else
 					set_regulated_dc_working_point_yc1000_one(shortaddr,value);
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("under_voltage_slow", para_name))
 			{
 				if((model==7)||(model==0x17)){
 					data = (int)(atof(value) * 1.3277);
-					if(bb_or_b1_single==0)
+					if((bb_or_b1_single==0)&&(model==7))
 						continue;
 					else if((bb_or_b1_single==2)||(model==0x17))
 						data = (int)(atof(value) * 1.33);
@@ -1186,7 +1172,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 				}
 				else
 					set_under_voltage_stage_2_yc1000_one(shortaddr,value);
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("voltage_3_clearance_time", para_name))
 			{
@@ -1196,7 +1181,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 				}
 				else
 					set_voltage_3_clearance_time_yc1000_one(shortaddr,value);
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("start_time", para_name))
 			{
@@ -1206,7 +1190,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 				}
 				else
 					set_start_time_yc1000_one(shortaddr, value);
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("active_antiisland_time", para_name))
 			{
@@ -1216,7 +1199,6 @@ int set_protection_paras_one(inverter_info *firstinverter)
 				}
 				else
 					set_active_antiisland_time_yc1000_one(shortaddr, value);
-				clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 			}
 			else if(!strcmp("power_factor", para_name))
 			{
@@ -1235,16 +1217,14 @@ int set_protection_paras_one(inverter_info *firstinverter)
 						set_protection_yc600_one(shortaddr,0x4B,0,0);
 					else ;
 						//set_voltage_3_clearance_time_yc1000(value);
-					clear_flag_one(inverter_id,para_name);					//设置后清除数据库中参数的设置标志
 				}
 			}
 			else 
-				clear_flag_one(inverter_id,para_name);
+				;
 		
 		}
 		
 	}
-
 	curinverter = firstinverter;
 	for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++,curinverter++)
 	{
