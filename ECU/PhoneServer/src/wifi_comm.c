@@ -1167,8 +1167,34 @@ void APP_Response_ServerInfo(char mapping,ECUServerInfo_t *serverInfo)
 	SendToSocketA(SendData ,packlength);
 }
 
+void APP_Response_InverterOnOff(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer)
+{
+	int packlength = 0,index = 0;
+	inverter_info *curinverter = inverter;
+	char uid[7];
+	memset(SendData,'\0',MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER);
 
-void APP_Response_RSSI(char mapping)
+	if(mapping == 0x00)
+	{
+		if(1 == cmd)
+		{	//获取当前的开关机状态
+			
+		}else if(2 == cmd)
+		{	//设置开关机状态(广播)
+		
+		}else if(3 == cmd)
+		{	//设置开关机状态(单播)
+		
+		}
+	}else
+	{
+		sprintf(SendData,"APS1100170026%02d01\n",cmd);
+		packlength = 18;
+	}
+	SendToSocketA(SendData ,packlength);
+}
+
+void APP_Response_RSSI(char mapping,inverter_info *inverter)
 {
 	int packlength = 0,index = 0;
 	inverter_info *curinverter = inverter;
@@ -1190,8 +1216,7 @@ void APP_Response_RSSI(char mapping)
 			uid[5] = (curinverter->id[10] - '0')*16+(curinverter->id[11] - '0');
 			memcpy(&SendData[packlength],uid,6);	
 			packlength += 6;
-			SendData[packlength++] = curinverter->shortaddr/256;
-			SendData[packlength++] = curinverter->shortaddr%256;
+			SendData[packlength++] = curinverter->signalstrength;
 		}
 		
 		SendData[packlength++] = 'E';
@@ -1209,6 +1234,25 @@ void APP_Response_RSSI(char mapping)
 		sprintf(SendData,"APS110015003001\n");
 		packlength = 16;
 	}		
+	SendToSocketA(SendData ,packlength);
+}
+
+
+void APP_Response_ClearEnergy(char mapping)
+{
+	int packlength = 0;
+	memset(SendData,'\0',MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER);	
+	if(mapping == 0x00)
+	{
+		sprintf(SendData,"APS110015003100\n");
+		packlength = 16;
+		
+	}else
+	{
+		sprintf(SendData,"APS110015003101\n");
+		packlength = 16;
+	}	
+	
 	SendToSocketA(SendData ,packlength);
 }
 

@@ -86,12 +86,12 @@ void add_Phone_functions(void)
 	pfun_Phone[P0023] = Phone_GetFunctionStatusInfo;
 	pfun_Phone[P0024] = Phone_ServerInfo;				//查看和设置相关服务器信息
 	//pfun_Phone[P0025] = Phone_InverterMaxPower;		//读取和设置最大保护功率值
-	//pfun_Phone[P0026] = Phone_InverterOnOff;		//读取和设置逆变器开关机
+	pfun_Phone[P0026] = Phone_InverterOnOff;		//读取和设置逆变器开关机
 	//pfun_Phone[P0027] = Phone_InverterGFDI;		//读取和设置GFDI控制
 	//pfun_Phone[P0028] = Phone_InverterIRD;		//读取和设置IRD控制标志
 	//pfun_Phone[P0029] = Phone_ACProtection;		//读取和设置保护参数
 	pfun_Phone[P0030] = Phone_RSSI;			//获取逆变器信号强度
-	//pfun_Phone[P0031] = Phone_ClearEnergy;		//清空数据库（清空历史发电量）
+	pfun_Phone[P0031] = Phone_ClearEnergy;		//清空数据库（清空历史发电量）
 	//pfun_Phone[P0032] = Phone_ProtectionStatus;		//查看逆变器保护状态
 
 }
@@ -778,19 +778,69 @@ void Phone_ServerInfo(int Data_Len,const char *recvbuffer)
 	
 }
 
+void Phone_InverterOnOff(int Data_Len,const char *recvbuffer) 
+{
+	int cmd = 0;
+	char cmd_str[3] = {'\0'};
+	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 26 ",(char *)recvbuffer);
+	memcpy(cmd_str,&recvbuffer[25],2);
+	cmd_str[2] = '\0';
+	cmd = atoi(cmd_str);
+	
+	if(!memcmp(&recvbuffer[13],ecu.id,12))
+	{
+		if(1 == cmd)
+		{	
+			APP_Response_InverterOnOff(0x00,cmd,inverter,recvbuffer);
+		}else if(2 == cmd)
+		{
+			APP_Response_InverterOnOff(0x00,cmd,inverter,recvbuffer);
+		}else if(3 == cmd)
+		{
+			APP_Response_InverterOnOff(0x00,cmd,inverter,recvbuffer);
+		}
+		{
+			return;
+		}	
+	}else
+	{
+		APP_Response_InverterOnOff(0x01,cmd,inverter,recvbuffer);
+	}
+
+}
+
+
 //获取信号强度
 void Phone_RSSI(int Data_Len,const char *recvbuffer) 			
 {
-	int ret = 0;
 	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 30 ",(char *)recvbuffer);
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
 	{	
-		APP_Response_RSSI(0x00);
+		APP_Response_RSSI(0x00,inverter);
 	}else
 	{
-		APP_Response_RSSI(0x01);
+		APP_Response_RSSI(0x01,inverter);
 	}
 	
+}
+
+//清空历史发电量
+void Phone_ClearEnergy(int Data_Len,const char *recvbuffer) 
+{
+	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 31 ",(char *)recvbuffer);
+	if(!memcmp(&recvbuffer[13],ecu.id,12))
+	{	
+		//删除历史发电量
+		echo("/home/data/ltpower","0.000000");
+		rm_dir("/home/record/ENERGY");
+		rm_dir("/home/record/POWER");
+		ecu.life_energy = 0;
+		ecu.today_energy = 0;
+		APP_Response_ClearEnergy(0x00);
+	}else
+	{
+		APP_Response_ClearEnergy(0x01);
+	}
 }
 
 

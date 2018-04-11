@@ -65,7 +65,11 @@ void APP_Response_GetECUAPList(char mapping,char *list);
 void APP_Response_GetFunctionStatusInfo(char mapping);
 //24 命令回应
 void APP_Response_ServerInfo(char mapping,ECUServerInfo_t *serverInfo);
+//26 命令回应
+void APP_Response_InverterOnOff(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer);
 
 // 30 命令回应
-void APP_Response_RSSI(char mapping);
+void APP_Response_RSSI(char mapping,inverter_info *inverter);
+// 31 命令回应
+void APP_Response_ClearEnergy(char mapping);
 #endif /*__WIFI_COMM_H__*/

@@ -174,6 +174,7 @@ int get_ecu_type()
 {
 	int fd;
 	char version[13] = {'\0'};
+	ecu_type = 1;
 	fd = open("/YUNENG/AREA.CON", O_RDONLY, 0);
 	if (fd >= 0)
 	{
@@ -186,11 +187,10 @@ int get_ecu_type()
 			ecu_type = 2;
 		else
 			ecu_type = 1;
-		//printdecmsg(ECU_DBG_MAIN,"ecu_type",ecu_type);
 		//print2msg(ECU_DBG_MAIN,"version",version);
 		close(fd);
 	}
-	
+	printdecmsg(ECU_DBG_MAIN,"ecu_type",ecu_type);
 	return 0;
 }
 

@@ -194,7 +194,7 @@ int save_ac_protection_num(const char *msg, int num)
 			for(j=0; j<PRO_NAME_NUM; j++)
 			{
 				if(pro_flag[j] == 1){
-					sprintf(str,"%s,%s,%f,1\n",inverter_id, pro_name[j], pro_value[j]);
+					sprintf(str,"%s,%s,%.2f,1\n",inverter_id, pro_name[j], pro_value[j]);
 					if(write(fd,str,strlen(str)) <= 0)
 					{
 						err_count++;

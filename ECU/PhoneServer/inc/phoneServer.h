@@ -73,6 +73,14 @@ void Phone_SetECUAPInfo(int Data_Len,const char *recvbuffer);
 void Phone_ListECUAPInfo(int Data_Len,const char *recvbuffer); 
 void Phone_GetFunctionStatusInfo(int Data_Len,const char *recvbuffer);
 void Phone_ServerInfo(int Data_Len,const char *recvbuffer);
+
+//读取和设置逆变器开关
+void Phone_InverterOnOff(int Data_Len,const char *recvbuffer) ;
+
+//获取信号强度
+void Phone_RSSI(int Data_Len,const char *recvbuffer) ;
+//清空历史发电量
+void Phone_ClearEnergy(int Data_Len,const char *recvbuffer); 
 //Phone Server线程
 void phone_server_thread_entry(void* parameter);
 

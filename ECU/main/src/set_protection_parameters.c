@@ -999,7 +999,7 @@ int clear_flag(char *para_name)					//设置后清除数据库中参数的设置标志
 		//将所在行分裂
 		splitString(data,splitdata);
 		memset(data,0x00,200);
-		sprintf(data,"%s,%d,,0\n",para_name,atoi(splitdata[1]));
+		sprintf(data,"%s,%.2f,,0\n",para_name,atof(splitdata[1]));
 
 		//删除para_name所在行
 		delete_line("/home/data/setpropa","/home/data/setpropa.t",para_name,strlen(para_name));
@@ -1090,12 +1090,12 @@ int set_protection_paras(inverter_info *firstinverter)
 	
 	while(1 == get_value_flag(para_name, value))
 	{
+		clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		data=0;
 		count_sum++;
 		if((yc600==1)&&(yc1000==1))
 		{
 			count_sum = 0;
-			clear_flag(para_name);
 			continue;
 		}
 		
@@ -1117,7 +1117,6 @@ int set_protection_paras(inverter_info *firstinverter)
 					set_protection_yc600(0x51,data,2);
 				}
 			}
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("over_voltage_fast", para_name))
 		{
@@ -1137,7 +1136,6 @@ int set_protection_paras(inverter_info *firstinverter)
 					set_protection_yc600(0x52,data,2);
 				}
 			}
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("under_voltage_stage_2", para_name))
 		{
@@ -1161,7 +1159,6 @@ int set_protection_paras(inverter_info *firstinverter)
 					set_protection_yc600(0x73,data,2);
 				}
 			}
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("over_voltage_slow", para_name))
 		{
@@ -1184,7 +1181,6 @@ int set_protection_paras(inverter_info *firstinverter)
 					set_protection_yc600(0x54,data,2);
 				}
 			}
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("under_frequency_fast", para_name))
 		{
@@ -1193,7 +1189,6 @@ int set_protection_paras(inverter_info *firstinverter)
 				set_protection_yc600(0x58,data,3);
 			else if(yc1000==1)
 				set_underfrequency_fast_yc1000(value);
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("over_frequency_fast", para_name))
 		{
@@ -1202,7 +1197,6 @@ int set_protection_paras(inverter_info *firstinverter)
 				set_protection_yc600(0x57,data,3);
 			else if(yc1000==1)
 				set_overfrequency_fast_yc1000(value);
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("under_frequency_slow", para_name))
 		{
@@ -1214,7 +1208,6 @@ int set_protection_paras(inverter_info *firstinverter)
 				set_underfrequency_slow_yc1000(value);
 				set_underfrequency_slow_yc1000_5(value);
 			}
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("over_frequency_slow", para_name))
 		{
@@ -1226,7 +1219,6 @@ int set_protection_paras(inverter_info *firstinverter)
 				set_overfrequency_slow_yc1000(value);
 				set_overfrequency_slow_yc1000_5(value);
 			}
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("voltage_triptime_fast", para_name))
 		{
@@ -1235,7 +1227,6 @@ int set_protection_paras(inverter_info *firstinverter)
 				set_protection_yc600(0x55,data,2);
 			else if(yc1000==1)
 				set_voltage_triptime_fast_yc1000(value);
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("voltage_triptime_slow", para_name))
 		{
@@ -1244,7 +1235,6 @@ int set_protection_paras(inverter_info *firstinverter)
 				set_protection_yc600(0x56,data,2);
 			else if(yc1000==1)
 				set_voltage_triptime_slow_yc1000(value);
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("frequency_triptime_fast", para_name))
 		{
@@ -1253,7 +1243,6 @@ int set_protection_paras(inverter_info *firstinverter)
 				set_protection_yc600(0x5B,data,2);
 			else if(yc1000==1)
 				set_frequency_triptime_fast_yc1000(value);
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("frequency_triptime_slow", para_name))
 		{
@@ -1262,7 +1251,6 @@ int set_protection_paras(inverter_info *firstinverter)
 				set_protection_yc600(0x5C,data,2);
 			else if(yc1000==1)
 				set_frequency_triptime_slow_yc1000(value);
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("grid_recovery_time", para_name))
 		{
@@ -1274,7 +1262,6 @@ int set_protection_paras(inverter_info *firstinverter)
 				set_grid_recovery_time_yc1000(value);
 				set_grid_recovery_time_yc1000_5(value);
 			}
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("regulated_dc_working_point", para_name))
 		{
@@ -1283,7 +1270,6 @@ int set_protection_paras(inverter_info *firstinverter)
 				set_protection_yc600(0x50,data,2);
 			else if(yc1000==1)
 				set_regulated_dc_working_point_yc1000(value);
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("under_voltage_slow", para_name))
 		{
@@ -1303,7 +1289,6 @@ int set_protection_paras(inverter_info *firstinverter)
 					set_protection_yc600(0x5E,data,2);
 				}
 			}
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("voltage_3_clearance_time", para_name))
 		{
@@ -1312,7 +1297,6 @@ int set_protection_paras(inverter_info *firstinverter)
 				set_protection_yc600(0x5F,data,2);
 			else if(yc1000==1)
 				set_voltage_3_clearance_time_yc1000(value);
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("start_time", para_name))
 		{
@@ -1321,14 +1305,12 @@ int set_protection_paras(inverter_info *firstinverter)
 				set_protection_yc600(0x3D,data,2);
 			else if(yc1000==1)
 				set_start_time_yc1000(value);
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if(!strcmp("power_factor", para_name))
 		{
 			data=(int)(atof(value));
 			set_protection_yc600(0x3F,data,1);
 //			set_voltage_3_clearance_time_yc1000(value);
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else if((!strcmp("relay_protect", para_name)))
 		{
@@ -1349,11 +1331,9 @@ int set_protection_paras(inverter_info *firstinverter)
 				set_protection_yc600(0x4E,data,1);
 			else if(yc1000==1)
 				set_active_antiisland_time_yc1000(value);
-			clear_flag(para_name);					//设置后清除数据库中参数的设置标志
 		}
 		else
 		{
-			clear_flag(para_name);
 			break;
 		}
 	}
@@ -1462,7 +1442,7 @@ int resolve_protection_paras_YC600(inverter_info *inverter, char *readbuff, int 
 
 		delete_line("/home/data/proparas","/home/data/proparas.t",inverter->id,12);
 		//id, under_voltage_fast, over_voltage_fast, under_voltage_slow, over_voltage_slow, under_frequency_fast, over_frequency_fast, under_frequency_slow, over_frequency_slow, voltage_triptime_fast, voltage_triptime_slow, frequency_triptime_fast, frequency_triptime_slow, grid_recovery_time, regulated_dc_working_point, under_voltage_stage_2, voltage_3_clearance_time, start_time, power_factor,relay_protect,active_antiisland_time
-		sprintf(data, "%s,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%f,%d,%f,%f\n", inverter->id, under_voltage_fast, over_voltage_fast, under_voltage_slow, over_voltage_slow, under_frequency_fast, over_frequency_fast, under_frequency_slow, over_frequency_slow, voltage_triptime_fast, voltage_triptime_slow, frequency_triptime_fast, frequency_triptime_slow, grid_recovery_time, regulated_dc_working_point, under_voltage_stage_2, voltage_3_clearance_time, start_time, power_factor, relay_protect, active_antiisland_time);
+		sprintf(data, "%s,%d,%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%.2f,%.2f,%d,%.2f,%.2f\n", inverter->id, under_voltage_fast, over_voltage_fast, under_voltage_slow, over_voltage_slow, under_frequency_fast, over_frequency_fast, under_frequency_slow, over_frequency_slow, voltage_triptime_fast, voltage_triptime_slow, frequency_triptime_fast, frequency_triptime_slow, grid_recovery_time, regulated_dc_working_point, under_voltage_stage_2, voltage_3_clearance_time, start_time, power_factor, relay_protect, active_antiisland_time);
 		for(i=0; i<3; i++)
 		{
 			if(1 == insert_line("/home/data/proparas",data))
@@ -1609,7 +1589,7 @@ int resolve_protection_paras_YC1000(inverter_info *inverter, char *readbuff, int
 
 		delete_line("/home/data/proparas","/home/data/proparas.t",inverter->id,12);
 		//id, under_voltage_fast, over_voltage_fast, under_voltage_slow, over_voltage_slow, under_frequency_fast, over_frequency_fast, under_frequency_slow, over_frequency_slow, voltage_triptime_fast, voltage_triptime_slow, frequency_triptime_fast, frequency_triptime_slow, grid_recovery_time, regulated_dc_working_point, under_voltage_stage_2, voltage_3_clearance_time, start_time, power_factor,relay_protect,active_antiisland_time
-		sprintf(data, "%s,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%f,%d,,,%f\n", inverter->id, under_voltage_fast, over_voltage_fast, under_voltage_slow, over_voltage_slow, under_frequency_fast, over_frequency_fast, under_frequency_slow, over_frequency_slow, voltage_triptime_fast, voltage_triptime_slow, frequency_triptime_fast, frequency_triptime_slow, grid_recovery_time, regulated_dc_working_point, under_voltage_stage_2, voltage_3_clearance_time, start_time, active_antiisland_time);
+		sprintf(data, "%s,%d,%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%d,%.2f,%d,,,%.2f\n", inverter->id, under_voltage_fast, over_voltage_fast, under_voltage_slow, over_voltage_slow, under_frequency_fast, over_frequency_fast, under_frequency_slow, over_frequency_slow, voltage_triptime_fast, voltage_triptime_slow, frequency_triptime_fast, frequency_triptime_slow, grid_recovery_time, regulated_dc_working_point, under_voltage_stage_2, voltage_3_clearance_time, start_time, active_antiisland_time);
 		for(i=0; i<3; i++)
 		{
 			if(1 == insert_line("/home/data/proparas",data))
@@ -1682,7 +1662,7 @@ int resolve_protection_paras5(inverter_info *inverter, char *readbuff, int size)
 		grid_recovery_time = readbuff[14+3]*256 + readbuff[15+3];
 
 
-		sprintf(data, "%s,,,,%d,%d,,,%f,%f,,,,,%d,,,,,,,\n)",
+		sprintf(data, "%s,,,,%d,%d,,,%.2f,%.2f,,,,,%d,,,,,,,\n)",
 				inverter->id,
 				under_voltage_slow,
 				over_voltage_slow,
