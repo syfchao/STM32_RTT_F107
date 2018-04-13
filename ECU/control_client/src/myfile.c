@@ -269,7 +269,7 @@ int read_line(char* filename,char *linedata,char* compareData,int len)
   fin=fopen(filename,"r");
 	if(fin == NULL)
 	{
-		print2msg(ECU_DBG_OTHER,"read_line failure2",filename);
+		//print2msg(ECU_DBG_OTHER,"read_line failure2",filename);
     return -1;
 	}
 	

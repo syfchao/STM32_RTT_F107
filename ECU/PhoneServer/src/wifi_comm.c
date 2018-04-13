@@ -8,10 +8,13 @@
 #include "usart5.h"
 #include "stdlib.h"
 #include "threadlist.h"
+#include "dfs_posix.h"
+
 
 extern ecu_info ecu;
 static char SendData[MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER] = {'\0'};
 extern unsigned char rateOfProgress;
+extern unsigned char processAllFlag;
 
 int phone_add_inverter(int num,const char *uidstring)
 {
@@ -286,6 +289,151 @@ int Save_Server(ECUServerInfo_t *serverInfo)
 	
 	return 0;
 }
+
+void phone_turnOnOff_single(const char *recvbuffer,int length)
+{
+	int num = 0,index = 0;
+	char buff[20] = {'\0'};
+	int fd = 0;
+	fd = open("/home/data/turnonof", O_WRONLY | O_TRUNC| O_CREAT,0);
+	num = (length - 33)/7;
+	if(fd >= 0)
+	{
+		for(index = 0;index < num;index++)
+		{
+			sprintf(buff,"%02x%02x%02x%02x%02x%02x,%c\n",recvbuffer[0+index*7],recvbuffer[1+index*7],recvbuffer[2+index*7],recvbuffer[3+index*7],recvbuffer[4+index*7],recvbuffer[5+index*7],(recvbuffer[6+index*7]+1));
+			printf("%s\n",buff);
+			write(fd,buff,strlen(buff));
+		}
+		close(fd);
+	}
+	
+	
+}
+
+
+void phone_GFDI_single(const char *recvbuffer,int length)
+{
+	int num = 0,index = 0;
+	char buff[20] = {'\0'};
+	int fd = 0;
+	fd = open("/home/data/clrgfdi", O_WRONLY | O_TRUNC| O_CREAT,0);
+	num = (length - 33)/7;
+	if(fd >= 0)
+	{
+		for(index = 0;index < num;index++)
+		{
+			sprintf(buff,"%02x%02x%02x%02x%02x%02x,%c\n",recvbuffer[0+index*7],recvbuffer[1+index*7],recvbuffer[2+index*7],recvbuffer[3+index*7],recvbuffer[4+index*7],recvbuffer[5+index*7],recvbuffer[6+index*7]);
+			printf("%s\n",buff);
+			write(fd,buff,strlen(buff));
+		}
+		close(fd);
+	}
+	
+	
+}
+
+
+void phone_MaxPower_ALL(inverter_info *inverter,unsigned short maxPower)
+{
+	int index = 0;
+	char buff[50] = {'\0'};
+	inverter_info *curinverter = inverter;
+	int fd = 0;
+	fd = open("/home/data/power", O_WRONLY | O_TRUNC| O_CREAT,0);
+	
+	if(fd >= 0)
+	{
+		for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)
+		{
+			sprintf(buff,"%s,%3d,,,,1\n",curinverter->id,maxPower);
+			printf("%s\n",buff);
+			write(fd,buff,strlen(buff));
+		}
+		close(fd);
+	}
+	
+	
+}
+
+void phone_MaxPower_single(const char *recvbuffer,int length)
+{
+	int num = 0,index = 0;
+	char buff[50] = {'\0'};
+	int fd = 0;
+	fd = open("/home/data/power", O_WRONLY | O_TRUNC| O_CREAT,0);
+	num = (length - 33)/8;
+	if(fd >= 0)
+	{
+		for(index = 0;index < num;index++)
+		{
+			sprintf(buff,"%02x%02x%02x%02x%02x%02x,%03d,,,,1\n",recvbuffer[0+index*8],recvbuffer[1+index*8],recvbuffer[2+index*8],recvbuffer[3+index*8],recvbuffer[4+index*8],recvbuffer[5+index*8],(recvbuffer[6+index*8]*256+recvbuffer[7+index*8]));
+			printf("%s\n",buff);
+			write(fd,buff,strlen(buff));
+		}
+		close(fd);
+	}
+	
+	
+}
+
+void phone_getMaxPower(char *buff,int* length)
+{
+	FILE *fp;
+	char data[200];
+	char splitdata[6][32];
+	char inv_buff[11] = { '\0' };
+	int index = 0,limitedpower = 0,limitedresult = 0;
+	*length = 0;
+	fp = fopen("/home/data/power", "r");
+	if(fp)
+	{
+		memset(data,0x00,200);
+		
+		while(NULL != fgets(data,200,fp))
+		{
+			memset(splitdata,0x00,6*32);
+			splitString(data,splitdata);
+			limitedpower = atoi(splitdata[1]);
+			limitedresult = atoi(splitdata[2]);
+			inv_buff[0] = ((splitdata[0][0] - '0') << 4) + (splitdata[0][1] - '0');
+			inv_buff[1] = ((splitdata[0][2] - '0') << 4) + (splitdata[0][3] - '0');
+			inv_buff[2] = ((splitdata[0][4] - '0') << 4) + (splitdata[0][5] - '0');
+			inv_buff[3] = ((splitdata[0][6] - '0') << 4) + (splitdata[0][7] - '0');
+			inv_buff[4] = ((splitdata[0][8] - '0') << 4) + (splitdata[0][9] - '0');
+			inv_buff[5] = ((splitdata[0][10] - '0') << 4) + (splitdata[0][11] - '0');
+			
+			if(0 != limitedpower)
+			{
+				inv_buff[6] = limitedpower/256;
+				inv_buff[7] = limitedpower%256; 
+			}else
+			{
+				inv_buff[6] = 0xff;
+				inv_buff[7] = 0xff; 
+			}
+
+			if(0 != limitedresult)
+			{
+				inv_buff[8] = limitedresult/256;
+				inv_buff[9] = limitedresult%256; 
+			}else
+			{
+				inv_buff[8] = 0xff;
+				inv_buff[9] = 0xff; 
+			}
+			
+			memcpy(&buff[index*10],inv_buff,10);
+			*length+=10;
+			index++;
+			
+		}
+		fclose(fp);
+	}
+	
+	
+}
+
 
 //01 COMMAND_BASEINFO 					//获取基本信息请求
 void APP_Response_BaseInfo(stBaseInfo baseInfo)
@@ -1167,25 +1315,100 @@ void APP_Response_ServerInfo(char mapping,ECUServerInfo_t *serverInfo)
 	SendToSocketA(SendData ,packlength);
 }
 
-void APP_Response_InverterOnOff(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer)
+
+void APP_Response_InverterMaxPower(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer,int length)
 {
-	int packlength = 0,index = 0;
+	int packlength = 0,index = 0,i = 0,total=0,flag = 0;
+	unsigned short maxPower = 0;
 	inverter_info *curinverter = inverter;
-	char uid[7];
+	unsigned char UID[7] = {'\0'};
+	
 	memset(SendData,'\0',MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER);
 
 	if(mapping == 0x00)
 	{
 		if(1 == cmd)
-		{	//获取当前的开关机状态
+		{
+			char * MaxPowerList = NULL;
+			int length = 0;
+			MaxPowerList = malloc(1300);
+			memset(MaxPowerList,0x00,1300);
+			//读取实际最大功率值
+			//从文件系统中读取功率值
+			phone_getMaxPower(MaxPowerList,&length);
+			total = length /10;
+			for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)
+			{
+				flag = 0;	//未从文件读取到
+				UID[0] = ((curinverter->id[0]-'0') << 4) + (curinverter->id[1]-'0');
+				UID[1] = ((curinverter->id[2]-'0') << 4) + (curinverter->id[3]-'0');
+				UID[2] = ((curinverter->id[4]-'0') << 4) + (curinverter->id[5]-'0');
+				UID[3] = ((curinverter->id[6]-'0') << 4) + (curinverter->id[7]-'0');
+				UID[4] = ((curinverter->id[8]-'0') << 4) + (curinverter->id[9]-'0');
+				UID[5] = ((curinverter->id[10]-'0') << 4)+ (curinverter->id[11]-'0');
+
+				for(i = 0;i<total;i++)
+				{
+					if(!memcmp(UID,&MaxPowerList[i*10],6))
+					{
+						flag = 1;
+						break;
+					}
+				}
+				
+				if(0 == flag)
+				{
+					memcpy(&MaxPowerList[length],UID,6);
+					MaxPowerList[length+6] = 0xff;
+					MaxPowerList[length+7] = 0xff;
+					MaxPowerList[length+8] = 0xff;
+					MaxPowerList[length+9] = 0xff;
+					length+=10;
+					total++;
+				}
+				
+			}
+			sprintf(SendData,"APS11000000250100");
+			packlength = 17;
+			memcpy(&SendData[packlength],MaxPowerList,length);
+			packlength += length;
+			SendData[packlength++] = 'E';
+			SendData[packlength++] = 'N';
+			SendData[packlength++] = 'D';
 			
+			SendData[5] = (packlength/1000) + '0';
+			SendData[6] = ((packlength/100)%10) + '0';
+			SendData[7] = ((packlength/10)%10) + '0';
+			SendData[8] = ((packlength)%10) + '0';
+			SendData[packlength++] = '\n';
+			free(MaxPowerList);
+			MaxPowerList = NULL;
 		}else if(2 == cmd)
-		{	//设置开关机状态(广播)
-		
+		{	//设置最大功率值(广播)
+			maxPower = recvbuffer[30]*256 + recvbuffer[31];
+			printf("maxPower:%d\n",maxPower);
+			phone_MaxPower_ALL(inverter,maxPower);
+			processAllFlag = 1;
+			sprintf(SendData,"APS11002000250200END\n");
+			packlength = 21;
 		}else if(3 == cmd)
-		{	//设置开关机状态(单播)
-		
+		{	//设置最大功率值(单播)
+			phone_MaxPower_single(&recvbuffer[30],length);
+			processAllFlag = 1;
+			sprintf(SendData,"APS11002000250300END\n");
+			packlength = 21;
 		}
+		else if(4 == cmd)
+		{	//下发读取命令
+			echo("/tmp/maxpower.con","ALL");
+			processAllFlag = 1;
+			sprintf(SendData,"APS11002000250400END\n");
+			packlength = 21;
+		}
+
+		
+
+		
 	}else
 	{
 		sprintf(SendData,"APS1100170026%02d01\n",cmd);
@@ -1193,6 +1416,259 @@ void APP_Response_InverterOnOff(char mapping,int cmd,inverter_info *inverter,con
 	}
 	SendToSocketA(SendData ,packlength);
 }
+
+
+void APP_Response_InverterOnOff(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer,int length)
+{
+	int packlength = 0,index = 0;
+	inverter_info *curinverter = inverter;
+	char turnOnOff;
+	memset(SendData,'\0',MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER);
+
+	if(mapping == 0x00)
+	{
+		if(1 == cmd)
+		{
+			//还没到第一次获取数据
+			if(ecu.had_data_broadcast_time[0] == '\0')
+			{
+				sprintf(SendData,"APS11002000260100END\n");
+				packlength = 21;
+				SendToSocketA(SendData ,packlength);
+				return ;
+			}
+			//获取当前的开关机状态
+			sprintf(SendData,"APS11000000260100");
+			packlength = 17;
+			for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)
+			{
+				SendData[packlength++] = ((curinverter->id[0]-'0') << 4) + (curinverter->id[1]-'0');
+				SendData[packlength++] = ((curinverter->id[2]-'0') << 4) + (curinverter->id[3]-'0');
+				SendData[packlength++] = ((curinverter->id[4]-'0') << 4) + (curinverter->id[5]-'0');
+				SendData[packlength++] = ((curinverter->id[6]-'0') << 4) + (curinverter->id[7]-'0');
+				SendData[packlength++] = ((curinverter->id[8]-'0') << 4) + (curinverter->id[9]-'0');
+				SendData[packlength++] = ((curinverter->id[10]-'0') << 4)+ (curinverter->id[11]-'0');
+
+				if((curinverter->inverterstatus.dataflag & 0x01))
+				{
+					SendData[packlength++] = curinverter->status_web[18];
+				}
+				else
+				{
+					SendData[packlength++] = '2';
+				}
+
+			}
+			
+			SendData[packlength++] = 'E';
+			SendData[packlength++] = 'N';
+			SendData[packlength++] = 'D';
+			
+			SendData[5] = (packlength/1000) + '0';
+			SendData[6] = ((packlength/100)%10) + '0';
+			SendData[7] = ((packlength/10)%10) + '0';
+			SendData[8] = ((packlength)%10) + '0';
+			SendData[packlength++] = '\n';
+		}else if(2 == cmd)
+		{	//设置开关机状态(广播)
+			turnOnOff = recvbuffer[30];
+			printf("turnOnOff:%c\n",turnOnOff);
+			if('0' == turnOnOff)
+			{	//开机
+				echo("/tmp/connect.con","connect all");
+			}else
+			{	//关机
+				echo("/tmp/connect.con","disconnect all");
+			}
+			processAllFlag = 1;
+			sprintf(SendData,"APS11002000260200END\n");
+			packlength = 21;
+		}else if(3 == cmd)
+		{	//设置开关机状态(单播)
+			phone_turnOnOff_single(&recvbuffer[30],length);
+			processAllFlag = 1;
+			sprintf(SendData,"APS11002000260300END\n");
+			packlength = 21;
+		}
+
+
+		
+	}else
+	{
+		sprintf(SendData,"APS1100170026%02d01\n",cmd);
+		packlength = 18;
+	}
+	SendToSocketA(SendData ,packlength);
+}
+
+
+void APP_Response_InverterGFDI(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer,int length)
+{
+	int packlength = 0,index = 0;
+	inverter_info *curinverter = inverter;
+	memset(SendData,'\0',MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER);
+
+	if(mapping == 0x00)
+	{
+		if(1 == cmd)
+		{
+			//还没到第一次获取数据
+			if(ecu.had_data_broadcast_time[0] == '\0')
+			{
+				sprintf(SendData,"APS11002000270100END\n");
+				packlength = 21;
+				SendToSocketA(SendData ,packlength);
+				return ;
+			}
+			//获取当前的开关机状态
+			sprintf(SendData,"APS11000000270100");
+			packlength = 17;
+			for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)
+			{
+				SendData[packlength++] = ((curinverter->id[0]-'0') << 4) + (curinverter->id[1]-'0');
+				SendData[packlength++] = ((curinverter->id[2]-'0') << 4) + (curinverter->id[3]-'0');
+				SendData[packlength++] = ((curinverter->id[4]-'0') << 4) + (curinverter->id[5]-'0');
+				SendData[packlength++] = ((curinverter->id[6]-'0') << 4) + (curinverter->id[7]-'0');
+				SendData[packlength++] = ((curinverter->id[8]-'0') << 4) + (curinverter->id[9]-'0');
+				SendData[packlength++] = ((curinverter->id[10]-'0') << 4)+ (curinverter->id[11]-'0');
+
+				if((curinverter->inverterstatus.dataflag & 0x01))
+				{
+					SendData[packlength++] = curinverter->status_web[17];
+				}
+				else
+				{
+					SendData[packlength++] = '2';
+				}
+
+			}
+			
+			SendData[packlength++] = 'E';
+			SendData[packlength++] = 'N';
+			SendData[packlength++] = 'D';
+			
+			SendData[5] = (packlength/1000) + '0';
+			SendData[6] = ((packlength/100)%10) + '0';
+			SendData[7] = ((packlength/10)%10) + '0';
+			SendData[8] = ((packlength)%10) + '0';
+			SendData[packlength++] = '\n';
+		}else if(2 == cmd)
+		{	//设置开关机状态(单播)
+			phone_GFDI_single(&recvbuffer[30],length);
+			processAllFlag = 1;
+			sprintf(SendData,"APS11002000270200END\n");
+			packlength = 21;
+		}
+
+	}else
+	{
+		sprintf(SendData,"APS1100170026%02d01\n",cmd);
+		packlength = 18;
+	}
+	SendToSocketA(SendData ,packlength);
+}
+
+void APP_Response_InverterIRD(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer,int length)
+{
+	int packlength = 0,index = 0,i = 0,total=0,flag = 0;
+	unsigned short maxPower = 0;
+	inverter_info *curinverter = inverter;
+	unsigned char UID[7] = {'\0'};
+	
+	memset(SendData,'\0',MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER);
+
+	if(mapping == 0x00)
+	{
+		if(1 == cmd)
+		{
+			char * MaxPowerList = NULL;
+			int length = 0;
+			MaxPowerList = malloc(1300);
+			memset(MaxPowerList,0x00,1300);
+			//读取实际最大功率值
+			//从文件系统中读取功率值
+			phone_getMaxPower(MaxPowerList,&length);
+			total = length /10;
+			for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)
+			{
+				flag = 0;	//未从文件读取到
+				UID[0] = ((curinverter->id[0]-'0') << 4) + (curinverter->id[1]-'0');
+				UID[1] = ((curinverter->id[2]-'0') << 4) + (curinverter->id[3]-'0');
+				UID[2] = ((curinverter->id[4]-'0') << 4) + (curinverter->id[5]-'0');
+				UID[3] = ((curinverter->id[6]-'0') << 4) + (curinverter->id[7]-'0');
+				UID[4] = ((curinverter->id[8]-'0') << 4) + (curinverter->id[9]-'0');
+				UID[5] = ((curinverter->id[10]-'0') << 4)+ (curinverter->id[11]-'0');
+
+				for(i = 0;i<total;i++)
+				{
+					if(!memcmp(UID,&MaxPowerList[i*10],6))
+					{
+						flag = 1;
+						break;
+					}
+				}
+				
+				if(0 == flag)
+				{
+					memcpy(&MaxPowerList[length],UID,6);
+					MaxPowerList[length+6] = 0xff;
+					MaxPowerList[length+7] = 0xff;
+					MaxPowerList[length+8] = 0xff;
+					MaxPowerList[length+9] = 0xff;
+					length+=10;
+					total++;
+				}
+				
+			}
+			sprintf(SendData,"APS11000000250100");
+			packlength = 17;
+			memcpy(&SendData[packlength],MaxPowerList,length);
+			packlength += length;
+			SendData[packlength++] = 'E';
+			SendData[packlength++] = 'N';
+			SendData[packlength++] = 'D';
+			
+			SendData[5] = (packlength/1000) + '0';
+			SendData[6] = ((packlength/100)%10) + '0';
+			SendData[7] = ((packlength/10)%10) + '0';
+			SendData[8] = ((packlength)%10) + '0';
+			SendData[packlength++] = '\n';
+			free(MaxPowerList);
+			MaxPowerList = NULL;
+		}else if(2 == cmd)
+		{	//设置最大功率值(广播)
+			maxPower = recvbuffer[30]*256 + recvbuffer[31];
+			printf("maxPower:%d\n",maxPower);
+			phone_MaxPower_ALL(inverter,maxPower);
+			processAllFlag = 1;
+			sprintf(SendData,"APS11002000250200END\n");
+			packlength = 21;
+		}else if(3 == cmd)
+		{	//设置最大功率值(单播)
+			phone_MaxPower_single(&recvbuffer[30],length);
+			processAllFlag = 1;
+			sprintf(SendData,"APS11002000250300END\n");
+			packlength = 21;
+		}
+		else if(4 == cmd)
+		{	//下发读取命令
+			echo("/tmp/maxpower.con","ALL");
+			processAllFlag = 1;
+			sprintf(SendData,"APS11002000250400END\n");
+			packlength = 21;
+		}
+
+		
+
+		
+	}else
+	{
+		sprintf(SendData,"APS1100170026%02d01\n",cmd);
+		packlength = 18;
+	}
+	SendToSocketA(SendData ,packlength);
+}
+
 
 void APP_Response_RSSI(char mapping,inverter_info *inverter)
 {

@@ -981,14 +981,14 @@ int set_protection_paras_one(inverter_info *firstinverter)
 		model = 0;
 		bb_or_b1_single = 0;
 		shortaddr = get_value_flag_one(inverter_id, para_name, value);
-		clear_flag_one(inverter_id,para_name);	
-		
 		if(shortaddr == -1)
 		{
 			break;
 		}else if(shortaddr==0){
+			clear_flag_one(inverter_id,para_name);
 			continue;
 		}
+		clear_flag_one(inverter_id,para_name);	
 		curinverter = firstinverter;
 		for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++,curinverter++)
 		{

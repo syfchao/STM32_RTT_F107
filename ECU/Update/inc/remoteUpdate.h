@@ -14,5 +14,7 @@
 /*****************************************************************************/
 /*  Function Declarations                                                    */
 /*****************************************************************************/
+int updateECUByVersion_Local(char *Domain,char *IP,int port,char *User,char *passwd);
+int updateECUByID_Local(char *Domain,char *IP,int port,char *User,char *passwd);
 void remote_update_thread_entry(void* parameter);
 #endif /*__REMOTE_UPDATE_H__*/

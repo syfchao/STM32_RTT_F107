@@ -40,22 +40,22 @@ extern ecu_info ecu;
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
-int updatemaxpower(inverter_info *inverter, int limitedresult)//更新逆变器的最大功率结果
+int updatemaxpower(inverter_info *inverter,int limitedresult)//更新逆变器的最大功率结果
 {	
 	char linedata[100] = "\0";
 	char splitdata[6][32];
 	int i;
 	
 	//读取所在ID行
-	if(1 == read_line("/home/data/power",linedata,inverter->id,12))
+	read_line("/home/data/power",linedata,inverter->id,12);
+	
 	{
 		//将所在行分裂
 		splitString(linedata,splitdata);
 		memset(linedata,0x00,100);
-		sprintf(linedata,"%s,%d,%d,%d,%d,0\n",inverter->id,limitedresult,atoi(splitdata[2]),atoi(splitdata[3]),atoi(splitdata[4]));
+		sprintf(linedata,"%s,%d,%d,%d,%d,0\n",inverter->id,atoi(splitdata[1]),limitedresult,atoi(splitdata[3]),atoi(splitdata[4]));
 		//删除id所在行
 		delete_line("/home/data/power","/home/data/_power",inverter->id,12);
-
 		//更新所在行
 		for(i=0; i<3; i++)
 		{
@@ -265,6 +265,7 @@ int process_max_power(inverter_info *firstinverter)
 							continue;
 					limitedpower = atoi(splitdata[1]);
 					limitedvalue = (limitedpower * 7395) >> 14;
+					printf("limitedpower:%d limitedvalue:%d\n",limitedpower,limitedvalue);
 					if((curinverter->model==7)||(curinverter->model==0x17))
 							limitedvalue = limitedvalue/4;
 					for(m=0; m<3; m++)

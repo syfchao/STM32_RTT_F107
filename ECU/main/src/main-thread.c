@@ -43,6 +43,7 @@ inverter_info inverter[MAXINVERTERCOUNT];
 ecu_info ecu;
 extern unsigned char rateOfProgress;
 unsigned char initAllFlag = 0;
+unsigned char processAllFlag = 0;
 
 /*****************************************************************************/
 /*  Function Implementations                                                 */
@@ -403,8 +404,12 @@ void main_thread_entry(void* parameter)
 			process_all(inverter);
 			printmsg(ECU_DBG_MAIN,"****************************************");
 		}
+
+		if(1 == processAllFlag)	
+			process_all(inverter);
 		
 		rt_thread_delay(RT_TICK_PER_SECOND/10);
+		
 		durabletime = acquire_time();				//如果轮训一边的时间不到5分钟,那么一直等到5分钟再轮训下一遍,超过5分钟则等待10分钟。。。5分钟起跳
 
 		if((durabletime-thistime)<=305)

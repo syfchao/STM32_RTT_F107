@@ -85,9 +85,9 @@ void add_Phone_functions(void)
 	pfun_Phone[P0022] = Phone_ListECUAPInfo;		//功率电流电压曲线
 	pfun_Phone[P0023] = Phone_GetFunctionStatusInfo;
 	pfun_Phone[P0024] = Phone_ServerInfo;				//查看和设置相关服务器信息
-	//pfun_Phone[P0025] = Phone_InverterMaxPower;		//读取和设置最大保护功率值
+	pfun_Phone[P0025] = Phone_InverterMaxPower;		//读取和设置最大保护功率值
 	pfun_Phone[P0026] = Phone_InverterOnOff;		//读取和设置逆变器开关机
-	//pfun_Phone[P0027] = Phone_InverterGFDI;		//读取和设置GFDI控制
+	pfun_Phone[P0027] = Phone_InverterGFDI;		//读取和设置GFDI控制
 	//pfun_Phone[P0028] = Phone_InverterIRD;		//读取和设置IRD控制标志
 	//pfun_Phone[P0029] = Phone_ACProtection;		//读取和设置保护参数
 	pfun_Phone[P0030] = Phone_RSSI;			//获取逆变器信号强度
@@ -369,7 +369,7 @@ void Phone_RegisterID(int Data_Len,const char *recvbuffer) 			//逆变器ID注册
 		}
 		
 		get_id_from_file(inverter);
-
+		unlink("/home/data/power");
 		restartThread(TYPE_DRM);
 		//重启main线程
 		restartThread(TYPE_MAIN);					
@@ -778,6 +778,41 @@ void Phone_ServerInfo(int Data_Len,const char *recvbuffer)
 	
 }
 
+
+void Phone_InverterMaxPower(int Data_Len,const char *recvbuffer) 
+{
+	int cmd = 0;
+	char cmd_str[3] = {'\0'};
+	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 25 ",(char *)recvbuffer);
+	memcpy(cmd_str,&recvbuffer[25],2);
+	cmd_str[2] = '\0';
+	cmd = atoi(cmd_str);
+	
+	if(!memcmp(&recvbuffer[13],ecu.id,12))
+	{	
+		if(1 == cmd)
+		{	//读取最大功率值
+			APP_Response_InverterMaxPower(0x00,cmd,inverter,recvbuffer,Data_Len);
+		}else if(2 == cmd)
+		{	//设置最大功率值(广播)
+			APP_Response_InverterMaxPower(0x00,cmd,inverter,recvbuffer,Data_Len);
+		}else if(3 == cmd)
+		{	//设置最大功率值(单播)
+			APP_Response_InverterMaxPower(0x00,cmd,inverter,recvbuffer,Data_Len);
+		}else if(4 == cmd)
+		{	//设置最大功率值(单播)
+			APP_Response_InverterMaxPower(0x00,cmd,inverter,recvbuffer,Data_Len);
+		}
+		{
+			return;
+		}	
+	}else
+	{
+		APP_Response_InverterMaxPower(0x01,cmd,inverter,recvbuffer,Data_Len);
+	}
+
+}
+
 void Phone_InverterOnOff(int Data_Len,const char *recvbuffer) 
 {
 	int cmd = 0;
@@ -786,30 +821,93 @@ void Phone_InverterOnOff(int Data_Len,const char *recvbuffer)
 	memcpy(cmd_str,&recvbuffer[25],2);
 	cmd_str[2] = '\0';
 	cmd = atoi(cmd_str);
-	
 	if(!memcmp(&recvbuffer[13],ecu.id,12))
 	{
 		if(1 == cmd)
 		{	
-			APP_Response_InverterOnOff(0x00,cmd,inverter,recvbuffer);
+			APP_Response_InverterOnOff(0x00,cmd,inverter,recvbuffer,Data_Len);
 		}else if(2 == cmd)
 		{
-			APP_Response_InverterOnOff(0x00,cmd,inverter,recvbuffer);
+			APP_Response_InverterOnOff(0x00,cmd,inverter,recvbuffer,Data_Len);
 		}else if(3 == cmd)
 		{
-			APP_Response_InverterOnOff(0x00,cmd,inverter,recvbuffer);
+			APP_Response_InverterOnOff(0x00,cmd,inverter,recvbuffer,Data_Len);
 		}
 		{
 			return;
 		}	
 	}else
 	{
-		APP_Response_InverterOnOff(0x01,cmd,inverter,recvbuffer);
+		APP_Response_InverterOnOff(0x01,cmd,inverter,recvbuffer,Data_Len);
 	}
 
 }
 
 
+void Phone_InverterGFDI(int Data_Len,const char *recvbuffer) 
+{
+	int cmd = 0;
+	char cmd_str[3] = {'\0'};
+	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 27 ",(char *)recvbuffer);
+	memcpy(cmd_str,&recvbuffer[25],2);
+	cmd_str[2] = '\0';
+	cmd = atoi(cmd_str);
+	if(!memcmp(&recvbuffer[13],ecu.id,12))
+	{
+		if(1 == cmd)
+		{	
+			APP_Response_InverterGFDI(0x00,cmd,inverter,recvbuffer,Data_Len);
+		}else if(2 == cmd)
+		{
+			APP_Response_InverterGFDI(0x00,cmd,inverter,recvbuffer,Data_Len);
+		}else if(3 == cmd)
+		{
+			APP_Response_InverterGFDI(0x00,cmd,inverter,recvbuffer,Data_Len);
+		}
+		{
+			return;
+		}	
+	}else
+	{
+		APP_Response_InverterGFDI(0x01,cmd,inverter,recvbuffer,Data_Len);
+	}
+
+}
+/*
+void Phone_InverterIRD(int Data_Len,const char *recvbuffer) 
+{
+	int cmd = 0;
+	char cmd_str[3] = {'\0'};
+	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 28 ",(char *)recvbuffer);
+	memcpy(cmd_str,&recvbuffer[25],2);
+	cmd_str[2] = '\0';
+	cmd = atoi(cmd_str);
+	
+	if(!memcmp(&recvbuffer[13],ecu.id,12))
+	{	
+		if(1 == cmd)
+		{	//读取IRD状态
+			APP_Response_InverterIRD(0x00,cmd,inverter,recvbuffer,Data_Len);
+		}else if(2 == cmd)
+		{	//设置IRD状态(广播)
+			APP_Response_InverterIRD(0x00,cmd,inverter,recvbuffer,Data_Len);
+		}else if(3 == cmd)
+		{	//设置IRD状态(单播)
+			APP_Response_InverterIRD(0x00,cmd,inverter,recvbuffer,Data_Len);
+		}else if(4 == cmd)
+		{	//下发获取IRD状态命令
+			APP_Response_InverterIRD(0x00,cmd,inverter,recvbuffer,Data_Len);
+		}
+		{
+			return;
+		}	
+	}else
+	{
+		APP_Response_InverterIRD(0x01,cmd,inverter,recvbuffer,Data_Len);
+	}
+
+}
+*/
 //获取信号强度
 void Phone_RSSI(int Data_Len,const char *recvbuffer) 			
 {

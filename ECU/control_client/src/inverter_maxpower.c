@@ -22,7 +22,7 @@
 #include "dfs_posix.h"
 
 /*********************************************************************
-powerè¡¨æ ¼å­—æ®µï¼š
+power±í¸ñ×Ö¶Î£º
 id,limitedpower,limitedresult,stationarypower,stationaryresult,flag
 **********************************************************************/
 /*****************************************************************************/
@@ -39,7 +39,7 @@ extern rt_mutex_t record_data_lock ;
 /*  Function Implementations                                                 */
 /*****************************************************************************/
 
-/* è®¾ç½®æŒ‡å®šå°æ•°é€†å˜å™¨æœ€å¤§åŠŸç‡ */
+/* ÉèÖÃÖ¸¶¨Ì¨ÊıÄæ±äÆ÷×î´ó¹¦ÂÊ */
 int set_maxpower_num(const char *msg, int num)
 {
 	int i, maxpower, err_count = 0;
@@ -51,15 +51,15 @@ int set_maxpower_num(const char *msg, int num)
 	{
 		for(i=0; i<num; i++)
 		{
-			//è·å–ä¸€å°é€†å˜å™¨çš„IDå·
+			//»ñÈ¡Ò»Ì¨Äæ±äÆ÷µÄIDºÅ
 			strncpy(inverter_id, &msg[i*18], 12);
-			//è·å–æœ€å¤§åŠŸç‡
+			//»ñÈ¡×î´ó¹¦ÂÊ
 			maxpower = msg_get_int(&msg[i*18 + 12], 3);
 			if(maxpower < 0)
 				continue;
 		
 			sprintf(str,"%s,%3d,,,,1\n",inverter_id,maxpower);
-			//æ’å…¥æ•°æ®
+			//²åÈëÊı¾İ
 			if(write(fd,str,strlen(str)) <= 0)
 			{
 				err_count++;
@@ -71,18 +71,18 @@ int set_maxpower_num(const char *msg, int num)
 	return err_count;
 }
 
-/* è®¾ç½®æ‰€æœ‰é€†å˜å™¨æœ€å¤§åŠŸç‡ */
+/* ÉèÖÃËùÓĞÄæ±äÆ÷×î´ó¹¦ÂÊ */
 int set_maxpower_all(int maxpower)
 {
 	char inverter_ids[MAXINVERTERCOUNT][13] = {"\0"};
 	int i,num;
 	char msg[2048] = {'\0'};
 
-	//æŸ¥è¯¢æ‰€æœ‰é€†å˜å™¨IDå·
+	//²éÑ¯ËùÓĞÄæ±äÆ÷IDºÅ
 	num = get_num_from_id(inverter_ids);
 
 
-	//å°†æ‰€æœ‰é€†å˜å™¨æ‹¼æ¥æˆè®¾ç½®å•å°çš„å½¢å¼
+	//½«ËùÓĞÄæ±äÆ÷Æ´½Ó³ÉÉèÖÃµ¥Ì¨µÄĞÎÊ½
 	for(i=0;i<num;i++){
 		msgcat_s(msg, 12, inverter_ids[i]);
 		msgcat_d(msg, 3, maxpower);
@@ -91,7 +91,7 @@ int set_maxpower_all(int maxpower)
 	return set_maxpower_num( msg, strlen(msg)/18);
 }
 
-/* ã€A110ã€‘EMAè®¾ç½®é€†å˜å™¨æœ€å¤§åŠŸç‡ */
+/* ¡¾A110¡¿EMAÉèÖÃÄæ±äÆ÷×î´ó¹¦ÂÊ */
 int set_inverter_maxpower(const char *recvbuffer, char *sendbuffer)
 {
 	int ack_flag = SUCCESS;
@@ -99,11 +99,11 @@ int set_inverter_maxpower(const char *recvbuffer, char *sendbuffer)
 	char timestamp[15] = {'\0'};
 	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
 	
-	//è·å–è®¾ç½®ç±»å‹æ ‡å¿—ä½: 0è®¾ç½®å…¨éƒ¨, 1è®¾ç½®æŒ‡å®šé€†å˜å™¨
+	//»ñÈ¡ÉèÖÃÀàĞÍ±êÖ¾Î»: 0ÉèÖÃÈ«²¿, 1ÉèÖÃÖ¸¶¨Äæ±äÆ÷
 	type = msg_get_int(&recvbuffer[30], 1);
-	//è·å–é€†å˜å™¨æ•°é‡
+	//»ñÈ¡Äæ±äÆ÷ÊıÁ¿
 	num = msg_get_int(&recvbuffer[31], 4);
-	//è·å–æ—¶é—´æˆ³
+	//»ñÈ¡Ê±¼ä´Á
 	strncpy(timestamp, &recvbuffer[35], 14);
 
 	{
@@ -117,7 +117,7 @@ int set_inverter_maxpower(const char *recvbuffer, char *sendbuffer)
 				}
 				break;
 			case 1:
-				//æ£€æŸ¥æ ¼å¼
+				//¼ì²é¸ñÊ½
 				if(!msg_num_check(&recvbuffer[52], num, 15, 1)){
 					ack_flag = FORMAT_ERROR;
 				}
@@ -132,13 +132,13 @@ int set_inverter_maxpower(const char *recvbuffer, char *sendbuffer)
 		}
 
 	}
-	//æ‹¼æ¥åº”ç­”æ¶ˆæ¯
+	//Æ´½ÓÓ¦´ğÏûÏ¢
 	msg_ACK(sendbuffer, "A110", timestamp, ack_flag);
 	rt_mutex_release(record_data_lock);
 	return 0;
 }
 
-/* ã€A117ã€‘è¯»å–é€†å˜å™¨æœ€å¤§åŠŸç‡åŠèŒƒå›´ */
+/* ¡¾A117¡¿¶ÁÈ¡Äæ±äÆ÷×î´ó¹¦ÂÊ¼°·¶Î§ */
 int response_inverter_maxpower(const char *recvbuffer, char *sendbuffer)
 {
 
@@ -147,14 +147,14 @@ int response_inverter_maxpower(const char *recvbuffer, char *sendbuffer)
 	char timestamp[15] = {'\0'};
 	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
 
-	//è®¾ç½®è¯»å–æ‰€æœ‰é€†å˜å™¨æœ€å¤§åŠŸç‡çš„æŒ‡ä»¤
+	//ÉèÖÃ¶ÁÈ¡ËùÓĞÄæ±äÆ÷×î´ó¹¦ÂÊµÄÖ¸Áî
 	if(file_set_one("ALL", "/tmp/maxpower.con") < 0){
 		ack_flag = FILE_ERROR;
 	}
 
 	strncpy(timestamp, &recvbuffer[34], 14);
 
-	//æ‹¼æ¥åº”ç­”æ¶ˆæ¯
+	//Æ´½ÓÓ¦´ğÏûÏ¢
 	msg_ACK(sendbuffer, "A117", timestamp, ack_flag);
 	rt_mutex_release(record_data_lock);
 	return 0;

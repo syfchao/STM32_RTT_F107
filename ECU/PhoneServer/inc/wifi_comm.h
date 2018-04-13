@@ -65,8 +65,12 @@ void APP_Response_GetECUAPList(char mapping,char *list);
 void APP_Response_GetFunctionStatusInfo(char mapping);
 //24 命令回应
 void APP_Response_ServerInfo(char mapping,ECUServerInfo_t *serverInfo);
+//25 命令回应
+void APP_Response_InverterMaxPower(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer,int length);
 //26 命令回应
-void APP_Response_InverterOnOff(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer);
+void APP_Response_InverterOnOff(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer,int length);
+//27 命令回应
+void APP_Response_InverterGFDI(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer,int length);
 
 // 30 命令回应
 void APP_Response_RSSI(char mapping,inverter_info *inverter);

@@ -42,6 +42,7 @@ extern struct rt_device serial4;		//串口4为Zigbee收发串口
 extern ecu_info ecu;
 extern int zigbeeReadFlag;
 static int zigbeereadtimeoutflag = 0;
+extern unsigned char processAllFlag;
 
 /*****************************************************************************/
 /*  Definitions                                                              */
@@ -1410,6 +1411,7 @@ int process_all(inverter_info *firstinverter)
 
 	
 	//save_A145_inverter_to_all();
+	processAllFlag = 0;
 	return 0;
 }
 

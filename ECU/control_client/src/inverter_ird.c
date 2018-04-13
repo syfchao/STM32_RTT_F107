@@ -19,7 +19,7 @@
 #include "myfile.h"
 #include "rtthread.h"
 /*********************************************************************
-irdè¡¨æ ¼å­—æ®µï¼š
+ird±í¸ñ×Ö¶Î£º
 id, result, set_value, set_flag
 **********************************************************************/
 
@@ -32,7 +32,7 @@ extern rt_mutex_t record_data_lock;
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
-/* è®¾ç½®æŒ‡å®šå°æ•°é€†å˜å™¨çš„IRDé€‰é¡¹ */
+/* ÉèÖÃÖ¸¶¨Ì¨ÊıÄæ±äÆ÷µÄIRDÑ¡Ïî */
 int set_ird_num(const char *msg, int num)
 {
 
@@ -43,16 +43,16 @@ int set_ird_num(const char *msg, int num)
 	{
 		for(i=0; i<num; i++)
 		{
-			//è·å–ä¸€å°é€†å˜å™¨çš„IDå·
+			//»ñÈ¡Ò»Ì¨Äæ±äÆ÷µÄIDºÅ
 			strncpy(inverter_id, &msg[i*16], 12);
-			//è·å–IRDè®¾ç½®å€¼
+			//»ñÈ¡IRDÉèÖÃÖµ
 			ird = msg_get_int(&msg[i*16 + 12], 1);
 
 			
-			//å¦‚æœå­˜åœ¨è¯¥é€†å˜å™¨æ•°æ®åˆ™åˆ é™¤è¯¥è®°å½•
+			//Èç¹û´æÔÚ¸ÃÄæ±äÆ÷Êı¾İÔòÉ¾³ı¸Ã¼ÇÂ¼
 			delete_line("/home/data/ird","/home/data/ird_t",inverter_id,12);
 			sprintf(str,"%s,,%d,1\n",inverter_id,ird);
-			//æ’å…¥æ•°æ®
+			//²åÈëÊı¾İ
 			if(-1 == insert_line("/home/data/ird",str))
 			{
 				err_count++;
@@ -63,26 +63,26 @@ int set_ird_num(const char *msg, int num)
 	return err_count;
 }
 
-/* ã€A126ã€‘EMAè¯»å–é€†å˜å™¨çš„IRDé€‰é¡¹ */
+/* ¡¾A126¡¿EMA¶ÁÈ¡Äæ±äÆ÷µÄIRDÑ¡Ïî */
 int read_inverter_ird(const char *recvbuffer, char *sendbuffer)
 {
 	int ack_flag = SUCCESS;
 	char timestamp[15] = {'\0'};
 	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
-	//è·å–æ—¶é—´æˆ³
+	//»ñÈ¡Ê±¼ä´Á
 	strncpy(timestamp, &recvbuffer[34], 14);
 
-	//è¯»å–é€†å˜å™¨çš„IRDè®¾ç½®é€‰é¡¹
+	//¶ÁÈ¡Äæ±äÆ÷µÄIRDÉèÖÃÑ¡Ïî
 	if(file_set_one("ALL", "/tmp/get_ird.con") < 0)
 		ack_flag = FILE_ERROR;
 
-	//æ‹¼æ¥åº”ç­”æ¶ˆæ¯
+	//Æ´½ÓÓ¦´ğÏûÏ¢
 	msg_ACK(sendbuffer, "A126", timestamp, ack_flag);
 	rt_mutex_release(record_data_lock);
 	return 0;
 }
 
-/* ã€A127ã€‘EMAè®¾ç½®é€†å˜å™¨çš„IRDé€‰é¡¹ */
+/* ¡¾A127¡¿EMAÉèÖÃÄæ±äÆ÷µÄIRDÑ¡Ïî */
 int set_inverter_ird(const char *recvbuffer, char *sendbuffer)
 {
 	int ack_flag = SUCCESS;
@@ -90,17 +90,17 @@ int set_inverter_ird(const char *recvbuffer, char *sendbuffer)
 	char timestamp[15] = {'\0'};
 	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
 	
-	//è·å–è®¾ç½®ç±»å‹æ ‡å¿—ä½: 0è®¾ç½®æ‰€æœ‰é€†å˜å™¨ï¼Œ1è®¾ç½®æŒ‡å®šé€†å˜å™¨
+	//»ñÈ¡ÉèÖÃÀàĞÍ±êÖ¾Î»: 0ÉèÖÃËùÓĞÄæ±äÆ÷£¬1ÉèÖÃÖ¸¶¨Äæ±äÆ÷
 	type = msg_get_int(&recvbuffer[30], 1);
-	//è·å–é€†å˜å™¨æ•°é‡
+	//»ñÈ¡Äæ±äÆ÷ÊıÁ¿
 	num = msg_get_int(&recvbuffer[31], 4);
-	//è·å–æ—¶é—´æˆ³
+	//»ñÈ¡Ê±¼ä´Á
 	strncpy(timestamp, &recvbuffer[35], 14);
 
 	switch(type)
 	{
 		case 0:
-			//è®¾ç½®æ‰€æœ‰é€†å˜å™¨ï¼Œå­˜å…¥é…ç½®æ–‡ä»¶
+			//ÉèÖÃËùÓĞÄæ±äÆ÷£¬´æÈëÅäÖÃÎÄ¼ş
 			ird = msg_get_int(&recvbuffer[52], 1);
 			if(ird == 1)
 				file_set_one("ALL,1", "/tmp/set_ird.con");
@@ -112,12 +112,12 @@ int set_inverter_ird(const char *recvbuffer, char *sendbuffer)
 				ack_flag = FORMAT_ERROR;
 			break;
 		case 1:
-			//æ£€æŸ¥æ ¼å¼ï¼ˆé€†å˜å™¨æ•°é‡ï¼‰
+			//¼ì²é¸ñÊ½£¨Äæ±äÆ÷ÊıÁ¿£©
 			if(!msg_num_check(&recvbuffer[52], num, 13, 1)){
 				ack_flag = FORMAT_ERROR;
 			}
 			else{
-				//è®¾ç½®æŒ‡å®šé€†å˜å™¨ï¼Œå­˜å…¥æ•°æ®åº“
+				//ÉèÖÃÖ¸¶¨Äæ±äÆ÷£¬´æÈëÊı¾İ¿â
 				if(set_ird_num(&recvbuffer[52], num) > 0)
 					ack_flag = DB_ERROR;
 			}
@@ -126,7 +126,7 @@ int set_inverter_ird(const char *recvbuffer, char *sendbuffer)
 			ack_flag = FORMAT_ERROR;
 			break;
 	}
-	//æ‹¼æ¥åº”ç­”æ¶ˆæ¯
+	//Æ´½ÓÓ¦´ğÏûÏ¢
 	msg_ACK(sendbuffer, "A127", timestamp, ack_flag);
 	rt_mutex_release(record_data_lock);
 	return 0;
