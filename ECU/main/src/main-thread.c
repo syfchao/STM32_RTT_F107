@@ -384,7 +384,9 @@ void main_thread_entry(void* parameter)
 			{
 				protocol_APS18(inverter, ecu.broadcast_time);
 				protocol_status(inverter, ecu.broadcast_time);
-				saveevent(inverter, ecu.broadcast_time);							//保存当前一轮逆变器事件
+				save_alarm_event(inverter, ecu.broadcast_time);	
+				//saveevent(inverter, ecu.broadcast_time);							//保存当前一轮逆变器事件
+				
 			}
 
 			//reset_inverter(inverter);											//重置每个逆变器		

@@ -71,7 +71,8 @@ void APP_Response_InverterMaxPower(char mapping,int cmd,inverter_info *inverter,
 void APP_Response_InverterOnOff(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer,int length);
 //27 命令回应
 void APP_Response_InverterGFDI(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer,int length);
-
+//28 命令回应
+void APP_Response_InverterIRD(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer,int length);
 // 30 命令回应
 void APP_Response_RSSI(char mapping,inverter_info *inverter);
 // 31 命令回应

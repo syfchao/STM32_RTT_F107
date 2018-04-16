@@ -79,6 +79,8 @@ void Phone_InverterMaxPower(int Data_Len,const char *recvbuffer) ;
 void Phone_InverterOnOff(int Data_Len,const char *recvbuffer) ;
 //读取和设置GFDI命令
 void Phone_InverterGFDI(int Data_Len,const char *recvbuffer) ;
+//读取和设置IRD命令
+void Phone_InverterIRD(int Data_Len,const char *recvbuffer) ;
 //获取信号强度
 void Phone_RSSI(int Data_Len,const char *recvbuffer) ;
 //清空历史发电量

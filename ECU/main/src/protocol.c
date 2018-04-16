@@ -27,6 +27,7 @@
 /*  Variable Declarations                                                    */
 /*****************************************************************************/
 extern ecu_info ecu;
+extern rt_mutex_t record_data_lock;
 
 /*****************************************************************************/
 /*  Function Implementations                                                 */
@@ -636,4 +637,46 @@ int saveevent(inverter_info *inverter, char *sendcommanddatatime)			//保存系�
 	return 0;
 }
 
+void save_alarm_event(inverter_info *inverter, char *date_time)
+{
+	char dir[50] = "/home/record/eventdir/";
+	char file[9];
+	char event_buff[200]={'\0'};
+	char date_time_tmp[7] = {'\0'};
+	rt_err_t result;
+	int fd = -1,i = 0;
+	
+	memcpy(date_time_tmp,&date_time[8],6);
+	memcpy(file,&date_time[0],8);
+	file[8] = '\0';
+	sprintf(dir,"%s%s.dat",dir,file);
+	date_time_tmp[6] = '\0';
+	print2msg(ECU_DBG_MAIN,"save_alarm_event DIR",dir);
+	result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
+	if(result == RT_EOK)
+	{
+		fd = open(dir, O_WRONLY | O_APPEND | O_CREAT,0);
+		
+		if (fd >= 0)
+		{	
+			for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(inverter->id)); i++){
+				if(1 == inverter->inverterstatus.dataflag)
+				{
+					if(0 != strcmp(inverter->status_web, "00000000000000000000000000000000000000000000"))
+					{
+						memset(event_buff, '\0', 200);
+						sprintf(event_buff,"%s,%s,%s\n", inverter->id, inverter->status_web, date_time_tmp);
+						write(fd,event_buff,strlen(event_buff));
+					
+					}
+				}
+				inverter++;
+			}
+
+			close(fd);
+		}
+	}
+	rt_mutex_release(record_data_lock);
+	
+}
 

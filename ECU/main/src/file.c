@@ -94,6 +94,7 @@ void sysDirDetection(void)
 	dirDetection("/home/record/data");
 	dirDetection("/home/record/inversta");
 	dirDetection("/home/record/power");
+	dirDetection("/home/record/eventdir");
 	dirDetection("/home/record/energy");
 	rt_mutex_release(record_data_lock);
 }
@@ -1429,6 +1430,7 @@ void initPath(void)
 	mkdir("/home/record/data",0x777);
 	mkdir("/home/record/inversta",0x777);
 	mkdir("/home/record/power",0x777);
+	mkdir("/home/record/eventdir",0x777);
 	mkdir("/home/record/energy",0x777);
 	//echo("/yuneng/area.con","NA");
 	echo("/yuneng/channel.con","0x10");

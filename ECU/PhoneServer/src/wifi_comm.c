@@ -434,6 +434,86 @@ void phone_getMaxPower(char *buff,int* length)
 	
 }
 
+void phone_IRD_ALL(unsigned char ird)
+{
+	char buff[50] = {'\0'};
+	sprintf(buff,"ALL,%d\n",ird);
+	echo("/tmp/set_ird.con",buff);
+	
+}
+
+void phone_IRD_single(const char *recvbuffer,int length)
+{
+	int num = 0,index = 0;
+	char buff[50] = {'\0'};
+	int fd = 0;
+	fd = open("/home/data/ird", O_WRONLY | O_TRUNC| O_CREAT,0);
+	num = (length - 33)/7;
+	if(fd >= 0)
+	{
+		for(index = 0;index < num;index++)
+		{
+			sprintf(buff,"%02x%02x%02x%02x%02x%02x,,%d,1\n",recvbuffer[0+index*7],recvbuffer[1+index*7],recvbuffer[2+index*7],recvbuffer[3+index*7],recvbuffer[4+index*7],recvbuffer[5+index*7],recvbuffer[6+index*7]);
+			printf("%s\n",buff);
+			write(fd,buff,strlen(buff));
+		}
+		close(fd);
+	}
+	
+	
+}
+void phone_getIRD(char *buff,int* length)
+{
+	FILE *fp;
+	char data[200];
+	char splitdata[4][32];
+	char inv_buff[11] = { '\0' };
+	int index = 0,IRD = 0,IRDresult = 0;
+	*length = 0;
+	fp = fopen("/home/data/ird", "r");
+	if(fp)
+	{
+		memset(data,0x00,200);
+		
+		while(NULL != fgets(data,200,fp))
+		{
+			memset(splitdata,0x00,4*32);
+			splitString(data,splitdata);
+			IRDresult = atoi(splitdata[1]);
+			IRD = atoi(splitdata[2]);
+			inv_buff[0] = ((splitdata[0][0] - '0') << 4) + (splitdata[0][1] - '0');
+			inv_buff[1] = ((splitdata[0][2] - '0') << 4) + (splitdata[0][3] - '0');
+			inv_buff[2] = ((splitdata[0][4] - '0') << 4) + (splitdata[0][5] - '0');
+			inv_buff[3] = ((splitdata[0][6] - '0') << 4) + (splitdata[0][7] - '0');
+			inv_buff[4] = ((splitdata[0][8] - '0') << 4) + (splitdata[0][9] - '0');
+			inv_buff[5] = ((splitdata[0][10] - '0') << 4) + (splitdata[0][11] - '0');
+			
+			if(0 != IRD)
+			{
+				inv_buff[6] = IRD;
+			}else
+			{
+				inv_buff[6] = 0xff;
+			}
+
+			if(0 != IRDresult)
+			{
+				inv_buff[7] = IRDresult;
+			}else
+			{
+				inv_buff[7] = 0xff; 
+			}
+			
+			memcpy(&buff[index*8],inv_buff,8);
+			*length+=8;
+			index++;
+			
+		}
+		fclose(fp);
+	}
+	
+	
+}
 
 //01 COMMAND_BASEINFO 					//获取基本信息请求
 void APP_Response_BaseInfo(stBaseInfo baseInfo)
@@ -1571,7 +1651,7 @@ void APP_Response_InverterGFDI(char mapping,int cmd,inverter_info *inverter,cons
 void APP_Response_InverterIRD(char mapping,int cmd,inverter_info *inverter,const char *recvbuffer,int length)
 {
 	int packlength = 0,index = 0,i = 0,total=0,flag = 0;
-	unsigned short maxPower = 0;
+	unsigned char ird = 0;
 	inverter_info *curinverter = inverter;
 	unsigned char UID[7] = {'\0'};
 	
@@ -1581,14 +1661,14 @@ void APP_Response_InverterIRD(char mapping,int cmd,inverter_info *inverter,const
 	{
 		if(1 == cmd)
 		{
-			char * MaxPowerList = NULL;
+			char * IRDList = NULL;
 			int length = 0;
-			MaxPowerList = malloc(1300);
-			memset(MaxPowerList,0x00,1300);
-			//读取实际最大功率值
-			//从文件系统中读取功率值
-			phone_getMaxPower(MaxPowerList,&length);
-			total = length /10;
+			IRDList = malloc(1024);
+			memset(IRDList,0x00,1024);
+			//读取实际IRD状态
+			//从文件系统中读取IRD状态
+			phone_getIRD(IRDList,&length);
+			total = length /8;
 			for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)
 			{
 				flag = 0;	//未从文件读取到
@@ -1601,7 +1681,7 @@ void APP_Response_InverterIRD(char mapping,int cmd,inverter_info *inverter,const
 
 				for(i = 0;i<total;i++)
 				{
-					if(!memcmp(UID,&MaxPowerList[i*10],6))
+					if(!memcmp(UID,&IRDList[i*8],6))
 					{
 						flag = 1;
 						break;
@@ -1610,19 +1690,17 @@ void APP_Response_InverterIRD(char mapping,int cmd,inverter_info *inverter,const
 				
 				if(0 == flag)
 				{
-					memcpy(&MaxPowerList[length],UID,6);
-					MaxPowerList[length+6] = 0xff;
-					MaxPowerList[length+7] = 0xff;
-					MaxPowerList[length+8] = 0xff;
-					MaxPowerList[length+9] = 0xff;
-					length+=10;
+					memcpy(&IRDList[length],UID,6);
+					IRDList[length+6] = 0xff;
+					IRDList[length+7] = 0xff;
+					length+=8;
 					total++;
 				}
 				
 			}
-			sprintf(SendData,"APS11000000250100");
+			sprintf(SendData,"APS11000000280100");
 			packlength = 17;
-			memcpy(&SendData[packlength],MaxPowerList,length);
+			memcpy(&SendData[packlength],IRDList,length);
 			packlength += length;
 			SendData[packlength++] = 'E';
 			SendData[packlength++] = 'N';
@@ -1633,37 +1711,34 @@ void APP_Response_InverterIRD(char mapping,int cmd,inverter_info *inverter,const
 			SendData[7] = ((packlength/10)%10) + '0';
 			SendData[8] = ((packlength)%10) + '0';
 			SendData[packlength++] = '\n';
-			free(MaxPowerList);
-			MaxPowerList = NULL;
+			free(IRDList);
+			IRDList = NULL;			
 		}else if(2 == cmd)
 		{	//设置最大功率值(广播)
-			maxPower = recvbuffer[30]*256 + recvbuffer[31];
-			printf("maxPower:%d\n",maxPower);
-			phone_MaxPower_ALL(inverter,maxPower);
+			ird = recvbuffer[30];
+			printf("ird:%d\n",ird);
+			phone_IRD_ALL(ird);
 			processAllFlag = 1;
-			sprintf(SendData,"APS11002000250200END\n");
+			sprintf(SendData,"APS11002000280200END\n");
 			packlength = 21;
 		}else if(3 == cmd)
 		{	//设置最大功率值(单播)
-			phone_MaxPower_single(&recvbuffer[30],length);
+			phone_IRD_single(&recvbuffer[30],length);
 			processAllFlag = 1;
-			sprintf(SendData,"APS11002000250300END\n");
+			sprintf(SendData,"APS11002000280300END\n");
 			packlength = 21;
 		}
 		else if(4 == cmd)
 		{	//下发读取命令
-			echo("/tmp/maxpower.con","ALL");
+			echo("/tmp/get_ird.con","ALL");
 			processAllFlag = 1;
-			sprintf(SendData,"APS11002000250400END\n");
+			sprintf(SendData,"APS11002000280400END\n");
 			packlength = 21;
 		}
-
-		
-
 		
 	}else
 	{
-		sprintf(SendData,"APS1100170026%02d01\n",cmd);
+		sprintf(SendData,"APS1100170028%02d01\n",cmd);
 		packlength = 18;
 	}
 	SendToSocketA(SendData ,packlength);

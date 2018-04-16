@@ -24,7 +24,7 @@
 #include "rthw.h"
 
 /*
-irdè¡¨æ ¼å­—æ®µ
+ird±í¸ñ×Ö¶Î
 id, result, set_value, set_flag
 */
 /*****************************************************************************/
@@ -36,7 +36,7 @@ extern inverter_info inverter[MAXINVERTERCOUNT];
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
-int send_ird_command_single(int shortaddr, char value)		//å•å°è®¾ç½®é€†å˜å™¨ird
+int send_ird_command_single(int shortaddr, char value)		//µ¥Ì¨ÉèÖÃÄæ±äÆ÷ird
 {
 	unsigned char sendbuff[256]={'\0'};
 	unsigned short check=0x00;
@@ -69,7 +69,7 @@ int send_ird_command_single(int shortaddr, char value)		//å•å°è®¾ç½®é€†å˜å™¨i
 	return 0;
 }
 
-int send_ird_command_all(char value)		//å¹¿æ’­è®¾ç½®é€†å˜å™¨ird
+int send_ird_command_all(char value)		//¹ã²¥ÉèÖÃÄæ±äÆ÷ird
 {
 	unsigned char sendbuff[256]={'\0'};
 	unsigned short check=0x00;
@@ -102,7 +102,7 @@ int send_ird_command_all(char value)		//å¹¿æ’­è®¾ç½®é€†å˜å™¨ird
 	return 0;
 }
 
-int resolve_ird(char *id, char *readbuff)		//è§£æå¹¶ä¿å­˜IRDè®¾ç½®ç»“æœ
+int resolve_ird(char *id, char *readbuff)		//½âÎö²¢±£´æIRDÉèÖÃ½á¹û
 {
 	char *inverter_result = NULL;	//[MAXINVERTERCOUNT*RECORDLENGTH+RECORDTAIL]={'\0'};
 	int i, mode;
@@ -112,17 +112,17 @@ int resolve_ird(char *id, char *readbuff)		//è§£æå¹¶ä¿å­˜IRDè®¾ç½®ç»“æœ
 	inverter_result = malloc(200);
 	memset(inverter_result,'\0',200);
 	
-	//è¯»å–æ‰€åœ¨IDè¡Œ
-	if(1 == read_line("/home/data/ird",data,id,12))
+	//¶ÁÈ¡ËùÔÚIDĞĞ
+	read_line("/home/data/ird",data,id,12);
 	{	
-		//å°†æ‰€åœ¨è¡Œåˆ†è£‚
+		//½«ËùÔÚĞĞ·ÖÁÑ
 		splitString(data,splitdata);
 		memset(data,0x00,200);
-		sprintf(data,"%s,%d,,0\n",id,mode);
+		sprintf(data,"%s,%d,%s,0\n",id,mode,splitdata[2]);
 
-		//åˆ é™¤idæ‰€åœ¨è¡Œ
+		//É¾³ıidËùÔÚĞĞ
 		delete_line("/home/data/ird","/home/data/ird.t",id,12);
-		//æ›´æ–°æ‰€åœ¨è¡Œ
+		//¸üĞÂËùÔÚĞĞ
 		for(i=0; i<3; i++)
 		{
 			if(1 == insert_line("/home/data/ird",data))
@@ -133,28 +133,8 @@ int resolve_ird(char *id, char *readbuff)		//è§£æå¹¶ä¿å­˜IRDè®¾ç½®ç»“æœ
 			else
 				print2msg(ECU_DBG_MAIN,id, "Failed to resolve ird power");
 		}
-		sprintf(inverter_result, "%s%01dEND", id, mode);				//è¿™é‡Œå…ˆæ³¨é‡Šæ‰
-		save_inverter_parameters_result2(id, 126, inverter_result);		//æŠŠç»“æœä¿å­˜åˆ°æ•°æ®åº“ï¼Œé€šè¿‡è¿œç¨‹æ§åˆ¶ç¨‹åºä¸Šä¼ ç»™EMA
-	}else
-	{
-		memset(data,0x00,200);
-		sprintf(data,"%s,%d,,0\n",id,mode);
-
-		//åˆ é™¤idæ‰€åœ¨è¡Œ
-		delete_line("/home/data/ird","/home/data/ird.t",id,12);
-		//æ›´æ–°æ‰€åœ¨è¡Œ
-		for(i=0; i<3; i++)
-		{
-			if(1 == insert_line("/home/data/ird",data))
-			{
-				print2msg(ECU_DBG_MAIN,id, "Update resolve ird successfully");
-				break;
-			}
-			else
-				print2msg(ECU_DBG_MAIN,id, "Failed to resolve ird power");
-		}
-		sprintf(inverter_result, "%s%01dEND", id, mode);				//è¿™é‡Œå…ˆæ³¨é‡Šæ‰
-		save_inverter_parameters_result2(id, 126, inverter_result);		//æŠŠç»“æœä¿å­˜åˆ°æ•°æ®åº“ï¼Œé€šè¿‡è¿œç¨‹æ§åˆ¶ç¨‹åºä¸Šä¼ ç»™EMA
+		sprintf(inverter_result, "%s%01dEND", id, mode);				//ÕâÀïÏÈ×¢ÊÍµô
+		save_inverter_parameters_result2(id, 126, inverter_result);		//°Ñ½á¹û±£´æµ½Êı¾İ¿â£¬Í¨¹ıÔ¶³Ì¿ØÖÆ³ÌĞòÉÏ´«¸øEMA
 	}
 	free(inverter_result);
 	inverter_result = NULL;
@@ -162,7 +142,7 @@ int resolve_ird(char *id, char *readbuff)		//è§£æå¹¶ä¿å­˜IRDè®¾ç½®ç»“æœ
 	return 0;
 }
 
-int resolve_ird_DD(char *id, char *readbuff)		//è§£æå¹¶ä¿å­˜IRDè®¾ç½®ç»“æœ
+int resolve_ird_DD(char *id, char *readbuff)		//½âÎö²¢±£´æIRDÉèÖÃ½á¹û
 {
 	char *inverter_result = NULL;	//[MAXINVERTERCOUNT*RECORDLENGTH+RECORDTAIL]={'\0'};
 	char data[200];
@@ -171,17 +151,17 @@ int resolve_ird_DD(char *id, char *readbuff)		//è§£æå¹¶ä¿å­˜IRDè®¾ç½®ç»“æœ
 	inverter_result = malloc(200);
 	memset(inverter_result,'\0',200);
 	mode = (int)readbuff[3+19];
-//è¯»å–æ‰€åœ¨IDè¡Œ
-	if(1 == read_line("/home/data/ird",data,id,12))
+	//¶ÁÈ¡ËùÔÚIDĞĞ
+	read_line("/home/data/ird",data,id,12);
 	{
-		//å°†æ‰€åœ¨è¡Œåˆ†è£‚
+		//½«ËùÔÚĞĞ·ÖÁÑ
 		splitString(data,splitdata);
 		memset(data,0x00,200);
-		sprintf(data,"%s,%d,,0\n",id,mode);
+		sprintf(data,"%s,%d,%s,0\n",id,mode,splitdata[2]);
 
-		//åˆ é™¤idæ‰€åœ¨è¡Œ
+		//É¾³ıidËùÔÚĞĞ
 		delete_line("/home/data/ird","/home/data/ird.t",id,12);
-		//æ›´æ–°æ‰€åœ¨è¡Œ
+		//¸üĞÂËùÔÚĞĞ
 		for(i=0; i<3; i++)
 		{
 			if(1 == insert_line("/home/data/ird",data))
@@ -193,30 +173,8 @@ int resolve_ird_DD(char *id, char *readbuff)		//è§£æå¹¶ä¿å­˜IRDè®¾ç½®ç»“æœ
 				print2msg(ECU_DBG_MAIN,id, "Failed to resolve ird DD power");
 		}
 
-		sprintf(inverter_result, "%s%01dEND", id, mode);				//è¿™é‡Œå…ˆæ³¨é‡Šæ‰
-		save_inverter_parameters_result2(id, 126, inverter_result);		//æŠŠç»“æœä¿å­˜åˆ°æ•°æ®åº“ï¼Œé€šè¿‡è¿œç¨‹æ§åˆ¶ç¨‹åºä¸Šä¼ ç»™EMA
-	}
-	else
-	{
-		memset(data,0x00,200);
-		sprintf(data,"%s,%d,,0\n",id,mode);
-
-		//åˆ é™¤idæ‰€åœ¨è¡Œ
-		delete_line("/home/data/ird","/home/data/ird.t",id,12);
-		//æ›´æ–°æ‰€åœ¨è¡Œ
-		for(i=0; i<3; i++)
-		{
-			if(1 == insert_line("/home/data/ird",data))
-			{
-				print2msg(ECU_DBG_MAIN,id, "Update resolve ird DD successfully");
-				break;
-			}
-			else
-				print2msg(ECU_DBG_MAIN,id, "Failed to resolve ird DD power");
-		}
-
-		sprintf(inverter_result, "%s%01dEND", id, mode);				//è¿™é‡Œå…ˆæ³¨é‡Šæ‰
-		save_inverter_parameters_result2(id, 126, inverter_result);		//æŠŠç»“æœä¿å­˜åˆ°æ•°æ®åº“ï¼Œé€šè¿‡è¿œç¨‹æ§åˆ¶ç¨‹åºä¸Šä¼ ç»™EMA
+		sprintf(inverter_result, "%s%01dEND", id, mode);				//ÕâÀïÏÈ×¢ÊÍµô
+		save_inverter_parameters_result2(id, 126, inverter_result);		//°Ñ½á¹û±£´æµ½Êı¾İ¿â£¬Í¨¹ıÔ¶³Ì¿ØÖÆ³ÌĞòÉÏ´«¸øEMA
 	}
 	free(inverter_result);
 	inverter_result = NULL;
@@ -224,14 +182,14 @@ int resolve_ird_DD(char *id, char *readbuff)		//è§£æå¹¶ä¿å­˜IRDè®¾ç½®ç»“æœ
 	return 0;
 }
 
-int get_ird_single(int shortaddr,char* id)		//ä»é€†å˜å™¨è¯»å–å®é™…IRD
+int get_ird_single(int shortaddr,char* id)		//´ÓÄæ±äÆ÷¶ÁÈ¡Êµ¼ÊIRD
 {
 	unsigned char sendbuff[256]={'\0'};
 	unsigned char readbuff[256]={'\0'};
 	unsigned short check=0x00;
 	int i, res;
 
-	clear_zbmodem();			//å‘é€æŒ‡ä»¤å‰ï¼Œå…ˆæ¸…ç©ºç¼“å†²åŒº
+	clear_zbmodem();			//·¢ËÍÖ¸ÁîÇ°£¬ÏÈÇå¿Õ»º³åÇø
 	sendbuff[0] = 0xFB;
 	sendbuff[1] = 0xFB;
 	sendbuff[2] = 0x06;
@@ -263,7 +221,7 @@ int get_ird_single(int shortaddr,char* id)		//ä»é€†å˜å™¨è¯»å–å®é™…IRD
 			(0xFE == readbuff[56]) &&
 			(0xFE == readbuff[57]))
 	{
-		resolve_ird(id, (char *)readbuff);		//è§£æå’Œä¿å­˜IRD
+		resolve_ird(id, (char *)readbuff);		//½âÎöºÍ±£´æIRD
 		return 0;
 	}
 	else if ((33 == res) &&
@@ -272,7 +230,7 @@ int get_ird_single(int shortaddr,char* id)		//ä»é€†å˜å™¨è¯»å–å®é™…IRD
 				(0xDD == readbuff[3]) &&
 				(0xFE == readbuff[31]) &&
 				(0xFE == readbuff[32])) {
-		resolve_ird_DD(id, (char *)readbuff);		//è§£æå’Œä¿å­˜IRD
+		resolve_ird_DD(id, (char *)readbuff);		//½âÎöºÍ±£´æIRD
 		return 0;
 	}
 	else
@@ -280,7 +238,7 @@ int get_ird_single(int shortaddr,char* id)		//ä»é€†å˜å™¨è¯»å–å®é™…IRD
 
 }
 
-int get_ird_id_value(char *id, char *value)		//ä»æ•°æ®åº“ä¸­è·å–ä¸€å°è¦è®¾ç½®ç”µç½‘çš„é€†å˜å™¨çš„IDå’ŒIRD
+int get_ird_id_value(char *id, char *value)		//´ÓÊı¾İ¿âÖĞ»ñÈ¡Ò»Ì¨ÒªÉèÖÃµçÍøµÄÄæ±äÆ÷µÄIDºÍIRD
 {
 	int index = 0,flag = 0;
 	FILE *fp;
@@ -312,7 +270,7 @@ int get_ird_id_value(char *id, char *value)		//ä»æ•°æ®åº“ä¸­è·å–ä¸€å°è¦è®¾
 		return -1;
 	}
 	curinverter = inverter;
-	for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)			//æœ‰æ•ˆé€†å˜å™¨è½®è®­
+	for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)			//ÓĞĞ§Äæ±äÆ÷ÂÖÑµ
 	{
 		if(!strcmp(curinverter->id,id))
 		{
@@ -322,23 +280,23 @@ int get_ird_id_value(char *id, char *value)		//ä»æ•°æ®åº“ä¸­è·å–ä¸€å°è¦è®¾
 	return 0;
 }
 
-int clear_ird_flag_single(char *id)					//è®¾ç½®åæ¸…é™¤æ•°æ®åº“ä¸­å‚æ•°çš„è®¾ç½®æ ‡å¿—
+int clear_ird_flag_single(char *id)					//ÉèÖÃºóÇå³ıÊı¾İ¿âÖĞ²ÎÊıµÄÉèÖÃ±êÖ¾
 {
 	char data[200];
 	char splitdata[4][32];
 	int i;
 
-	//è¯»å–æ‰€åœ¨IDè¡Œ
-	if(1 == read_line("/home/data/ird",data,id,12))
+	//¶ÁÈ¡ËùÔÚIDĞĞ
+	 read_line("/home/data/ird",data,id,12);
 	{
-		//å°†æ‰€åœ¨è¡Œåˆ†è£‚
+		//½«ËùÔÚĞĞ·ÖÁÑ
 		splitString(data,splitdata);
 		memset(data,0x00,200);
-		sprintf(data,"%s,%d,,0\n",id,atoi(splitdata[1]));
+		sprintf(data,"%s,%d,%d,0\n",id,atoi(splitdata[1]),atoi(splitdata[2]));
 
-		//åˆ é™¤idæ‰€åœ¨è¡Œ
+		//É¾³ıidËùÔÚĞĞ
 		delete_line("/home/data/ird","/home/data/ird.t",id,12);
-		//æ›´æ–°æ‰€åœ¨è¡Œ
+		//¸üĞÂËùÔÚĞĞ
 		for(i=0; i<3; i++)
 		{
 			if(1 == insert_line("/home/data/ird",data))
@@ -354,11 +312,11 @@ int clear_ird_flag_single(char *id)					//è®¾ç½®åæ¸…é™¤æ•°æ®åº“ä¸­å‚æ•°çš„è®
 	return 0;
 }
 
-int clear_ird_flag_all()					//è®¾ç½®åæ¸…é™¤æ•°æ®åº“ä¸­å‚æ•°çš„è®¾ç½®æ ‡å¿—
+int clear_ird_flag_all()					//ÉèÖÃºóÇå³ıÊı¾İ¿âÖĞ²ÎÊıµÄÉèÖÃ±êÖ¾
 {
 	FILE *fp;
 
-	fp = fopen("/tmp/set_ird.con", "w");		//æ¸…ç©ºè®¾ç½®æ–‡ä»¶
+	fp = fopen("/tmp/set_ird.con", "w");		//Çå¿ÕÉèÖÃÎÄ¼ş
 	
 	if(fp)
 	{
@@ -368,14 +326,14 @@ int clear_ird_flag_all()					//è®¾ç½®åæ¸…é™¤æ•°æ®åº“ä¸­å‚æ•°çš„è®¾ç½®æ ‡å¿—
 	return 0;
 }
 
-int get_ird_all(struct inverter_info_t *firstinverter)		//è¯»å–æ‰€æœ‰é€†å˜å™¨çš„IRD
+int get_ird_all(struct inverter_info_t *firstinverter)		//¶ÁÈ¡ËùÓĞÄæ±äÆ÷µÄIRD
 {
 	int i, j;
 	struct inverter_info_t *inverter = firstinverter;
 	
 	for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(inverter->id)); i++, inverter++){
 		for(j=0; j<3; j++){
-			if(!get_ird_single(inverter->shortaddr,inverter->id))		//è¯»å–ä¸€å°é€†å˜å™¨çš„IRD
+			if(!get_ird_single(inverter->shortaddr,inverter->id))		//¶ÁÈ¡Ò»Ì¨Äæ±äÆ÷µÄIRD
 				break;
 		}
 	}
@@ -383,7 +341,7 @@ int get_ird_all(struct inverter_info_t *firstinverter)		//è¯»å–æ‰€æœ‰é€†å˜å™¨ç
 	return 0;
 }
 
-int set_ird_single()		//è®¾ç½®å•å°é€†å˜å™¨IRD
+int set_ird_single()		//ÉèÖÃµ¥Ì¨Äæ±äÆ÷IRD
 {
 	char id[16]={'\0'};
 	char value[16]={'\0'};
@@ -392,14 +350,14 @@ int set_ird_single()		//è®¾ç½®å•å°é€†å˜å™¨IRD
 	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
 	while(1){
 		shortaddr= get_ird_id_value(id, value);
-		if(-1 == shortaddr)		//ä»æ•°æ®åº“ä¸­è·å–ä¸€å°è¦è®¾ç½®ç”µç½‘çš„é€†å˜å™¨çš„IDå’ŒIRDï¼Œæ²¡æœ‰å°±é€€å‡º
+		if(-1 == shortaddr)		//´ÓÊı¾İ¿âÖĞ»ñÈ¡Ò»Ì¨ÒªÉèÖÃµçÍøµÄÄæ±äÆ÷µÄIDºÍIRD£¬Ã»ÓĞ¾ÍÍË³ö
 			break;
 
 		clear_ird_flag_single(id);
 		if(shortaddr > 0){
-			send_ird_command_single(shortaddr, atoi(value));	//è®¾ç½®ä¸€å°é€†å˜å™¨IRD
+			send_ird_command_single(shortaddr, atoi(value));	//ÉèÖÃÒ»Ì¨Äæ±äÆ÷IRD
 			for(index=0; index<3; index++){
-				if(!get_ird_single(shortaddr,id))	//è¯»å–é€†å˜å™¨çš„è®¾ç½®ç»“æœ
+				if(!get_ird_single(shortaddr,id))	//¶ÁÈ¡Äæ±äÆ÷µÄÉèÖÃ½á¹û
 					break;			
 			}
 		}
@@ -408,7 +366,7 @@ int set_ird_single()		//è®¾ç½®å•å°é€†å˜å™¨IRD
 	return 0;
 }
 
-int set_ird_all(inverter_info *firstinverter)		//è®¾ç½®æ‰€æœ‰é€†å˜å™¨IRD
+int set_ird_all(inverter_info *firstinverter)		//ÉèÖÃËùÓĞÄæ±äÆ÷IRD
 {
 	FILE *fp;
 	char buff[256]={'\0'};
@@ -428,8 +386,8 @@ int set_ird_all(inverter_info *firstinverter)		//è®¾ç½®æ‰€æœ‰é€†å˜å™¨IRD
 			clear_ird_flag_all();
 
 			if(!strcmp(id, "ALL")){
-				send_ird_command_all(atoi(value));		//å¹¿æ’­è®¾ç½®
-				get_ird_all(firstinverter);	//è¯»å–æ‰€æœ‰é€†å˜å™¨ç»“æœ
+				send_ird_command_all(atoi(value));		//¹ã²¥ÉèÖÃ
+				get_ird_all(firstinverter);	//¶ÁÈ¡ËùÓĞÄæ±äÆ÷½á¹û
 			}
 		}
 	}
@@ -437,20 +395,20 @@ int set_ird_all(inverter_info *firstinverter)		//è®¾ç½®æ‰€æœ‰é€†å˜å™¨IRD
 	return 0;
 }
 
-int get_ird_from_inverters(inverter_info *firstinverter)		//è®¾ç½®æ‰€æœ‰é€†å˜å™¨IRD
+int get_ird_from_inverters(inverter_info *firstinverter)		//ÉèÖÃËùÓĞÄæ±äÆ÷IRD
 {
 	FILE *fp;
 	char buff[256]={'\0'};
 	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
-	//set_grid_environment_all(firstinverter);	//åœ¨ç³»ç»Ÿä¸­æœ‰é€†å˜å™¨ä¸Šä¼ å®æ—¶æ•°æ®æ—¶æ‰è®¾ç½®æ‰€æœ‰
+	//set_grid_environment_all(firstinverter);	//ÔÚÏµÍ³ÖĞÓĞÄæ±äÆ÷ÉÏ´«ÊµÊ±Êı¾İÊ±²ÅÉèÖÃËùÓĞ
 
-	fp = fopen("/tmp/get_ird.con", "r");	//ä¸è®¾ç½®åªè¯»
+	fp = fopen("/tmp/get_ird.con", "r");	//²»ÉèÖÃÖ»¶Á
 	if(fp){
 		fgets(buff, sizeof(buff), fp);
 		fclose(fp);
 
 		if(!strcmp(buff, "ALL")){
-			fp = fopen("/tmp/get_ird.con", "w");	//æ¸…ç©ºæ–‡ä»¶åè¯»å–
+			fp = fopen("/tmp/get_ird.con", "w");	//Çå¿ÕÎÄ¼şºó¶ÁÈ¡
 			if(fp){
 				fclose(fp);
 			}
