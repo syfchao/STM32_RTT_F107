@@ -1231,6 +1231,11 @@
               <FileType>1</FileType>
               <FilePath>..\ECU\client\src\clientSocket.c</FilePath>
             </File>
+            <File>
+              <FileName>datelist.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ECU\client\src\datelist.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
