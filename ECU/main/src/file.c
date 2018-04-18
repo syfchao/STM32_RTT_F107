@@ -700,6 +700,94 @@ void delete_system_power_2_month_ago(char *date_time)
 
 }
 
+//计算两天前的时间
+int calculate_earliest_2_day_ago(char *date,int *earliest_data)
+{
+	char year_s[5] = {'\0'};
+	char month_s[3] = {'\0'};
+	char day_s[3] = {'\0'};
+	int year = 0,month = 0,day = 0;	//year为年份 month为月份 day为日期  flag 为瑞年判断标志 count表示上个月好需要补的天数 number_of_days:上个月的总天数
+
+	memcpy(year_s,date,4);
+	year_s[4] = '\0';
+	year = atoi(year_s);
+
+	memcpy(month_s,&date[4],2);
+	month_s[2] = '\0';
+	month = atoi(month_s);
+
+	memcpy(day_s,&date[6],2);
+	day_s[2] = '\0';
+	day = atoi(day_s);
+	
+	if(day >= 3)
+	{
+		day -= 2;
+		*earliest_data = (year * 10000 + month*100+day);
+		
+		return 0;
+	}else
+	{
+		month -= 1;
+		if(month == 0)
+		{
+			month =12;
+			year = year - 1;
+		}
+		day=day_tab[ leap(year)][month-1]+day-2;
+		*earliest_data = (year * 10000 + month*100+day);
+		
+		return 0;
+	}
+}
+
+
+void delete_alarm_event_2_day_ago(char *date_time)
+{
+	DIR *dirp;
+	char dir[30] = "/home/record/eventdir";
+	struct dirent *d;
+	char path[100];
+	int earliest_data,file_data;
+	char fileTime[20] = {'\0'};
+
+	/* 打开dir目录*/
+	rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
+	dirp = opendir("/home/record/eventdir");
+	if(dirp == RT_NULL)
+	{
+		printmsg(ECU_DBG_CLIENT,"delete_system_power_2_month_ago open directory error");
+		mkdir("/home/record/eventdir",0);
+	}
+	else
+	{
+		calculate_earliest_2_day_ago(date_time,&earliest_data);
+		//printf("calculate_earliest_2_month_ago:::::%d\n",earliest_data);
+		/* 读取dir目录*/
+		while ((d = readdir(dirp)) != RT_NULL)
+		{
+		
+			
+			memcpy(fileTime,d->d_name,8);
+			fileTime[8] = '\0';
+			file_data = atoi(fileTime);
+			if(file_data <= earliest_data)
+			{
+				sprintf(path,"%s/%s",dir,d->d_name);
+				unlink(path);
+			}
+
+			
+		}
+		/* 关闭目录 */
+		closedir(dirp);
+	}
+	rt_mutex_release(record_data_lock);
+
+
+}
+
+
 //读取某日的功率曲线参数   日期   报文
 int read_system_power(char *date_time, char *power_buff,int *length)
 {
