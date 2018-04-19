@@ -93,7 +93,7 @@ void add_Phone_functions(void)
 	//pfun_Phone[P0029] = Phone_ACProtection;		//读取和设置保护参数
 	pfun_Phone[P0030] = Phone_RSSI;			//获取逆变器信号强度
 	pfun_Phone[P0031] = Phone_ClearEnergy;		//清空数据库（清空历史发电量）
-	//pfun_Phone[P0032] = Phone_ProtectionStatus;		//查看逆变器保护状态
+	pfun_Phone[P0032] = Phone_AlarmEvent;		//查看逆变器保护状态
 
 }
 
@@ -942,6 +942,24 @@ void Phone_ClearEnergy(int Data_Len,const char *recvbuffer)
 		APP_Response_ClearEnergy(0x01);
 	}
 }
+
+//上报告警事件
+void Phone_AlarmEvent(int Data_Len,const char *recvbuffer) 
+{
+	char Date[9] = {'\0'};
+	char serial[4] = {'\0'};
+	print2msg(ECU_DBG_WIFI,"WIFI_Recv_Event 32 ",(char *)recvbuffer);
+	if(!memcmp(&recvbuffer[13],ecu.id,12))
+	{	
+		memcpy(Date,&recvbuffer[28],8);
+		memcpy(serial,&recvbuffer[36],3);
+		APP_Response_AlarmEvent(0x00,Date,serial);
+	}else
+	{
+		APP_Response_AlarmEvent(0x01,Date,serial);
+	}	
+}
+
 
 
 //WIFI事件处理

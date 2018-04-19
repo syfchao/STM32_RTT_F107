@@ -614,13 +614,13 @@ int AT_CWSAP(char *ECUID,char *PASSWD)			//≈‰÷√ECU»»µ„√˚◊÷
 	char AT[100] = { '\0' };
 	clear_WIFI();
 	sprintf(AT,"AT+CWSAP_DEF=\"ECU_R_%s\",\"%s\",11,3\r\n",ECUID,PASSWD);
-	printf("%s",AT);
+	
 	WIFI_SendData(AT, (strlen(AT)+1));
 	for(i = 0;i< 200;i++)
 	{
 		if(1 == detectionOK(Cur))
 		{
-			printf("AT+CWSAP :+ok\n");
+			printf("%s",AT);
 			clear_WIFI();
 			return 0;
 		}
@@ -717,7 +717,7 @@ int AT_CWJAPStatus(char *info)			//≤È—ØECU¡¨Ω”Œﬁœﬂ¬∑”…∆˜√˚ ∑µªÿ1±Ì æªÒ»°≥…π¶¡¨Ω”
 	char AT[100] = { '\0' };
 	clear_WIFI();
 	sprintf(AT,"AT+CWJAP?\r\n");
-	printf("%s",AT);
+	
 	WIFI_SendData(AT, (strlen(AT)+1));
 	for(i = 0;i< 200;i++)
 	{
@@ -764,13 +764,11 @@ int AT_CWLAPList(char *liststr)
 	char AT[100] = { '\0' };
 	clear_WIFI();
 	sprintf(AT,"AT+CWLAP\r\n");
-	printf("%s",AT);
 	WIFI_SendData(AT, (strlen(AT)+1));
 	for(i = 0;i< 600;i++)
 	{
 		if(1 == detectionLAPList(Cur,liststr))
 		{
-			printf("AT+AT_CWLAPList :+ok\n");
 			clear_WIFI();
 			return 0;
 		}
@@ -789,7 +787,6 @@ int AT_CIPMUX1(void)			//…Ë÷√∂‡¡¨Ω”AT√¸¡Ó
 	{
 		if(1 == detectionOK(Cur))
 		{
-			//printf("AT+CIPMUX :+ok\n");
 			clear_WIFI();
 			return 0;
 		}
@@ -808,7 +805,6 @@ int AT_CIPSERVER(void)			//…Ë÷√∂‡¡¨Ω”AT√¸¡Ó
 	{
 		if(1 == detectionOK(Cur))
 		{
-			//printf("AT+CIPSERVER=1,8899 :+ok\n");
 			clear_WIFI();
 			return 0;
 		}
@@ -831,7 +827,6 @@ int AT_CIPSTART(char ConnectID,char *connectType,char *IP,int port)			//≈‰÷√ECU¡
 	{
 		if(1 == detectionOK(Cur))
 		{
-			printf("%s +ok\n",AT);
 			clear_WIFI();
 			return 0;
 		}
@@ -847,13 +842,11 @@ int AT_CIPCLOSE(char ConnectID)			//≈‰÷√ECU¡¨Ω”Œﬁœﬂ¬∑”…∆˜√˚
 	char AT[100] = { '\0' };
 	clear_WIFI();
 	sprintf(AT,"AT+CIPCLOSE=%c\r\n",ConnectID);
-	//printf("%s",AT);
 	WIFI_SendData(AT, (strlen(AT)+1));
 	for(i = 0;i< 100;i++)
 	{
 		if((1 == detectionOK(Cur))||(1 == detectionUNLINK(Cur)))
 		{
-			printf("AT+AT_CIPCLOSE :%c +ok\n",ConnectID);
 			clear_WIFI();
 			return 0;
 		}
@@ -892,7 +885,6 @@ int AT_CIPAP_DEF(void)			//≈‰÷√ECU¡¨Ω”Œﬁœﬂ¬∑”…∆˜√˚
 	char AT[100] = { '\0' };
 	clear_WIFI();
 	sprintf(AT,"AT+CIPAP_DEF=\"10.10.100.254\"\r\n");
-	printf("%s",AT);
 	WIFI_SendData(AT, (strlen(AT)+1));
 	for(i = 0;i< 200;i++)
 	{
@@ -920,7 +912,6 @@ int AT_CIPSTO(void)			//≈‰÷√WIFIƒ£øÈ◊˜Œ™TCP∑˛ŒÒ∆˜ ±µƒ≥¨ ± ±º‰
 	{
 		if(1 == detectionOK(Cur))
 		{
-			printmsg(ECU_DBG_WIFI,"AT_CIPSTO :+ok");	
 			clear_WIFI();
 			return 0;
 		}

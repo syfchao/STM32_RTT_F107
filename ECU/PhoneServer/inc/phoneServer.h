@@ -85,6 +85,8 @@ void Phone_InverterIRD(int Data_Len,const char *recvbuffer) ;
 void Phone_RSSI(int Data_Len,const char *recvbuffer) ;
 //清空历史发电量
 void Phone_ClearEnergy(int Data_Len,const char *recvbuffer); 
+//上报告警事件
+void Phone_AlarmEvent(int Data_Len,const char *recvbuffer) ;
 //Phone Server线程
 void phone_server_thread_entry(void* parameter);
 

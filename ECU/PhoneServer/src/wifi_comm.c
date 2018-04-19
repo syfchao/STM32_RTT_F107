@@ -515,6 +515,125 @@ void phone_getIRD(char *buff,int* length)
 	
 }
 
+int resolve_Event(char *data,char *event_buff)
+{
+	char UID[13] = {'\0'};
+	char Event[64] = {'\0'};
+	char Time[7] = {'\0'};
+	int len = 0,i = 0;
+	len  =strlen(data);
+	
+	if((data[12] == ',')&&(data[len-8] == ','))
+	{
+		memcpy(UID,data,12);
+		memcpy(Event,&data[13],(len-21));
+		memcpy(Time,&data[len-7],6);
+		event_buff[0] = ((UID[0]-'0') << 4) + (UID[1]-'0');
+		event_buff[1] = ((UID[2]-'0') << 4) + (UID[3]-'0');
+		event_buff[2] = ((UID[4]-'0') << 4) + (UID[5]-'0');
+		event_buff[3] = ((UID[6]-'0') << 4) + (UID[7]-'0');
+		event_buff[4] = ((UID[8]-'0') << 4) + (UID[9]-'0');
+		event_buff[5] = ((UID[10]-'0') << 4) + (UID[11]-'0');
+		
+		event_buff[6] = ((Time[0]-'0') << 4) + (Time[1]-'0');
+		event_buff[7] = ((Time[2]-'0') << 4) + (Time[3]-'0');
+		event_buff[8] = ((Time[4]-'0') << 4) + (Time[5]-'0');
+
+		for(i  = 0;i<(len-21);i++)
+		{
+			event_buff[9+(i/8)] |= (Event[i]-'0') <<(7-i%8);
+		}
+		
+		//printf("%s   %s   %s\n",UID,Event,Time);
+		return 0;
+	}else
+	{
+		return -1;
+	}
+	
+}
+
+void phone_getEvent(char *buff,int* length,const char *Date,const char *serial)
+{
+	FILE *fp;
+	char path[100] = {'\0'};
+	char data[200];
+	char event_buff[18] = {0x00};
+	int total = 0,serial_no=0,index = 0,temp = 0;	//获取一共有多少条数据
+	
+	*length = 0;
+	serial_no = atoi(serial);
+	sprintf(path,"/home/record/eventdir/%s.dat",Date);
+	
+	fp = fopen(path, "r");
+	if(fp)
+	{	
+		while(NULL != fgets(data,200,fp))
+		{
+			total++;
+		}
+		fclose(fp);
+		fp = NULL;
+	}
+	printf("alarm event total:%d\n",total);
+
+	if(total >= (1 + serial_no*200))	//读取到的条数大于要求序列号的长度
+	{
+		fp = fopen(path, "r");
+		if(fp)
+		{
+			temp = total  - serial_no * 200;	
+			if(temp <=200)		//剩余条数小于等于200条
+			{
+				//直接读Temp条数据
+				for(index = 0;index < temp;index++)
+				{
+					if(NULL != fgets(data,200,fp))
+					{
+						memset(event_buff,0x00,18);
+						if(0 == resolve_Event(data,event_buff))
+						{
+							memcpy(&buff[*length],event_buff,17);
+							*length+=17;
+						}
+						
+					}else
+					{
+						break;
+					}
+					
+					
+				}
+			}else				//剩余条数大于200条
+			{
+				//先跳过temp-200条数据   在读200条
+				for(index = 0;index < (temp-200);index++)
+					fgets(data,200,fp);
+				//读取200条数据，并解析
+				for(index = 0;index < 200;index++)
+				{
+					if(NULL != fgets(data,200,fp))
+					{
+						memset(event_buff,0x00,18);
+						if(0 == resolve_Event(data,event_buff))
+						{
+							memcpy(&buff[*length],event_buff,17);
+							*length+=17;
+						}
+						
+					}else
+					{
+						break;
+					}
+				}
+			}
+			fclose(fp);
+			fp = NULL;
+		}
+	}
+	
+}
+
 //01 COMMAND_BASEINFO 					//获取基本信息请求
 void APP_Response_BaseInfo(stBaseInfo baseInfo)
 {
@@ -1806,4 +1925,45 @@ void APP_Response_ClearEnergy(char mapping)
 	
 	SendToSocketA(SendData ,packlength);
 }
+
+void APP_Response_AlarmEvent(char mapping,const char *Date,const char *serial)
+{
+	int packlength = 0;
+	
+	memset(SendData,'\0',MAXINVERTERCOUNT * INVERTER_PHONE_PER_LEN + INVERTER_PHONE_PER_OTHER);	
+	if(mapping == 0x00)
+	{
+		char * EventList = NULL;
+		int length = 0;
+		EventList = malloc(3500);
+		memset(EventList,0x00,3500);
+		
+		phone_getEvent(EventList,&length,Date,serial);
+		sprintf(SendData,"APS110015003200");
+		packlength = 15;
+		memcpy(&SendData[packlength],EventList,length);
+		packlength += length;
+		
+		SendData[packlength++] = 'E';
+		SendData[packlength++] = 'N';
+		SendData[packlength++] = 'D';
+		
+		SendData[5] = (packlength/1000) + '0';
+		SendData[6] = ((packlength/100)%10) + '0';
+		SendData[7] = ((packlength/10)%10) + '0';
+		SendData[8] = ((packlength)%10) + '0';
+		SendData[packlength++] = '\n';
+		free(EventList);
+		EventList = NULL;
+		
+	}else
+	{
+		sprintf(SendData,"APS110015003201\n");
+		packlength = 16;
+	}	
+	
+	SendToSocketA(SendData ,packlength);
+}
+
+
 

@@ -77,4 +77,6 @@ void APP_Response_InverterIRD(char mapping,int cmd,inverter_info *inverter,const
 void APP_Response_RSSI(char mapping,inverter_info *inverter);
 // 31 命令回应
 void APP_Response_ClearEnergy(char mapping);
+// 32命令回应
+void APP_Response_AlarmEvent(char mapping,const char *Date,const char *serial);
 #endif /*__WIFI_COMM_H__*/
