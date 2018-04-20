@@ -2909,6 +2909,7 @@ int WIFI_Create(eSocketType Type)
 					
 					
 				rt_thread_delay(1);
+				MCP1316_kickwatchdog();
 		}
 		printdecmsg(ECU_DBG_WIFI,"WIFI_CreateSocket WIFI Get reply time out ",Type);
 	}	
@@ -2966,6 +2967,7 @@ int WIFI_Close(eSocketType Type)
 				
 			}
 			rt_thread_delay(1);
+			MCP1316_kickwatchdog();
 		}
 		printdecmsg(ECU_DBG_WIFI,"WIFI_CloseSocket WIFI Get reply time out ",Type);
 	}	
@@ -3091,6 +3093,7 @@ int SendToSocketA(char *data ,int length,unsigned char ID[8])
 			return 0;
 		}
 		rt_hw_ms_delay(50);
+		MCP1316_kickwatchdog();
 	}
 	rt_exit_critical();
 	return 0;
@@ -3138,6 +3141,7 @@ int SendToSocketB(char *data ,int length)
 			}
 			
 			rt_hw_ms_delay(50);
+			MCP1316_kickwatchdog();
 		}
 		rt_exit_critical();
 	
@@ -3204,6 +3208,7 @@ int SendToSocketC(char *data ,int length)
 			}
 			
 			rt_hw_ms_delay(50);
+			MCP1316_kickwatchdog();
 		}
 		rt_exit_critical();
 	}
