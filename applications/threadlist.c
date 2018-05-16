@@ -31,6 +31,8 @@
 #include "rtc.h"
 #include "watchdog.h"
 #include "timer.h"
+#include "powerIO.h"
+#include "key.h"
 
 #ifdef RT_USING_DFS
 #include <dfs_fs.h>
@@ -221,9 +223,16 @@ void rt_init_thread_entry(void* parameter)
 	}
 	
 	cpu_usage_init();
-	WIFI_Reset();
-	sysDirDetection();
+	EXTIX_Init();									//恢复出厂设置IO中断初始化
+	APEXTIX_Init();
+	uart5_init(115200);	
+
+	rt_hw_powerIO_init();
+	rt_hw_ETHIO_init();
+	rt_hw_powerIO_on();
 	initSocketArgs();
+	sysDirDetection();
+	
 	//usart485_init(115200);
 	
 }

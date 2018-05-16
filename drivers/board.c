@@ -65,17 +65,16 @@ void SysTick_Handler(void)
  */
 void rt_hw_board_init(void)
 {
-  /* NVIC Configuration */
-  NVIC_Configuration();
+  	/* NVIC Configuration */
+  	NVIC_Configuration();
 
 	/* Configure the SysTick */
-  SysTick_Config( SystemCoreClock / RT_TICK_PER_SECOND );
+	SysTick_Config( SystemCoreClock / RT_TICK_PER_SECOND );
 
 	rt_hw_lan8720_init();
-  rt_hw_usart_init();		//串口初始化
+	rt_hw_usart_init();		//串口初始化
 	uart5_init(115200);
-	EXTIX_Init();		 	//外部中断初始化
-  rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
+	rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
 	//rt_hw_watchdog_init();
 }
 

@@ -38,6 +38,7 @@
 #define WIFI_PIN                    (GPIO_Pin_6)
 
 rt_mutex_t wifi_uart_lock = RT_NULL;
+extern unsigned char APSTA_Status;
 
 /*****************************************************************************/
 /*  Function Implementations                                                 */
@@ -290,7 +291,7 @@ void UART5_IRQHandler(void)                	//串口1中断服务程序
 	if(USART_GetITStatus(UART5, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
 	{
 		USART_RX_BUF[Cur] = USART_ReceiveData(UART5);//(UART5->DR);	//读取接收到的数据
-		SEGGER_RTT_printf(0, "[%d] : %x %c\n",Cur,USART_RX_BUF[Cur],USART_RX_BUF[Cur]);
+		//SEGGER_RTT_printf(0, "[%d] : %x %c\n",Cur,USART_RX_BUF[Cur],USART_RX_BUF[Cur]);
 		Cur +=1;
 		if(Cur >=USART_REC_LEN)
 		{
@@ -301,6 +302,7 @@ void UART5_IRQHandler(void)                	//串口1中断服务程序
 
 void clear_WIFI(void)
 {
+	//TIM3_Int_Deinit();
 	Cur = 0;
 }
 
@@ -341,9 +343,18 @@ int detectionResetStatus(int size)		//检测到Ai-Thinker Technology Co. Ltd.  返回
 	{
 		if(!memcmp(&USART_RX_BUF[i],"Ai-Thinker Technology Co. Ltd.",30))
 		{
-			AT_CIPMUX1();
-			AT_CIPSERVER();
-			AT_CIPSTO();
+			if(APSTA_Status == 1)
+			{
+				AT_CWMODE3(3);
+				AT_CIPMUX1();
+				AT_CIPSERVER();
+				AT_CIPSTO();
+			}else
+			{
+				AT_CWMODE3(1);
+				AT_CIPMUX1();
+			}
+			
 			return 1;			
 		}
 	}
@@ -395,13 +406,13 @@ int detectionIPD(int size)
 					WIFI_RecvSocketCData[len] = '\0';
 					WIFI_Recv_SocketC_Event = 1;
 					WIFI_Recv_SocketC_LEN =len;
-					printf("C:%s\n",WIFI_RecvSocketCData);
+					//printf("C:%s\n",WIFI_RecvSocketCData);
 				}else if('3' == ConnectID){
 					memcpy(WIFI_RecvSocketBData,&USART_RX_BUF[i+8+j],len );
 					WIFI_RecvSocketBData[len] = '\0';
 					WIFI_Recv_SocketB_Event = 1;
 					WIFI_Recv_SocketB_LEN =len;
-					printf("B:%s\n",WIFI_RecvSocketBData);
+					//printf("B:%s\n",WIFI_RecvSocketBData);
 				}else
 				{
 					TCPServerConnectID = ConnectID;
@@ -409,7 +420,7 @@ int detectionIPD(int size)
 					WIFI_RecvSocketAData[len] = '\0';
 					WIFI_Recv_SocketA_Event = 1;
 					WIFI_Recv_SocketA_LEN =len;
-					printf("A:%s\n",WIFI_RecvSocketAData);
+					//printf("A:%s\n",WIFI_RecvSocketAData);
 				}
 				Cur = 0;
 				return 1;
@@ -433,10 +444,6 @@ int WIFI_Reset(void)
 	GPIO_ResetBits(WIFI_GPIO, WIFI_PIN);
 	rt_hw_ms_delay(1000);
 	GPIO_SetBits(WIFI_GPIO, WIFI_PIN);
-	rt_hw_ms_delay(3000);
-	AT_CIPMUX1();
-	AT_CIPSERVER();
-	AT_CIPSTO();
 	return 0;
 }
 
@@ -451,7 +458,6 @@ int ESP07S_sendData(char *data ,int length)
 	{
 		if(1 == detectionSENDOK(Cur))
 		{
-			//printf("AT+CWMODE3 :+ok\n");
 			return 0;
 		}
 		rt_thread_delay(1);
@@ -555,7 +561,6 @@ int AT_CWMODE3(int mode)			//配置WIFI模块为AP+STA模式1.STA模式 3.AP+STA模式
 	{
 		if(1 == detectionOK(Cur))
 		{
-			printf("AT+CWMODE :+ok\n");
 			clear_WIFI();
 			return 0;
 		}
@@ -565,7 +570,6 @@ int AT_CWMODE3(int mode)			//配置WIFI模块为AP+STA模式1.STA模式 3.AP+STA模式
 	return -1;
 		
 }
-
 int AT_RST(void)			//复位WIFI模块
 {
 	int i = 0;
@@ -594,7 +598,7 @@ int WIFI_Test(void)
 	clear_WIFI();
 	//发送"AT+Z\n",返回+ok
 	WIFI_SendData("AT\r\n", 8);
-	for(i = 0;i< 100;i++)
+	for(i = 0;i< 200;i++)
 	{
 		if(1 == detectionOK(Cur))
 		{
@@ -614,7 +618,6 @@ int AT_CWSAP(char *ECUID,char *PASSWD)			//配置ECU热点名字
 	char AT[100] = { '\0' };
 	clear_WIFI();
 	sprintf(AT,"AT+CWSAP_DEF=\"ECU_R_%s\",\"%s\",11,3\r\n",ECUID,PASSWD);
-	
 	WIFI_SendData(AT, (strlen(AT)+1));
 	for(i = 0;i< 200;i++)
 	{
@@ -634,8 +637,15 @@ int AT_CWSAP(char *ECUID,char *PASSWD)			//配置ECU热点名字
 int WIFI_Factory_Passwd(void)
 {
 	char ECUID[13] = {'\0'};
+	int res = 0;
+	AT_CWMODE3(3);
+
+	
 	get_ecuid(ECUID);
-	if(!AT_CWSAP(ECUID,"88888888"))
+	res = AT_CWSAP(ECUID,"88888888");
+	AT_CWMODE3(1);
+	AT_CIPMUX1();
+	if(!res)
 		return 0;
 	else
 		return -1;
@@ -658,13 +668,13 @@ int AT_CWJAP_DEF(char *SSID,char *PASSWD)			//配置ECU连接无线路由器名
 	char AT[100] = { '\0' };
 	clear_WIFI();
 	sprintf(AT,"AT+CWJAP_DEF=\"%s\",\"%s\"\r\n",SSID,PASSWD);
-	printf("%s",AT);
+	
 	WIFI_SendData(AT, (strlen(AT)+1));
 	for(i = 0;i< 1500;i++)
 	{
 		if(1 == detectionOK(Cur))
 		{
-			printf("AT+AT_CWJAP_DEF :+ok\n");
+			printf("%s",AT);
 			clear_WIFI();
 			return 0;
 		}
@@ -698,7 +708,6 @@ int detectionJAPStatus(int size,char *info,unsigned char *LinksStatus)		//检测到
 						}
 					}
 					memcpy(info,&USART_RX_BUF[SSIDStart],(SSIDEnd-SSIDStart));
-					printf("info:%s\n",info);
 					*LinksStatus = 1;
 					return 1;
 				}
@@ -764,11 +773,13 @@ int AT_CWLAPList(char *liststr)
 	char AT[100] = { '\0' };
 	clear_WIFI();
 	sprintf(AT,"AT+CWLAP\r\n");
+	printf("%s",AT);
 	WIFI_SendData(AT, (strlen(AT)+1));
 	for(i = 0;i< 600;i++)
 	{
 		if(1 == detectionLAPList(Cur,liststr))
 		{
+			printf("AT+AT_CWLAPList :+ok\n");
 			clear_WIFI();
 			return 0;
 		}
@@ -863,13 +874,11 @@ int AT_CIPSEND(char ConnectID,int size)			//配置ECU连接无线路由器名
 	char AT[100] = { '\0' };
 	clear_WIFI();
 	sprintf(AT,"AT+CIPSEND=%c,%d\r\n",ConnectID,size);
-	//printf("%s",AT);
 	WIFI_SendData(AT, (strlen(AT)+1));
 	for(i = 0;i< 200;i++)
 	{
 		if(1 == detectionOK(Cur))
 		{
-			//printf("AT+AT_CIPSEND :+ok\n");
 			clear_WIFI();
 			return 0;
 		}
@@ -924,17 +933,49 @@ int AT_CIPSTO(void)			//配置WIFI模块作为TCP服务器时的超时时间
 int WIFI_Factory(char *ECUID12)
 {
 
+	int i = 0,res = 0;
+
+	//选择 WMODE
+	for(i = 0;i<3;i++)
+	{
+		if(0 == AT_CWMODE3(3))
+		{
+			res = 0;
+			break;
+		}else
+			res = -1;
+	}
+	if(res == -1) return -1;	
+
+
 	if(!AT_CWSAP(ECUID12,"88888888"))
 	{
 
+		//选择 WMODE
+		for(i = 0;i<3;i++)
+		{
+			if(0 == AT_CWMODE3(1))
+			{
+				res = 0;
+				break;
+			}else
+				res = -1;
+		}
+		if(res == -1) return -1;	
+		AT_CIPMUX1();
+		/*
 		if(0 != AT_RST())
 		{
 			WIFI_Reset();
 		}
+		
 		rt_hw_s_delay(1);
 		AT_CIPMUX1();
 		AT_CIPSERVER();
 		AT_CIPSTO();
+		*/
+
+		
 		return 0;
 	}
 	else
@@ -968,6 +1009,7 @@ int InitWorkMode(void)
 	}
 	if(res == -1) return -1;	
 
+
 	//配置默认IP
 	for(i = 0;i<3;i++)
 	{
@@ -999,8 +1041,9 @@ void Send(char *data, int num)
 int AT_JAPST(void)
 {
 	char info[100] = {'\0'};
-
-	return AT_CWJAPStatus(info);
+	int ret = AT_CWJAPStatus(info);
+	printf("%s\n",info);
+	return ret;
 }
 
 void AT_LAPList(void)
@@ -1042,7 +1085,4 @@ FINSH_FUNCTION_EXPORT(SendToSocketC , Send SOCKET C.)
 
 FINSH_FUNCTION_EXPORT(AT_JAPST , AT_JAPST.)
 #endif
-
-
-
 

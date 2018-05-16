@@ -82,6 +82,7 @@ int AT_CWJAPStatus(char *info);			//²éÑ¯ECUÁ¬½ÓÎŞÏßÂ·ÓÉÆ÷Ãû ·µ»Ø1±íÊ¾»ñÈ¡³É¹¦Á¬½
 int AT_CWJAP(char *SSID,char *PASSWD);			//ÅäÖÃECUÁ¬½ÓÎŞÏßÂ·ÓÉÆ÷Ãû
 int AT_CWLAPList(char *liststr);
 void WIFI_GetEvent_ESP07S(void);
+int AT_CWMODE3(int mode);
 
 #endif
 

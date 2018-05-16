@@ -41,6 +41,7 @@
 #include "channel.h"
 #include "key.h"
 #include "timer.h"
+#include "usart5.h"
 
 #define MIN_FUNCTION_ID 0
 #define MAX_FUNCTION_ID 14
@@ -50,6 +51,11 @@ extern rt_mutex_t wifi_uart_lock;
 extern ecu_info ecu;
 extern inverter_info inverter[MAXINVERTERCOUNT];
 extern unsigned char WIFI_RST_Event;
+extern unsigned char APKEY_EVENT;
+unsigned char APSTA_Status = 0;		//当前AP,STA模式   0表示STA模式，1表示STA+AP模式
+static rt_timer_t APSTAtimer;	//线程重启定时器
+unsigned char  switchSTAModeFlag = 0;	//切换为STA模式标志
+
 enum CommandID{
 	P0000, P0001, P0002, P0003, P0004, P0005, P0006, P0007, P0008, P0009, //0-9
 	P0010, P0011, P0012, P0013, P0014, P0015, P0016, P0017, P0018, P0019, //10-19
@@ -224,7 +230,7 @@ int ResolveServerInfo(const char *string,ECUServerInfo_t *serverInfo)
 	memcpy(domainLenStr,&string[30],3);
 	domainLen = atoi(domainLenStr);
 	memcpy(serverInfo->domain,&string[33],domainLen);
-
+	serverInfo->domain[domainLen] = '\0';
 	memcpy(serverInfo->IP,&string[33+domainLen],4);
 
 	serverInfo->Port1 = string[37+domainLen]*256 + string[38+domainLen];
@@ -769,6 +775,7 @@ void Phone_ServerInfo(int Data_Len,const char *recvbuffer)
 		if(ret == 0)
 		{	
 			APP_Response_ServerInfo(0x00,&serverInfo);
+			initSocketArgs();
 		}else
 		{
 			return;
@@ -1007,12 +1014,22 @@ void process_KEYEvent(void)
 //无线复位处理
 int process_WIFI_RST(void)
 {
-	printf("process_WIFI_RST Start\n");
 	if(AT_RST() != 0)
 	{
 		WIFI_Reset();
 	}
-	printf("process_WIFI_RST End\n");
+
+	if(APSTA_Status == 1)
+	{
+		AT_CWMODE3(3);
+		AT_CIPMUX1();
+		AT_CIPSERVER();
+		AT_CIPSTO();
+	}else
+	{
+		AT_CWMODE3(1);
+		AT_CIPMUX1();
+	}
 	return 0;
 }
 
@@ -1030,6 +1047,53 @@ void process_WIFIEvent_ESP07S(void)
 	}
 }
 
+
+static void APSTATimeout(void* parameter)
+{
+	//切换为AP+STA模式
+	APSTA_Status = 0;
+	switchSTAModeFlag = 1;
+}
+
+void process_switchSTAMode(void)
+{
+	if(switchSTAModeFlag == 1)
+	{
+		printf("STA\n");
+		AT_CWMODE3(1);
+		AT_CIPMUX1();
+		switchSTAModeFlag = 0;
+	}
+}
+
+//切换为AP+STA模式，1小时后切换为STA模式
+void process_APKEYEvent(void)
+{
+	//切换到AP+STA模式
+	AT_CWMODE3(3);
+	AT_CIPMUX1();
+	AT_CIPSERVER();
+	AT_CIPSTO();
+	printf("AP\n");
+	APSTA_Status = 1;
+
+	 if(APSTAtimer == RT_NULL)
+	 {
+		//定时器1小时后，切换为STA模式
+		APSTAtimer = rt_timer_create("APSTA",
+			APSTATimeout, 
+			RT_NULL, 
+			3600*RT_TICK_PER_SECOND,
+			RT_TIMER_FLAG_ONE_SHOT); 
+	 }
+	
+	if (APSTAtimer != RT_NULL) 
+	{
+		rt_timer_stop(APSTAtimer);
+		rt_timer_start(APSTAtimer);
+	}
+	
+}
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
@@ -1057,7 +1121,7 @@ void phone_server_thread_entry(void* parameter)
 	get_ecuid(ecu.id);
 	get_mac((unsigned char*)ecu.MacAddress);			//ECU 有线Mac地址
 	readconnecttime();
-	
+	rt_thread_delay(RT_TICK_PER_SECOND*START_TIME_PHONE_SERVER);
 	add_Phone_functions();
 		
 	//3?ê??ˉIP
@@ -1068,7 +1132,8 @@ void phone_server_thread_entry(void* parameter)
 		StaticIP(IPconfig.IPAddr,IPconfig.MSKAddr,IPconfig.GWAddr,IPconfig.DNS1Addr,IPconfig.DNS2Addr);
 	}
 
-	
+	AT_CWMODE3(1);
+	AT_CIPMUX1();
 	while(1)
 	{	
 		//上锁
@@ -1078,20 +1143,19 @@ void phone_server_thread_entry(void* parameter)
 		//解锁
 		rt_mutex_release(wifi_uart_lock);
 		
-		if(WIFI_Recv_SocketA_Event == 1)
-		{
-			//print2msg(ECU_DBG_WIFI,"phone_server",(char *)WIFI_RecvSocketAData);
-			WIFI_Recv_SocketA_Event = 0;
-			process_WIFI();
-		}
-
 		//检测按键事件
 		if(KEY_FormatWIFI_Event == 1)
 		{
 			process_KEYEvent();
 			KEY_FormatWIFI_Event = 0;
 		}
-
+		
+		if(APKEY_EVENT == 1)
+		{
+			process_APKEYEvent();	//切换到AP+STA模式，定时1小时切换回STA模式
+			APKEY_EVENT = 0;
+		}
+		
 		//WIFI复位事件
 		if(WIFI_RST_Event == 1)
 		{
@@ -1099,7 +1163,7 @@ void phone_server_thread_entry(void* parameter)
 			if(ret == 0)
 				WIFI_RST_Event = 0;
 		}
-
+		process_switchSTAMode();
 		rt_thread_delay(RT_TICK_PER_SECOND/100);
 	}
 	
