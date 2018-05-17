@@ -7,18 +7,18 @@
 
 typedef struct
 {
-	char ECUID[13];											//ECU ID
-	unsigned int LifttimeEnergy;				//ECU 历史发电量
-	unsigned int LastSystemPower;			//ECU 当前系统功率
-	unsigned int GenerationCurrentDay;//ECU 当天发电量
-	char LastToEMA[8];									//ECU 最后一次连接EMA的时间
-	unsigned short InvertersNum;				//ECU 逆变器总数
-	unsigned short LastInvertersNum;		//ECU 当前连接的逆变器总数
-	unsigned char TimeZoneLength;				//ECU 时区长度
-	char TimeZone[20];									//ECU 时区
-	char MacAddress[7];									//ECU 有线Mac地址
-	char WifiMac[7];										//ECU 无线Mac地址
-	char Channel[3];										//信道
+    char ECUID[13];											//ECU ID
+    unsigned int LifttimeEnergy;				//ECU 历史发电量
+    unsigned int LastSystemPower;			//ECU 当前系统功率
+    unsigned int GenerationCurrentDay;//ECU 当天发电量
+    char LastToEMA[8];									//ECU 最后一次连接EMA的时间
+    unsigned short InvertersNum;				//ECU 逆变器总数
+    unsigned short LastInvertersNum;		//ECU 当前连接的逆变器总数
+    unsigned char TimeZoneLength;				//ECU 时区长度
+    char TimeZone[20];									//ECU 时区
+    char MacAddress[7];									//ECU 有线Mac地址
+    char WifiMac[7];										//ECU 无线Mac地址
+    char Channel[3];										//信道
 } stBaseInfo;
 
 unsigned short packetlen(unsigned char *packet);

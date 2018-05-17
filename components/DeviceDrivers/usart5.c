@@ -48,206 +48,206 @@ Socket_Cfg control_client_arg;
 
 void initSocketArgs(void)
 {
-	FILE *fp;
-	char *buff = NULL;
-	client_arg.port1 = CLIENT_SERVER_PORT1;
-	client_arg.port2 = CLIENT_SERVER_PORT2;
-	strcpy(client_arg.domain, CLIENT_SERVER_DOMAIN);
-	strcpy(client_arg.ip, CLIENT_SERVER_IP);
+    FILE *fp;
+    char *buff = NULL;
+    client_arg.port1 = CLIENT_SERVER_PORT1;
+    client_arg.port2 = CLIENT_SERVER_PORT2;
+    strcpy(client_arg.domain, CLIENT_SERVER_DOMAIN);
+    strcpy(client_arg.ip, CLIENT_SERVER_IP);
 
-	buff = malloc(512);
-	memset(buff,'\0',512);
-	//初始化电量上传参数
-	fp = fopen("/yuneng/datacent.con", "r");
-	if(fp)
-	{
-		while(1)
-		{
-			memset(buff, '\0', 512);
-			fgets(buff, 512, fp);
-			
-			if(!strlen(buff))
-				break;
-			if(!strncmp(buff, "Domain", 6))
-			{
-				strcpy(client_arg.domain, &buff[7]);
-				if('\n' == client_arg.domain[strlen(client_arg.domain)-1])
-					client_arg.domain[strlen(client_arg.domain)-1] = '\0';
-			}
-			if(!strncmp(buff, "IP", 2))
-			{
-				strcpy(client_arg.ip, &buff[3]);
-				if('\n' == client_arg.ip[strlen(client_arg.ip)-1])
-					client_arg.ip[strlen(client_arg.ip)-1] = '\0';
-			}
-			if(!strncmp(buff, "Port1", 5))
-				client_arg.port1=atoi(&buff[6]);
-			if(!strncmp(buff, "Port2", 5))
-				client_arg.port2=atoi(&buff[6]);
-		}
-		fclose(fp);
-	}
-	
-	//初始化远程控制参数
-	control_client_arg.port1 = CONTROL_SERVER_PORT1;
-	control_client_arg.port2 = CONTROL_SERVER_PORT2;
-;	strcpy(control_client_arg.domain, CONTROL_SERVER_DOMAIN);
-	strcpy(control_client_arg.ip, CONTROL_SERVER_IP);
-	control_client_arg.timeout = 10;
-	control_client_arg.report_interval = 15;
-	fp = fopen("/yuneng/control.con", "r");
-	if(fp)
-	{
-		while(1)
-		{
-			memset(buff, '\0',512);
-			fgets(buff, 512, fp);
-			if(!strlen(buff))
-			break;
-			if(!strncmp(buff, "Domain", 6))
-			{
-				strcpy(control_client_arg.domain, &buff[7]);
-				if('\n' == control_client_arg.domain[strlen(control_client_arg.domain)-1])
-					control_client_arg.domain[strlen(control_client_arg.domain)-1] = '\0';
-			}
-			if(!strncmp(buff, "IP", 2))
-			{
-				strcpy(control_client_arg.ip, &buff[3]);
-				if('\n' == control_client_arg.ip[strlen(control_client_arg.ip)-1])
-					control_client_arg.ip[strlen(control_client_arg.ip)-1] = '\0';
-			}
-			if(!strncmp(buff, "Port1", 5))
-				control_client_arg.port1=atoi(&buff[6]);
-			if(!strncmp(buff, "Port2", 5))
-				control_client_arg.port2=atoi(&buff[6]);
+    buff = malloc(512);
+    memset(buff,'\0',512);
+    //初始化电量上传参数
+    fp = fopen("/yuneng/datacent.con", "r");
+    if(fp)
+    {
+        while(1)
+        {
+            memset(buff, '\0', 512);
+            fgets(buff, 512, fp);
 
-			if(!strncmp(buff, "Timeout", 7))
-			{
-				control_client_arg.timeout = atoi(&buff[8]);
-			}
-			
-			if(!strncmp(buff, "Report_Interval", 15))
-			{
-				control_client_arg.report_interval = atoi(&buff[16]);
-			}
-		}
-		fclose(fp);
-	}
+            if(!strlen(buff))
+                break;
+            if(!strncmp(buff, "Domain", 6))
+            {
+                strcpy(client_arg.domain, &buff[7]);
+                if('\n' == client_arg.domain[strlen(client_arg.domain)-1])
+                    client_arg.domain[strlen(client_arg.domain)-1] = '\0';
+            }
+            if(!strncmp(buff, "IP", 2))
+            {
+                strcpy(client_arg.ip, &buff[3]);
+                if('\n' == client_arg.ip[strlen(client_arg.ip)-1])
+                    client_arg.ip[strlen(client_arg.ip)-1] = '\0';
+            }
+            if(!strncmp(buff, "Port1", 5))
+                client_arg.port1=atoi(&buff[6]);
+            if(!strncmp(buff, "Port2", 5))
+                client_arg.port2=atoi(&buff[6]);
+        }
+        fclose(fp);
+    }
 
-	printf("client_arg.domain:%s\n",client_arg.domain);
-	printf("client_arg.ip:%s\n",client_arg.ip);
-	printf("client_arg.port1:%d\n",client_arg.port1);
-	printf("client_arg.port2:%d\n",client_arg.port2);
+    //初始化远程控制参数
+    control_client_arg.port1 = CONTROL_SERVER_PORT1;
+    control_client_arg.port2 = CONTROL_SERVER_PORT2;
+    ;	strcpy(control_client_arg.domain, CONTROL_SERVER_DOMAIN);
+    strcpy(control_client_arg.ip, CONTROL_SERVER_IP);
+    control_client_arg.timeout = 10;
+    control_client_arg.report_interval = 15;
+    fp = fopen("/yuneng/control.con", "r");
+    if(fp)
+    {
+        while(1)
+        {
+            memset(buff, '\0',512);
+            fgets(buff, 512, fp);
+            if(!strlen(buff))
+                break;
+            if(!strncmp(buff, "Domain", 6))
+            {
+                strcpy(control_client_arg.domain, &buff[7]);
+                if('\n' == control_client_arg.domain[strlen(control_client_arg.domain)-1])
+                    control_client_arg.domain[strlen(control_client_arg.domain)-1] = '\0';
+            }
+            if(!strncmp(buff, "IP", 2))
+            {
+                strcpy(control_client_arg.ip, &buff[3]);
+                if('\n' == control_client_arg.ip[strlen(control_client_arg.ip)-1])
+                    control_client_arg.ip[strlen(control_client_arg.ip)-1] = '\0';
+            }
+            if(!strncmp(buff, "Port1", 5))
+                control_client_arg.port1=atoi(&buff[6]);
+            if(!strncmp(buff, "Port2", 5))
+                control_client_arg.port2=atoi(&buff[6]);
 
-	printf("client_arg.domain:%s\n",control_client_arg.domain);
-	printf("client_arg.ip:%s\n",control_client_arg.ip);
-	printf("client_arg.port1:%d\n",control_client_arg.port1);
-	printf("client_arg.port2:%d\n",control_client_arg.port2);
-	printf("client_arg.timeout:%d\n",control_client_arg.timeout);
-	printf("client_arg.report_interval:%d\n",control_client_arg.report_interval);
-	
-	free(buff);
-	buff = NULL;
+            if(!strncmp(buff, "Timeout", 7))
+            {
+                control_client_arg.timeout = atoi(&buff[8]);
+            }
+
+            if(!strncmp(buff, "Report_Interval", 15))
+            {
+                control_client_arg.report_interval = atoi(&buff[16]);
+            }
+        }
+        fclose(fp);
+    }
+
+    printf("client_arg.domain:%s\n",client_arg.domain);
+    printf("client_arg.ip:%s\n",client_arg.ip);
+    printf("client_arg.port1:%d\n",client_arg.port1);
+    printf("client_arg.port2:%d\n",client_arg.port2);
+
+    printf("client_arg.domain:%s\n",control_client_arg.domain);
+    printf("client_arg.ip:%s\n",control_client_arg.ip);
+    printf("client_arg.port1:%d\n",control_client_arg.port1);
+    printf("client_arg.port2:%d\n",control_client_arg.port2);
+    printf("client_arg.timeout:%d\n",control_client_arg.timeout);
+    printf("client_arg.report_interval:%d\n",control_client_arg.report_interval);
+
+    free(buff);
+    buff = NULL;
 }
 
 
 /* 随机取port1或port2 */
 int randport(Socket_Cfg cfg)
 {
-	srand((unsigned)acquire_time());
-	if(rand()%2)
-		return cfg.port1;
-	else
-		return cfg.port2;
+    srand((unsigned)acquire_time());
+    if(rand()%2)
+        return cfg.port1;
+    else
+        return cfg.port2;
 }
 //4个字节
 unsigned short packetlen_A(unsigned char *packet)
 {
-	unsigned short len = 0;
-	len = ((packet[0]-'0')*1000 +(packet[1]-'0')*100 + (packet[2]-'0')*10 + (packet[3]-'0'));
-	return len;
+    unsigned short len = 0;
+    len = ((packet[0]-'0')*1000 +(packet[1]-'0')*100 + (packet[2]-'0')*10 + (packet[3]-'0'));
+    return len;
 }
 
 //2个字节
 unsigned short packetlen_B(unsigned char *packet)
 {
-	unsigned short len = 0,count = 0;
-	count = (packet[0] - '0') * 10 + (packet[1] - '0');
-	len =  3 + 9 + count *14;
-	return len;
-	
+    unsigned short len = 0,count = 0;
+    count = (packet[0] - '0') * 10 + (packet[1] - '0');
+    len =  3 + 9 + count *14;
+    return len;
+
 }
 
 //5个字节
 unsigned short packetlen_C(unsigned char *packet)
 {
-	unsigned short len = 0;
-	int i = 0;
-	for(i = 0;i < 5;i++)
-	{
-		if(packet[i] == 'A') packet[i] = '0';
-	}
-	len = ((packet[0]-'0')*10000 +(packet[1]-'0')*1000 + (packet[2]-'0')*100 + (packet[3]-'0')*10 + (packet[4]-'0'));
-	return len;
+    unsigned short len = 0;
+    int i = 0;
+    for(i = 0;i < 5;i++)
+    {
+        if(packet[i] == 'A') packet[i] = '0';
+    }
+    len = ((packet[0]-'0')*10000 +(packet[1]-'0')*1000 + (packet[2]-'0')*100 + (packet[3]-'0')*10 + (packet[4]-'0'));
+    return len;
 }
 
 //WIFI发送函数 
 int WIFI_SendData(char *data, int num)
 {      
-	int index = 0;
-	char ch = 0;
-	for(index = 0;index < num;index++)
-	{
-		ch = data[index];
-		while(USART_GetFlagStatus(UART5,USART_FLAG_TC)==RESET); 
-   			 USART_SendData(UART5,(uint16_t)ch);
-	}
-	return index;
+    int index = 0;
+    char ch = 0;
+    for(index = 0;index < num;index++)
+    {
+        ch = data[index];
+        while(USART_GetFlagStatus(UART5,USART_FLAG_TC)==RESET);
+        USART_SendData(UART5,(uint16_t)ch);
+    }
+    return index;
 }
- 
+
 
 //初始化IO 串口5
 //bound:波特率
 void uart5_init(u32 bound){
     //GPIO端口设置
-	GPIO_InitTypeDef GPIO_InitStructure;
-	USART_InitTypeDef USART_InitStructure;
-	NVIC_InitTypeDef NVIC_InitStructure;
-	 
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5, ENABLE);	//使能串口时钟UART5
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC|RCC_APB2Periph_GPIOD|RCC_APB2Periph_AFIO, ENABLE);	//使能GPIOA时钟
+    GPIO_InitTypeDef GPIO_InitStructure;
+    USART_InitTypeDef USART_InitStructure;
+    NVIC_InitTypeDef NVIC_InitStructure;
 
- 	//USART_DeInit(UART5);  //复位串口5
-	 //UART5_TX   PC.12
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5, ENABLE);	//使能串口时钟UART5
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC|RCC_APB2Periph_GPIOD|RCC_APB2Periph_AFIO, ENABLE);	//使能GPIOA时钟
+
+    //USART_DeInit(UART5);  //复位串口5
+    //UART5_TX   PC.12
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12; //PC.12
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;	//复用推挽输出
     GPIO_Init(GPIOC, &GPIO_InitStructure); //初始化PC12
-   
+
     //UART5_RX	  PD.2
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;//浮空输入
     GPIO_Init(GPIOD, &GPIO_InitStructure);  //初始化PD2
-   //USART 初始化设置
+    //USART 初始化设置
 
-	USART_InitStructure.USART_BaudRate = bound;//一般设置为9600;
-	USART_InitStructure.USART_WordLength = USART_WordLength_8b;//字长为8位数据格式
-	USART_InitStructure.USART_StopBits = USART_StopBits_1;//一个停止位
-	USART_InitStructure.USART_Parity = USART_Parity_No;//无奇偶校验位
-	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;//无硬件数据流控制
-	USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;	//收发模式
+    USART_InitStructure.USART_BaudRate = bound;//一般设置为9600;
+    USART_InitStructure.USART_WordLength = USART_WordLength_8b;//字长为8位数据格式
+    USART_InitStructure.USART_StopBits = USART_StopBits_1;//一个停止位
+    USART_InitStructure.USART_Parity = USART_Parity_No;//无奇偶校验位
+    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;//无硬件数据流控制
+    USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;	//收发模式
 
     USART_Init(UART5, &USART_InitStructure); //初始化串口
 
-   //UART5 NVIC 配置
+    //UART5 NVIC 配置
     NVIC_InitStructure.NVIC_IRQChannel = UART5_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0;//抢占优先级3
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;		//子优先级3
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQ通道使能
-	NVIC_Init(&NVIC_InitStructure);	//根据指定的参数初始化VIC寄存器
-   
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0;//抢占优先级3
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;		//子优先级3
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQ通道使能
+    NVIC_Init(&NVIC_InitStructure);	//根据指定的参数初始化VIC寄存器
+
     USART_ITConfig(UART5, USART_IT_RXNE, ENABLE);//开启中断
-    USART_Cmd(UART5, ENABLE);                    //使能串口 
+    USART_Cmd(UART5, ENABLE);                    //使能串口
 
 
     RCC_APB2PeriphClockCmd(WIFI_RCC,ENABLE);
@@ -257,8 +257,8 @@ void uart5_init(u32 bound){
 
     GPIO_InitStructure.GPIO_Pin   = WIFI_PIN;
     GPIO_Init(WIFI_GPIO, &GPIO_InitStructure);
-	GPIO_SetBits(WIFI_GPIO, WIFI_PIN);
-	
+    GPIO_SetBits(WIFI_GPIO, WIFI_PIN);
+
 
 }
 
@@ -270,7 +270,7 @@ unsigned int WIFI_Recv_SocketA_LEN =0;
 char TCPServerConnectID = '0';
 
 char ConnectID = '0';
-	
+
 //WIFI  socket B 当串口发出来的数据组包成功时 ,数组赋值，并且Socket事件变为1
 unsigned char WIFI_RecvSocketBData[SOCKETB_LEN] = {'\0'};
 unsigned char WIFI_Recv_SocketB_Event = 0;
@@ -288,22 +288,22 @@ unsigned short Cur = 0;															//当前采值位置														//数据解析位置
 
 void UART5_IRQHandler(void)                	//串口1中断服务程序
 {
-	if(USART_GetITStatus(UART5, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
-	{
-		USART_RX_BUF[Cur] = USART_ReceiveData(UART5);//(UART5->DR);	//读取接收到的数据
-		//SEGGER_RTT_printf(0, "[%d] : %x %c\n",Cur,USART_RX_BUF[Cur],USART_RX_BUF[Cur]);
-		Cur +=1;
-		if(Cur >=USART_REC_LEN)
-		{
-			Cur = 0;
-		}
-	}
+    if(USART_GetITStatus(UART5, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
+    {
+        USART_RX_BUF[Cur] = USART_ReceiveData(UART5);//(UART5->DR);	//读取接收到的数据
+        //SEGGER_RTT_printf(0, "[%d] : %x %c\n",Cur,USART_RX_BUF[Cur],USART_RX_BUF[Cur]);
+        Cur +=1;
+        if(Cur >=USART_REC_LEN)
+        {
+            Cur = 0;
+        }
+    }
 }
 
 void clear_WIFI(void)
 {
-	//TIM3_Int_Deinit();
-	Cur = 0;
+    //TIM3_Int_Deinit();
+    Cur = 0;
 }
 
 
@@ -311,748 +311,748 @@ void clear_WIFI(void)
 //判断字符中是否有OK  字符
 int detectionOK(int size)		//检测到OK  返回1   未检出到返回0
 {
-	int i=0;
-	for(i = 0;i<(size-2);i++)
-	{
-		if(!memcmp(&USART_RX_BUF[i],"OK",2))
-		{
-			return 1;			
-		}
-	}
-	return 0;
+    int i=0;
+    for(i = 0;i<(size-2);i++)
+    {
+        if(!memcmp(&USART_RX_BUF[i],"OK",2))
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int detectionUNLINK(int size)		//检测到OK  返回1   未检出到返回0
 {
-	int i=0;
-	for(i = 0;i<(size-2);i++)
-	{
-		if(!memcmp(&USART_RX_BUF[i],"UNLINK",6))
-		{
-			return 1;			
-		}
-	}
-	return 0;
+    int i=0;
+    for(i = 0;i<(size-2);i++)
+    {
+        if(!memcmp(&USART_RX_BUF[i],"UNLINK",6))
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 //判断字符中是否有Ai-Thinker Technology Co. Ltd.  字符
 int detectionResetStatus(int size)		//检测到Ai-Thinker Technology Co. Ltd.  返回1   未检出到返回0
 {
-	int i=0;
-	for(i = 0;i<(size-30);i++)
-	{
-		if(!memcmp(&USART_RX_BUF[i],"Ai-Thinker Technology Co. Ltd.",30))
-		{
-			if(APSTA_Status == 1)
-			{
-				AT_CWMODE3(3);
-				AT_CIPMUX1();
-				AT_CIPSERVER();
-				AT_CIPSTO();
-			}else
-			{
-				AT_CWMODE3(1);
-				AT_CIPMUX1();
-			}
-			
-			return 1;			
-		}
-	}
-	return 0;
+    int i=0;
+    for(i = 0;i<(size-30);i++)
+    {
+        if(!memcmp(&USART_RX_BUF[i],"Ai-Thinker Technology Co. Ltd.",30))
+        {
+            if(APSTA_Status == 1)
+            {
+                AT_CWMODE3(3);
+                AT_CIPMUX1();
+                AT_CIPSERVER();
+                AT_CIPSTO();
+            }else
+            {
+                AT_CWMODE3(1);
+                AT_CIPMUX1();
+            }
+
+            return 1;
+        }
+    }
+    return 0;
 }
 
 //判断字符中是否有OK  字符
 int detectionSENDOK(int size)		//检测到OK  返回1   未检出到返回0
 {
-	int i=0;
-	for(i = 0;i<(size-7);i++)
-	{
-		if(!memcmp(&USART_RX_BUF[i],"SEND OK",7))
-		{
-			return 1;			
-		}
-	}
-	return 0;
+    int i=0;
+    for(i = 0;i<(size-7);i++)
+    {
+        if(!memcmp(&USART_RX_BUF[i],"SEND OK",7))
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 //判断字符中是否有+IPD
 int detectionIPD(int size)
 {
-	int i=0,j=0;
-	char messageLen[5] = {'\0'};
-	int len = 0;
-	
-	for(i = 0;i<(size-4);i++)
-	{
-		if(!memcmp(&USART_RX_BUF[i],"+IPD",4))
-		{
-			ConnectID = USART_RX_BUF[i+5];
-			memcpy(messageLen,&USART_RX_BUF[i+7],4);
-			for(j = 0;j<4;j++)
-			{
-				if(messageLen[j] == ':')
-				{
-					messageLen[j] = '\0';
-					//printf("%c %d,%s\n",USART_RX_BUF[i+5],j,messageLen);
-					len = atoi(messageLen);
-					break;
-				}
-			}
-			if((size - i -7-j) >=len)
-			{
-				if('4'==ConnectID)
-				{
-					memcpy(WIFI_RecvSocketCData,&USART_RX_BUF[i+8+j],len );
-					WIFI_RecvSocketCData[len] = '\0';
-					WIFI_Recv_SocketC_Event = 1;
-					WIFI_Recv_SocketC_LEN =len;
-					//printf("C:%s\n",WIFI_RecvSocketCData);
-				}else if('3' == ConnectID){
-					memcpy(WIFI_RecvSocketBData,&USART_RX_BUF[i+8+j],len );
-					WIFI_RecvSocketBData[len] = '\0';
-					WIFI_Recv_SocketB_Event = 1;
-					WIFI_Recv_SocketB_LEN =len;
-					//printf("B:%s\n",WIFI_RecvSocketBData);
-				}else
-				{
-					TCPServerConnectID = ConnectID;
-					memcpy(WIFI_RecvSocketAData,&USART_RX_BUF[i+8+j],len );
-					WIFI_RecvSocketAData[len] = '\0';
-					WIFI_Recv_SocketA_Event = 1;
-					WIFI_Recv_SocketA_LEN =len;
-					//printf("A:%s\n",WIFI_RecvSocketAData);
-				}
-				Cur = 0;
-				return 1;
-			}
-			break;
-			
-		}
-	}
-	return 0;
+    int i=0,j=0;
+    char messageLen[5] = {'\0'};
+    int len = 0;
+
+    for(i = 0;i<(size-4);i++)
+    {
+        if(!memcmp(&USART_RX_BUF[i],"+IPD",4))
+        {
+            ConnectID = USART_RX_BUF[i+5];
+            memcpy(messageLen,&USART_RX_BUF[i+7],4);
+            for(j = 0;j<4;j++)
+            {
+                if(messageLen[j] == ':')
+                {
+                    messageLen[j] = '\0';
+                    //printf("%c %d,%s\n",USART_RX_BUF[i+5],j,messageLen);
+                    len = atoi(messageLen);
+                    break;
+                }
+            }
+            if((size - i -7-j) >=len)
+            {
+                if('4'==ConnectID)
+                {
+                    memcpy(WIFI_RecvSocketCData,&USART_RX_BUF[i+8+j],len );
+                    WIFI_RecvSocketCData[len] = '\0';
+                    WIFI_Recv_SocketC_Event = 1;
+                    WIFI_Recv_SocketC_LEN =len;
+                    //printf("C:%s\n",WIFI_RecvSocketCData);
+                }else if('3' == ConnectID){
+                    memcpy(WIFI_RecvSocketBData,&USART_RX_BUF[i+8+j],len );
+                    WIFI_RecvSocketBData[len] = '\0';
+                    WIFI_Recv_SocketB_Event = 1;
+                    WIFI_Recv_SocketB_LEN =len;
+                    //printf("B:%s\n",WIFI_RecvSocketBData);
+                }else
+                {
+                    TCPServerConnectID = ConnectID;
+                    memcpy(WIFI_RecvSocketAData,&USART_RX_BUF[i+8+j],len );
+                    WIFI_RecvSocketAData[len] = '\0';
+                    WIFI_Recv_SocketA_Event = 1;
+                    WIFI_Recv_SocketA_LEN =len;
+                    //printf("A:%s\n",WIFI_RecvSocketAData);
+                }
+                Cur = 0;
+                return 1;
+            }
+            break;
+
+        }
+    }
+    return 0;
 }
 
 void WIFI_GetEvent_ESP07S(void)
 {
-	//判断ECU_R数据大于38个字节
-	detectionIPD(Cur);
-	detectionResetStatus(Cur);
+    //判断ECU_R数据大于38个字节
+    detectionIPD(Cur);
+    detectionResetStatus(Cur);
 }
 
 int WIFI_Reset(void)
 {
-	GPIO_ResetBits(WIFI_GPIO, WIFI_PIN);
-	rt_hw_ms_delay(1000);
-	GPIO_SetBits(WIFI_GPIO, WIFI_PIN);
-	return 0;
+    GPIO_ResetBits(WIFI_GPIO, WIFI_PIN);
+    rt_hw_ms_delay(1000);
+    GPIO_SetBits(WIFI_GPIO, WIFI_PIN);
+    return 0;
 }
 
 char sendbuff[4096] = {'\0'};
 
 int ESP07S_sendData(char *data ,int length)
 {
-	int i = 0;
-	clear_WIFI();
-	WIFI_SendData(data,length);
-	for(i = 0;i< 100;i++)
-	{
-		if(1 == detectionSENDOK(Cur))
-		{
-			return 0;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return -1;
-	
+    int i = 0;
+    clear_WIFI();
+    WIFI_SendData(data,length);
+    for(i = 0;i< 100;i++)
+    {
+        if(1 == detectionSENDOK(Cur))
+        {
+            return 0;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return -1;
+
 }
 
 int SendToSocket(char connectID,char *data ,int length)
 {
-	int send_length = 0;	//需要发送的字节位置
-	while(length > 0)
-	{
-		memset(sendbuff,'\0',4096);
-		if(length > 1460)
-		{
-			memcpy(sendbuff,&data[send_length],1460);
-			AT_CIPSEND(connectID,1460);
-			ESP07S_sendData(sendbuff,1460);
-			//rt_hw_ms_delay(230);
-			send_length += 1460;
-			length -= 1460;
-		}else
-		{
-			memcpy(sendbuff,&data[send_length],length);
-			AT_CIPSEND(connectID,length);
-			ESP07S_sendData(sendbuff,length);
-			length -= length;
+    int send_length = 0;	//需要发送的字节位置
+    while(length > 0)
+    {
+        memset(sendbuff,'\0',4096);
+        if(length > 1460)
+        {
+            memcpy(sendbuff,&data[send_length],1460);
+            AT_CIPSEND(connectID,1460);
+            ESP07S_sendData(sendbuff,1460);
+            //rt_hw_ms_delay(230);
+            send_length += 1460;
+            length -= 1460;
+        }else
+        {
+            memcpy(sendbuff,&data[send_length],length);
+            AT_CIPSEND(connectID,length);
+            ESP07S_sendData(sendbuff,length);
+            length -= length;
 
-			return 0;
-		}
-		
-	}
-	AT_CIPCLOSE(connectID);
-	return -1;
+            return 0;
+        }
+
+    }
+    AT_CIPCLOSE(connectID);
+    return -1;
 }
 
 
 //SOCKET A 发送数据  \n需要在传入字符串中带入
 int SendToSocketA(char *data ,int length)
 {
-	return SendToSocket(TCPServerConnectID,data,length);
+    return SendToSocket(TCPServerConnectID,data,length);
 }
 
 //SOCKET B 发送数据
 int SendToSocketB(char *IP ,int port,char *data ,int length)
 {
-	WIFI_Recv_SocketB_Event = 0;
-	if(!AT_CIPSTART('3',"TCP",IP ,port))
-	{
-		//printf("SendToSocketB: ino AT_CIPSTART\n");
-		return SendToSocket('3',data,length);
-	}
-	return -1;
+    WIFI_Recv_SocketB_Event = 0;
+    if(!AT_CIPSTART('3',"TCP",IP ,port))
+    {
+        //printf("SendToSocketB: ino AT_CIPSTART\n");
+        return SendToSocket('3',data,length);
+    }
+    return -1;
 }
 
 //SOCKET C 发送数据
 int SendToSocketC(char *IP ,int port,char *data ,int length)
 {
-	char msg_length[6] = {'\0'};
+    char msg_length[6] = {'\0'};
 
-	if(data[strlen(data)-1] == '\n'){
-		sprintf(msg_length, "%05d", strlen(data)-1);
-	}
-	else{
-		sprintf(msg_length, "%05d", strlen(data));
-		strcat(data, "\n");
-		length++;
-	}
-	strncpy(&data[5], msg_length, 5);
-	WIFI_Recv_SocketC_Event = 0;
-	print2msg(ECU_DBG_CONTROL_CLIENT,"Sent", data);
-	if(!AT_CIPSTART('4',"TCP",IP ,port))
-	{
-		//printf("SendToSocketC: ino AT_CIPSTART\n");
-		return SendToSocket('4',data,length);
-	}
-	return -1;
+    if(data[strlen(data)-1] == '\n'){
+        sprintf(msg_length, "%05d", strlen(data)-1);
+    }
+    else{
+        sprintf(msg_length, "%05d", strlen(data));
+        strcat(data, "\n");
+        length++;
+    }
+    strncpy(&data[5], msg_length, 5);
+    WIFI_Recv_SocketC_Event = 0;
+    print2msg(ECU_DBG_CONTROL_CLIENT,"Sent", data);
+    if(!AT_CIPSTART('4',"TCP",IP ,port))
+    {
+        //printf("SendToSocketC: ino AT_CIPSTART\n");
+        return SendToSocket('4',data,length);
+    }
+    return -1;
 }
 
 //----ESP01流程-------------------------------
 int AT_CWMODE3(int mode)			//配置WIFI模块为AP+STA模式1.STA模式 3.AP+STA模式
 {
-	int i = 0;
-	clear_WIFI();
-	if(mode == 1)
-	{
-		WIFI_SendData("AT+CWMODE_DEF=1\r\n", 17);
-	}else if(mode == 3)
-	{
-		WIFI_SendData("AT+CWMODE_DEF=3\r\n", 17);
-	}else
-	{
-		return -1;
-	}
-	
-		
-	
-	for(i = 0;i< 100;i++)
-	{
-		if(1 == detectionOK(Cur))
-		{
-			clear_WIFI();
-			return 0;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return -1;
-		
+    int i = 0;
+    clear_WIFI();
+    if(mode == 1)
+    {
+        WIFI_SendData("AT+CWMODE_DEF=1\r\n", 17);
+    }else if(mode == 3)
+    {
+        WIFI_SendData("AT+CWMODE_DEF=3\r\n", 17);
+    }else
+    {
+        return -1;
+    }
+
+
+
+    for(i = 0;i< 100;i++)
+    {
+        if(1 == detectionOK(Cur))
+        {
+            clear_WIFI();
+            return 0;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return -1;
+
 }
 int AT_RST(void)			//复位WIFI模块
 {
-	int i = 0;
-	clear_WIFI();
-	//发送"AT+Z\n",返回+ok
-	WIFI_SendData("AT+RST\r\n", 8);
-	for(i = 0;i< 200;i++)
-	{
-		if(1 == detectionOK(Cur))
-		{
-			printf("AT+RST :+ok\n");
-			clear_WIFI();
-			return 0;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return -1;
-	
+    int i = 0;
+    clear_WIFI();
+    //发送"AT+Z\n",返回+ok
+    WIFI_SendData("AT+RST\r\n", 8);
+    for(i = 0;i< 200;i++)
+    {
+        if(1 == detectionOK(Cur))
+        {
+            printf("AT+RST :+ok\n");
+            clear_WIFI();
+            return 0;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return -1;
+
 }
 
 
 int WIFI_Test(void)
 {
-	int i = 0;
-	clear_WIFI();
-	//发送"AT+Z\n",返回+ok
-	WIFI_SendData("AT\r\n", 8);
-	for(i = 0;i< 200;i++)
-	{
-		if(1 == detectionOK(Cur))
-		{
-			clear_WIFI();
-			return 0;
-		}
-		rt_thread_delay(1);
-		MCP1316_kickwatchdog();
-	}
-	clear_WIFI();
-	return -1;
+    int i = 0;
+    clear_WIFI();
+    //发送"AT+Z\n",返回+ok
+    WIFI_SendData("AT\r\n", 8);
+    for(i = 0;i< 200;i++)
+    {
+        if(1 == detectionOK(Cur))
+        {
+            clear_WIFI();
+            return 0;
+        }
+        rt_thread_delay(1);
+        MCP1316_kickwatchdog();
+    }
+    clear_WIFI();
+    return -1;
 }
 
 int AT_CWSAP(char *ECUID,char *PASSWD)			//配置ECU热点名字
 {
-	int i = 0;
-	char AT[100] = { '\0' };
-	clear_WIFI();
-	sprintf(AT,"AT+CWSAP_DEF=\"ECU_R_%s\",\"%s\",11,3\r\n",ECUID,PASSWD);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	for(i = 0;i< 200;i++)
-	{
-		if(1 == detectionOK(Cur))
-		{
-			printf("%s",AT);
-			clear_WIFI();
-			return 0;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return -1;
-	
+    int i = 0;
+    char AT[100] = { '\0' };
+    clear_WIFI();
+    sprintf(AT,"AT+CWSAP_DEF=\"ECU_R_%s\",\"%s\",11,3\r\n",ECUID,PASSWD);
+    WIFI_SendData(AT, (strlen(AT)+1));
+    for(i = 0;i< 200;i++)
+    {
+        if(1 == detectionOK(Cur))
+        {
+            printf("%s",AT);
+            clear_WIFI();
+            return 0;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return -1;
+
 }
 
 int WIFI_Factory_Passwd(void)
 {
-	char ECUID[13] = {'\0'};
-	int res = 0;
-	AT_CWMODE3(3);
+    char ECUID[13] = {'\0'};
+    int res = 0;
+    AT_CWMODE3(3);
 
-	
-	get_ecuid(ECUID);
-	res = AT_CWSAP(ECUID,"88888888");
-	AT_CWMODE3(1);
-	AT_CIPMUX1();
-	if(!res)
-		return 0;
-	else
-		return -1;
+
+    get_ecuid(ECUID);
+    res = AT_CWSAP(ECUID,"88888888");
+    AT_CWMODE3(1);
+    AT_CIPMUX1();
+    if(!res)
+        return 0;
+    else
+        return -1;
 }
 
 int AT_CWJAP(char *SSID,char *PASSWD)			//配置ECU连接无线路由器名
 {
-	char AT[100] = { '\0' };
-	clear_WIFI();
-	sprintf(AT,"AT+CWJAP_DEF=\"%s\",\"%s\"\r\n",SSID,PASSWD);
-	printf("%s",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
+    char AT[100] = { '\0' };
+    clear_WIFI();
+    sprintf(AT,"AT+CWJAP_DEF=\"%s\",\"%s\"\r\n",SSID,PASSWD);
+    printf("%s",AT);
+    WIFI_SendData(AT, (strlen(AT)+1));
 
-	return 0;
+    return 0;
 }
 
 int AT_CWJAP_DEF(char *SSID,char *PASSWD)			//配置ECU连接无线路由器名
 {
-	int i = 0;
-	char AT[100] = { '\0' };
-	clear_WIFI();
-	sprintf(AT,"AT+CWJAP_DEF=\"%s\",\"%s\"\r\n",SSID,PASSWD);
-	
-	WIFI_SendData(AT, (strlen(AT)+1));
-	for(i = 0;i< 1500;i++)
-	{
-		if(1 == detectionOK(Cur))
-		{
-			printf("%s",AT);
-			clear_WIFI();
-			return 0;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return -1;
+    int i = 0;
+    char AT[100] = { '\0' };
+    clear_WIFI();
+    sprintf(AT,"AT+CWJAP_DEF=\"%s\",\"%s\"\r\n",SSID,PASSWD);
+
+    WIFI_SendData(AT, (strlen(AT)+1));
+    for(i = 0;i< 1500;i++)
+    {
+        if(1 == detectionOK(Cur))
+        {
+            printf("%s",AT);
+            clear_WIFI();
+            return 0;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return -1;
 }
 
 //判断字符中是否有OK  字符	LinksStatus:连接状态 0表示未连接 1表示已连接
 int detectionJAPStatus(int size,char *info,unsigned char *LinksStatus)		//检测到OK  返回1   未检出到返回0
 {
-	int i=0,j=0,SSIDStart = 0,SSIDEnd = 0;
-	*LinksStatus = 0;
-	for(i = 0;i<(size-2);i++)
-	{
-		if(!memcmp(&USART_RX_BUF[i],"OK",2))
-		{
-			for(j = 0;j < i;j++)
-			{
-				if(!memcmp(&USART_RX_BUF[j],"+CWJAP:\"",8))
-				{
-					SSIDStart = j+7;
-					for(j=SSIDStart;j < i;j++)
-					{
-						if('\r' == USART_RX_BUF[j])
-						{
-							
-							SSIDEnd = j;
-							break;
-						}
-					}
-					memcpy(info,&USART_RX_BUF[SSIDStart],(SSIDEnd-SSIDStart));
-					*LinksStatus = 1;
-					return 1;
-				}
-			}
-			*LinksStatus = 0;
-			return 1;			
-		}
-	}
-	return -1;
+    int i=0,j=0,SSIDStart = 0,SSIDEnd = 0;
+    *LinksStatus = 0;
+    for(i = 0;i<(size-2);i++)
+    {
+        if(!memcmp(&USART_RX_BUF[i],"OK",2))
+        {
+            for(j = 0;j < i;j++)
+            {
+                if(!memcmp(&USART_RX_BUF[j],"+CWJAP:\"",8))
+                {
+                    SSIDStart = j+7;
+                    for(j=SSIDStart;j < i;j++)
+                    {
+                        if('\r' == USART_RX_BUF[j])
+                        {
+
+                            SSIDEnd = j;
+                            break;
+                        }
+                    }
+                    memcpy(info,&USART_RX_BUF[SSIDStart],(SSIDEnd-SSIDStart));
+                    *LinksStatus = 1;
+                    return 1;
+                }
+            }
+            *LinksStatus = 0;
+            return 1;
+        }
+    }
+    return -1;
 }
 
 int AT_CWJAPStatus(char *info)			//查询ECU连接无线路由器名 返回1表示获取成功连接，返回0表示未连接
 {
-	int i = 0;
-	unsigned char LinksStatus;
-	char AT[100] = { '\0' };
-	clear_WIFI();
-	sprintf(AT,"AT+CWJAP?\r\n");
-	
-	WIFI_SendData(AT, (strlen(AT)+1));
-	for(i = 0;i< 200;i++)
-	{
-		if(1 == detectionJAPStatus(Cur,info,&LinksStatus))
-		{
-			printf("AT+AT_CWJAPStatus :+ok:%d\n",LinksStatus);
-			clear_WIFI();
-			return LinksStatus;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return 0;
+    int i = 0;
+    unsigned char LinksStatus;
+    char AT[100] = { '\0' };
+    clear_WIFI();
+    sprintf(AT,"AT+CWJAP?\r\n");
+
+    WIFI_SendData(AT, (strlen(AT)+1));
+    for(i = 0;i< 200;i++)
+    {
+        if(1 == detectionJAPStatus(Cur,info,&LinksStatus))
+        {
+            printf("AT+AT_CWJAPStatus :+ok:%d\n",LinksStatus);
+            clear_WIFI();
+            return LinksStatus;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return 0;
 }
 
 
 int detectionLAPList(int size,char *str)		//检测到OK  返回1   未检出到返回0
 {
-	int i=0,j=0;
-	for(i = 0;i<(size-2);i++)
-	{
-		if(!memcmp(&USART_RX_BUF[i],"OK",2))
-		{
-			for(j = 0;j < i;j++)
-			{
-				if(!memcmp(&USART_RX_BUF[j],"+CWLAP:",7))
-				{
-					memcpy(str,&USART_RX_BUF[j],(i-j-4));
-					str[i-j-4] = '\0';
-					printf("list:%d %d %d  %s\n",i,j,strlen(str),str);
-					return 1;
-				}
-			}
-			return 1;			
-		}
-	}
-	return -1;
+    int i=0,j=0;
+    for(i = 0;i<(size-2);i++)
+    {
+        if(!memcmp(&USART_RX_BUF[i],"OK",2))
+        {
+            for(j = 0;j < i;j++)
+            {
+                if(!memcmp(&USART_RX_BUF[j],"+CWLAP:",7))
+                {
+                    memcpy(str,&USART_RX_BUF[j],(i-j-4));
+                    str[i-j-4] = '\0';
+                    printf("list:%d %d %d  %s\n",i,j,strlen(str),str);
+                    return 1;
+                }
+            }
+            return 1;
+        }
+    }
+    return -1;
 }
 
 
 int AT_CWLAPList(char *liststr)		
 {
-	int i = 0;
-	char AT[100] = { '\0' };
-	clear_WIFI();
-	sprintf(AT,"AT+CWLAP\r\n");
-	printf("%s",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	for(i = 0;i< 600;i++)
-	{
-		if(1 == detectionLAPList(Cur,liststr))
-		{
-			printf("AT+AT_CWLAPList :+ok\n");
-			clear_WIFI();
-			return 0;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return -1;
+    int i = 0;
+    char AT[100] = { '\0' };
+    clear_WIFI();
+    sprintf(AT,"AT+CWLAP\r\n");
+    printf("%s",AT);
+    WIFI_SendData(AT, (strlen(AT)+1));
+    for(i = 0;i< 600;i++)
+    {
+        if(1 == detectionLAPList(Cur,liststr))
+        {
+            printf("AT+AT_CWLAPList :+ok\n");
+            clear_WIFI();
+            return 0;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return -1;
 }
 
 int AT_CIPMUX1(void)			//设置多连接AT命令
 {
-	int i = 0;
-	clear_WIFI();
-	WIFI_SendData("AT+CIPMUX=1\r\n", 13);
-	for(i = 0;i< 200;i++)
-	{
-		if(1 == detectionOK(Cur))
-		{
-			clear_WIFI();
-			return 0;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return -1;
+    int i = 0;
+    clear_WIFI();
+    WIFI_SendData("AT+CIPMUX=1\r\n", 13);
+    for(i = 0;i< 200;i++)
+    {
+        if(1 == detectionOK(Cur))
+        {
+            clear_WIFI();
+            return 0;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return -1;
 }
 
 int AT_CIPSERVER(void)			//设置多连接AT命令
 {
-	int i = 0;
-	clear_WIFI();
-	WIFI_SendData("AT+CIPSERVER=1,8899\r\n", 21);
-	for(i = 0;i< 200;i++)
-	{
-		if(1 == detectionOK(Cur))
-		{
-			clear_WIFI();
-			return 0;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return -1;
+    int i = 0;
+    clear_WIFI();
+    WIFI_SendData("AT+CIPSERVER=1,8899\r\n", 21);
+    for(i = 0;i< 200;i++)
+    {
+        if(1 == detectionOK(Cur))
+        {
+            clear_WIFI();
+            return 0;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return -1;
 }
 
 
 int AT_CIPSTART(char ConnectID,char *connectType,char *IP,int port)			//配置ECU连接无线路由器名
 {
-	int i = 0;
-	char AT[100] = { '\0' };
-	clear_WIFI();
-	sprintf(AT,"AT+CIPSTART=%c,\"%s\",\"%s\",%d\r\n",ConnectID,connectType,IP,port);
-	
-	WIFI_SendData(AT, (strlen(AT)+1));
-	for(i = 0;i< 500;i++)
-	{
-		if(1 == detectionOK(Cur))
-		{
-			clear_WIFI();
-			return 0;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return -1;
+    int i = 0;
+    char AT[100] = { '\0' };
+    clear_WIFI();
+    sprintf(AT,"AT+CIPSTART=%c,\"%s\",\"%s\",%d\r\n",ConnectID,connectType,IP,port);
+
+    WIFI_SendData(AT, (strlen(AT)+1));
+    for(i = 0;i< 500;i++)
+    {
+        if(1 == detectionOK(Cur))
+        {
+            clear_WIFI();
+            return 0;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return -1;
 }
 
 int AT_CIPCLOSE(char ConnectID)			//配置ECU连接无线路由器名
 {
-	int i = 0;
-	char AT[100] = { '\0' };
-	clear_WIFI();
-	sprintf(AT,"AT+CIPCLOSE=%c\r\n",ConnectID);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	for(i = 0;i< 100;i++)
-	{
-		if((1 == detectionOK(Cur))||(1 == detectionUNLINK(Cur)))
-		{
-			clear_WIFI();
-			return 0;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return -1;
+    int i = 0;
+    char AT[100] = { '\0' };
+    clear_WIFI();
+    sprintf(AT,"AT+CIPCLOSE=%c\r\n",ConnectID);
+    WIFI_SendData(AT, (strlen(AT)+1));
+    for(i = 0;i< 100;i++)
+    {
+        if((1 == detectionOK(Cur))||(1 == detectionUNLINK(Cur)))
+        {
+            clear_WIFI();
+            return 0;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return -1;
 }
 
 
 int AT_CIPSEND(char ConnectID,int size)			//配置ECU连接无线路由器名
 {
-	int i = 0;
-	char AT[100] = { '\0' };
-	clear_WIFI();
-	sprintf(AT,"AT+CIPSEND=%c,%d\r\n",ConnectID,size);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	for(i = 0;i< 200;i++)
-	{
-		if(1 == detectionOK(Cur))
-		{
-			clear_WIFI();
-			return 0;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return -1;
+    int i = 0;
+    char AT[100] = { '\0' };
+    clear_WIFI();
+    sprintf(AT,"AT+CIPSEND=%c,%d\r\n",ConnectID,size);
+    WIFI_SendData(AT, (strlen(AT)+1));
+    for(i = 0;i< 200;i++)
+    {
+        if(1 == detectionOK(Cur))
+        {
+            clear_WIFI();
+            return 0;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return -1;
 }
 
 int AT_CIPAP_DEF(void)			//配置ECU连接无线路由器名
 {
-	int i = 0;
-	char AT[100] = { '\0' };
-	clear_WIFI();
-	sprintf(AT,"AT+CIPAP_DEF=\"10.10.100.254\"\r\n");
-	WIFI_SendData(AT, (strlen(AT)+1));
-	for(i = 0;i< 200;i++)
-	{
-		if(1 == detectionOK(Cur))
-		{
-			printf("AT+AT_CIPAP_DEF :+ok\n");
-			clear_WIFI();
-			return 0;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return -1;
+    int i = 0;
+    char AT[100] = { '\0' };
+    clear_WIFI();
+    sprintf(AT,"AT+CIPAP_DEF=\"10.10.100.254\"\r\n");
+    WIFI_SendData(AT, (strlen(AT)+1));
+    for(i = 0;i< 200;i++)
+    {
+        if(1 == detectionOK(Cur))
+        {
+            printf("AT+AT_CIPAP_DEF :+ok\n");
+            clear_WIFI();
+            return 0;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return -1;
 }
 
 int AT_CIPSTO(void)			//配置WIFI模块作为TCP服务器时的超时时间
 {
-	int i = 0;
-	char AT[100] = { '\0' };
-	clear_WIFI();
-	sprintf(AT,"AT+CIPSTO=20\r\n");
-	//printf("%s",AT);
-	WIFI_SendData(AT, (strlen(AT)+1));
-	for(i = 0;i< 200;i++)
-	{
-		if(1 == detectionOK(Cur))
-		{
-			clear_WIFI();
-			return 0;
-		}
-		rt_thread_delay(1);
-	}
-	clear_WIFI();
-	return -1;
+    int i = 0;
+    char AT[100] = { '\0' };
+    clear_WIFI();
+    sprintf(AT,"AT+CIPSTO=20\r\n");
+    //printf("%s",AT);
+    WIFI_SendData(AT, (strlen(AT)+1));
+    for(i = 0;i< 200;i++)
+    {
+        if(1 == detectionOK(Cur))
+        {
+            clear_WIFI();
+            return 0;
+        }
+        rt_thread_delay(1);
+    }
+    clear_WIFI();
+    return -1;
 }
 
 int WIFI_Factory(char *ECUID12)
 {
 
-	int i = 0,res = 0;
+    int i = 0,res = 0;
 
-	//选择 WMODE
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_CWMODE3(3))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;	
+    //选择 WMODE
+    for(i = 0;i<3;i++)
+    {
+        if(0 == AT_CWMODE3(3))
+        {
+            res = 0;
+            break;
+        }else
+            res = -1;
+    }
+    if(res == -1) return -1;
 
 
-	if(!AT_CWSAP(ECUID12,"88888888"))
-	{
+    if(!AT_CWSAP(ECUID12,"88888888"))
+    {
 
-		//选择 WMODE
-		for(i = 0;i<3;i++)
-		{
-			if(0 == AT_CWMODE3(1))
-			{
-				res = 0;
-				break;
-			}else
-				res = -1;
-		}
-		if(res == -1) return -1;	
-		AT_CIPMUX1();
-		/*
-		if(0 != AT_RST())
-		{
-			WIFI_Reset();
-		}
-		
-		rt_hw_s_delay(1);
-		AT_CIPMUX1();
-		AT_CIPSERVER();
-		AT_CIPSTO();
-		*/
+        //选择 WMODE
+        for(i = 0;i<3;i++)
+        {
+            if(0 == AT_CWMODE3(1))
+            {
+                res = 0;
+                break;
+            }else
+                res = -1;
+        }
+        if(res == -1) return -1;
+        AT_CIPMUX1();
+        /*
+        if(0 != AT_RST())
+        {
+            WIFI_Reset();
+        }
 
-		
-		return 0;
-	}
-	else
-		return -1;
+        rt_hw_s_delay(1);
+        AT_CIPMUX1();
+        AT_CIPSERVER();
+        AT_CIPSTO();
+        */
+
+
+        return 0;
+    }
+    else
+        return -1;
 
 }
 
 int WIFI_ChangePasswd(char *NewPasswd)
 {
-	char ECUID[13] = {'\0'};
-	get_ecuid(ECUID);
-	if(!AT_CWSAP(ECUID,NewPasswd))
-		return 0;
-	else
-		return -1;
+    char ECUID[13] = {'\0'};
+    get_ecuid(ECUID);
+    if(!AT_CWSAP(ECUID,NewPasswd))
+        return 0;
+    else
+        return -1;
 }
 
 int InitWorkMode(void)
 {
-	int i = 0,res = 0;
+    int i = 0,res = 0;
 
-	//选择 WMODE
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_CWMODE3(3))
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;	
+    //选择 WMODE
+    for(i = 0;i<3;i++)
+    {
+        if(0 == AT_CWMODE3(3))
+        {
+            res = 0;
+            break;
+        }else
+            res = -1;
+    }
+    if(res == -1) return -1;
 
 
-	//配置默认IP
-	for(i = 0;i<3;i++)
-	{
-		if(0 == AT_CIPAP_DEF())
-		{
-			res = 0;
-			break;
-		}else
-			res = -1;
-	}
-	if(res == -1) return -1;	
-	
-	printf("WIFI_InitWorkMode Over\n");
+    //配置默认IP
+    for(i = 0;i<3;i++)
+    {
+        if(0 == AT_CIPAP_DEF())
+        {
+            res = 0;
+            break;
+        }else
+            res = -1;
+    }
+    if(res == -1) return -1;
 
-	return 0;
+    printf("WIFI_InitWorkMode Over\n");
+
+    return 0;
 }
 
 #ifdef RT_USING_FINSH
 #include <finsh.h>
 void Send(char *data, int num)
 {
-	memset(sendbuff,0x00,4096);
-	sprintf(sendbuff,"b00000000");
+    memset(sendbuff,0x00,4096);
+    sprintf(sendbuff,"b00000000");
 
-	memcpy(&sendbuff[9],data,num);
-	
-	WIFI_SendData(sendbuff,(num+9));
+    memcpy(&sendbuff[9],data,num);
+
+    WIFI_SendData(sendbuff,(num+9));
 }
 int AT_JAPST(void)
 {
-	char info[100] = {'\0'};
-	int ret = AT_CWJAPStatus(info);
-	printf("%s\n",info);
-	return ret;
+    char info[100] = {'\0'};
+    int ret = AT_CWJAPStatus(info);
+    printf("%s\n",info);
+    return ret;
 }
 
 void AT_LAPList(void)
 {
-	char *list = NULL;
-	list = malloc(2048);
-	memset(list,'\0',2048);
-	AT_CWLAPList(list);
-	free(list);
+    char *list = NULL;
+    list = malloc(2048);
+    memset(list,'\0',2048);
+    AT_CWLAPList(list);
+    free(list);
 }
 FINSH_FUNCTION_EXPORT(AT_LAPList ,AT_LAPList)
 FINSH_FUNCTION_EXPORT(Send ,WIFI send)

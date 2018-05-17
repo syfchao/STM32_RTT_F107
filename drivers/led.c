@@ -58,14 +58,14 @@ void led(rt_uint32_t value)
     /* set led status */
     switch (value)
     {
-        case 0:
-            rt_hw_led_off();
-            break;
-        case 1:
-            rt_hw_led_on();
-            break;
-        default:
-			break;
+    case 0:
+        rt_hw_led_off();
+        break;
+    case 1:
+        rt_hw_led_on();
+        break;
+    default:
+        break;
     }
 
 }

@@ -40,27 +40,27 @@ void rt_hw_lan8720_init(void)
 
     GPIO_InitStructure.GPIO_Pin   = LAN8720_PIN;
     GPIO_Init(LAN8720_GPIO, &GPIO_InitStructure);
-		GPIO_SetBits(LAN8720_GPIO, LAN8720_PIN);
+    GPIO_SetBits(LAN8720_GPIO, LAN8720_PIN);
 }
 
 void rt_hw_lan8720_rst(void)
 {
-  GPIO_ResetBits(LAN8720_GPIO, LAN8720_PIN);
-	rt_hw_s_delay(1);
-	GPIO_SetBits(LAN8720_GPIO, LAN8720_PIN);
+    GPIO_ResetBits(LAN8720_GPIO, LAN8720_PIN);
+    rt_hw_s_delay(1);
+    GPIO_SetBits(LAN8720_GPIO, LAN8720_PIN);
 }
 
 int rt_hw_GetWiredNetConnect(void)
 {
-	/*	REV1.0.6更改为IO判断 20180510
-	int value = 0,ret = 0;
-	value = ETH_ReadPHYRegister(0x00, 1);
-	rt_hw_ms_delay(5);
-	value = ETH_ReadPHYRegister(0x00, 1);
-	ret = (value & (1 << 2)) >> 2;
-	return ret;
-	*/
-	return rt_hw_ETHIO_status();
+    /*	REV1.0.6更改为IO判断 20180510
+    int value = 0,ret = 0;
+    value = ETH_ReadPHYRegister(0x00, 1);
+    rt_hw_ms_delay(5);
+    value = ETH_ReadPHYRegister(0x00, 1);
+    ret = (value & (1 << 2)) >> 2;
+    return ret;
+    */
+    return rt_hw_ETHIO_status();
 }
 
 #if 1
@@ -68,12 +68,12 @@ int rt_hw_GetWiredNetConnect(void)
 #include <finsh.h>
 void lanrst()
 {
-	rt_hw_lan8720_rst();
+    rt_hw_lan8720_rst();
 }
 FINSH_FUNCTION_EXPORT(lanrst, lanrst.)
 void GetNet()
 {
-	rt_hw_GetWiredNetConnect();
+    rt_hw_GetWiredNetConnect();
 }
 FINSH_FUNCTION_EXPORT(GetNet, GetNet.)
 

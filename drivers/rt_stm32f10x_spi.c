@@ -87,7 +87,7 @@ rt_inline uint16_t get_spi_BaudRatePrescaler(rt_uint32_t max_hz)
     uint16_t SPI_BaudRatePrescaler;
 
     /* STM32F10x SPI MAX 18Mhz */
-	
+
     if(max_hz >= SystemCoreClock/2 && SystemCoreClock/2 <= 18000000)
     {
         SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_2;
@@ -121,8 +121,8 @@ rt_inline uint16_t get_spi_BaudRatePrescaler(rt_uint32_t max_hz)
         /* min prescaler 256 */
         SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_256;
     }
-	
-	printf("%x   %d   %d\n",SPI_BaudRatePrescaler,max_hz,SystemCoreClock);
+
+    printf("%x   %d   %d\n",SPI_BaudRatePrescaler,max_hz,SystemCoreClock);
     return SPI_BaudRatePrescaler;
 }
 
@@ -211,11 +211,11 @@ static rt_uint32_t xfer(struct rt_spi_device* device, struct rt_spi_message* mes
             DMA_Configuration(stm32_spi_bus, message->send_buf, message->recv_buf, message->length);
             SPI_I2S_DMACmd(SPI, SPI_I2S_DMAReq_Tx | SPI_I2S_DMAReq_Rx, ENABLE);
             while (DMA_GetFlagStatus(stm32_spi_bus->DMA_Channel_RX_FLAG_TC) == RESET
-                    || DMA_GetFlagStatus(stm32_spi_bus->DMA_Channel_TX_FLAG_TC) == RESET);
+                   || DMA_GetFlagStatus(stm32_spi_bus->DMA_Channel_TX_FLAG_TC) == RESET);
             SPI_I2S_DMACmd(SPI, SPI_I2S_DMAReq_Tx | SPI_I2S_DMAReq_Rx, DISABLE);
         }
-//        rt_memcpy(buffer,_spi_flash_buffer,DMA_BUFFER_SIZE);
-//        buffer += DMA_BUFFER_SIZE;
+        //        rt_memcpy(buffer,_spi_flash_buffer,DMA_BUFFER_SIZE);
+        //        buffer += DMA_BUFFER_SIZE;
     }
     else
 #endif
@@ -304,10 +304,10 @@ rt_err_t stm32_spi_register(SPI_TypeDef * SPI,
                             const char * spi_bus_name)
 {
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-	
+
     if(SPI == SPI1)
     {
-    	stm32_spi->SPI = SPI1;
+        stm32_spi->SPI = SPI1;
 #ifdef SPI_USE_DMA
         /* Enable the DMA1 Clock */
         RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
@@ -339,7 +339,7 @@ rt_err_t stm32_spi_register(SPI_TypeDef * SPI,
     }
     else if(SPI == SPI3)
     {
-    	stm32_spi->SPI = SPI3;
+        stm32_spi->SPI = SPI3;
 #ifdef SPI_USE_DMA
         /* Enable the DMA2 Clock */
         RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA2, ENABLE);

@@ -124,7 +124,7 @@ static rt_err_t stm32_control(struct rt_serial_device *serial, int cmd, void *ar
 
     switch (cmd)
     {
-        /* disable interrupt */
+    /* disable interrupt */
     case RT_DEVICE_CTRL_CLR_INT:
         /* disable rx irq */
         UART_DISABLE_IRQ(uart->irq);
@@ -157,13 +157,13 @@ static int stm32_putc(struct rt_serial_device *serial, char c)
 
     if(serial->parent.open_flag & RT_DEVICE_FLAG_INT_TX)
     {
-          if(!(uart->uart_device->SR & USART_FLAG_TXE))
-          {
-              USART_ITConfig(uart->uart_device, USART_IT_TC, ENABLE);
-              return -1;
-          }
-          uart->uart_device->DR = c;
-          USART_ITConfig(uart->uart_device, USART_IT_TC, ENABLE);
+        if(!(uart->uart_device->SR & USART_FLAG_TXE))
+        {
+            USART_ITConfig(uart->uart_device, USART_IT_TC, ENABLE);
+            return -1;
+        }
+        uart->uart_device->DR = c;
+        USART_ITConfig(uart->uart_device, USART_IT_TC, ENABLE);
     }
     else
     {
@@ -297,9 +297,9 @@ struct stm32_uart uart1 =
     USART1_IRQn,
     {
         DMA1_Channel5,
-        DMA1_FLAG_GL5,
-        DMA1_Channel5_IRQn,
-        0,
+                DMA1_FLAG_GL5,
+                DMA1_Channel5_IRQn,
+                0,
     },
 };
 struct rt_serial_device serial1;
@@ -308,7 +308,7 @@ void USART1_IRQHandler(void)
 {
     /* enter interrupt */
     rt_interrupt_enter();
-	//------------------------------------
+    //------------------------------------
 
     uart_isr(&serial1);
 
@@ -335,9 +335,9 @@ struct stm32_uart uart4 =
     UART4_IRQn,
     {
         DMA2_Channel3,
-        DMA2_FLAG_GL3,
-        DMA2_Channel3_IRQn,
-        0,
+                DMA2_FLAG_GL3,
+                DMA2_Channel3_IRQn,
+                0,
     },
 };
 struct rt_serial_device serial4;
@@ -346,9 +346,9 @@ void UART4_IRQHandler(void)
 {
     /* enter interrupt */
     rt_interrupt_enter();
-	//新增  如果是zigbee串口uart4 则设置就收到数据标志
-	zigbeeReadFlag = 1;
-	//------------------------------------
+    //新增  如果是zigbee串口uart4 则设置就收到数据标志
+    zigbeeReadFlag = 1;
+    //------------------------------------
     uart_isr(&serial4);
 
     /* leave interrupt */
@@ -481,7 +481,7 @@ void rt_hw_usart_init(void)
 
     serial1.ops    = &stm32_uart_ops;
     serial1.config = config;
-	
+
     NVIC_Configuration(uart);
 
     /* register UART1 device */

@@ -18,8 +18,8 @@
 
 typedef struct name_value
 {
-	char name[32];
-	char value[64];
+    char name[32];
+    char value[64];
 }MyArray;
 
 /*****************************************************************************/

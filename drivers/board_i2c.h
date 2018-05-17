@@ -39,9 +39,9 @@ void rt_hw_i2c_init(void);
 
 
 #ifdef __cplusplus
-    }
+}
 #endif      // __cplusplus
-    
+
 #endif      // __BOARD_I2C_H__
 /*********************************************************************************************************
 END FILE

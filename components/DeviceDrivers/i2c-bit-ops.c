@@ -281,7 +281,7 @@ static rt_size_t i2c_recv_bytes(struct rt_i2c_bus_device *bus,
 
         bit_dbg("recieve bytes: 0x%02x, %s\n",
                 val, (flags & RT_I2C_NO_READ_ACK) ?
-                "(No ACK/NACK)" : (count ? "ACK" : "NACK"));
+                    "(No ACK/NACK)" : (count ? "ACK" : "NACK"));
 
         if (!(flags & RT_I2C_NO_READ_ACK))
         {

@@ -78,7 +78,7 @@ static void gpio0_set_scl(void *data, rt_int32_t state)
     }
     else
     {
-        I2C1_SCL_L(); 
+        I2C1_SCL_L();
     }
 }
 
@@ -116,27 +116,27 @@ static const struct rt_i2c_bit_ops bit_ops0 =
 *********************************************************************************************************/
 void rt_hw_i2c_init(void)
 {
-  GPIO_InitTypeDef  GPIO_InitStructure;
+    GPIO_InitTypeDef  GPIO_InitStructure;
 #ifdef RT_USING_I2C1
-  RCC_APB2PeriphClockCmd(I2C1_GPIO_PERIPHERAL, ENABLE);	  
+    RCC_APB2PeriphClockCmd(I2C1_GPIO_PERIPHERAL, ENABLE);
 
-  // scl
-  GPIO_InitStructure.GPIO_Pin = I2C1_GPIO_SCL_PIN;				 
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD; 		 
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;		 
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_SetBits(GPIOB, I2C1_GPIO_SCL_PIN);
+    // scl
+    GPIO_InitStructure.GPIO_Pin = I2C1_GPIO_SCL_PIN;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    GPIO_SetBits(GPIOB, I2C1_GPIO_SCL_PIN);
 
-  // sda
-  GPIO_InitStructure.GPIO_Pin = I2C1_GPIO_SDA_PIN;				 
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD; 		 
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;		 
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_SetBits(GPIOB, I2C1_GPIO_SDA_PIN);
-  
-  rt_memset((void *)&i2c_device0, 0, sizeof(struct rt_i2c_bus_device));
-  i2c_device0.priv = (void *)&bit_ops0;
-  rt_i2c_bit_add_bus(&i2c_device0, "i2c1");
+    // sda
+    GPIO_InitStructure.GPIO_Pin = I2C1_GPIO_SDA_PIN;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    GPIO_SetBits(GPIOB, I2C1_GPIO_SDA_PIN);
+
+    rt_memset((void *)&i2c_device0, 0, sizeof(struct rt_i2c_bus_device));
+    i2c_device0.priv = (void *)&bit_ops0;
+    rt_i2c_bit_add_bus(&i2c_device0, "i2c1");
 #endif
 }
 #endif   /* end of RT_USING_I2C_BITOPS */

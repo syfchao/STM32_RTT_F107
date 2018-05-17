@@ -21,30 +21,30 @@
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
-/* ã€A108ã€‘EMAå‘ECUå‘é€è‡ªå®šä¹‰å‘½ä»¤ */
+/* ¡¾A108¡¿EMAÏòECU·¢ËÍ×Ô¶¨ÒåÃüÁî */
 int custom_command(const char *recvbuffer, char *sendbuffer)
 {
-	int ack_flag = SUCCESS;
-	char command[256] = {'\0'};
-	char timestamp[15] = {'\0'};
+    int ack_flag = SUCCESS;
+    char command[256] = {'\0'};
+    char timestamp[15] = {'\0'};
 
-	//æ—¶é—´æˆ³
-	strncpy(timestamp, &recvbuffer[30], 14);
+    //Ê±¼ä´Á
+    strncpy(timestamp, &recvbuffer[30], 14);
 
-	//è‡ªå®šä¹‰å‘½ä»¤
-	if(msg_get_one_section(command, &recvbuffer[47]) <= 0){
-		ack_flag = FORMAT_ERROR;
-	}
-	else{
-		//ç»“æŸç¨‹åºå‘½ä»¤
-		if(!strncmp(command, "quit", 4)){
-			printmsg(ECU_DBG_CONTROL_CLIENT,"Ready to quit");
-			msg_ACK(sendbuffer, "A108", timestamp, ack_flag);
-			return -1;
-		}
-		//æ‰§è¡Œè‡ªå®šä¹‰å‘½ä»¤
-		ack_flag = mysystem(command);
-	}
-	msg_ACK(sendbuffer, "A108", timestamp, ack_flag);
-	return 0;
+    //×Ô¶¨ÒåÃüÁî
+    if(msg_get_one_section(command, &recvbuffer[47]) <= 0){
+        ack_flag = FORMAT_ERROR;
+    }
+    else{
+        //½áÊø³ÌĞòÃüÁî
+        if(!strncmp(command, "quit", 4)){
+            printmsg(ECU_DBG_CONTROL_CLIENT,"Ready to quit");
+            msg_ACK(sendbuffer, "A108", timestamp, ack_flag);
+            return -1;
+        }
+        //Ö´ĞĞ×Ô¶¨ÒåÃüÁî
+        ack_flag = mysystem(command);
+    }
+    msg_ACK(sendbuffer, "A108", timestamp, ack_flag);
+    return 0;
 }

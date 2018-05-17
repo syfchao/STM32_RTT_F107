@@ -36,193 +36,193 @@ extern ecu_info ecu;
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
-/* åè®®çš„ECUéƒ¨åˆ† */
+/* Ð­ÒéµÄECU²¿·Ö */
 int ecu_msg(char *sendbuffer, int num, const char *recvbuffer)
 {
-	char version_msg[16] = {'\0'};	//ç‰ˆæœ¬ä¿¡æ¯ï¼ˆåŒ…æ‹¬ï¼šé•¿åº¦+ç‰ˆæœ¬å·+æ•°å­—ç‰ˆæœ¬å·ï¼‰
-	char version[16] = {'\0'};		//ç‰ˆæœ¬å·
-	char area[16] = {'\0'};
-	char version_number[2] = {'\0'};//æ•°å­—ç‰ˆæœ¬å·
-	char timestamp[16] = {'\0'};	//æ—¶é—´æˆ³
+    char version_msg[16] = {'\0'};	//°æ±¾ÐÅÏ¢£¨°üÀ¨£º³¤¶È+°æ±¾ºÅ+Êý×Ö°æ±¾ºÅ£©
+    char version[16] = {'\0'};		//°æ±¾ºÅ
+    char area[16] = {'\0'};
+    char version_number[2] = {'\0'};//Êý×Ö°æ±¾ºÅ
+    char timestamp[16] = {'\0'};	//Ê±¼ä´Á
 
-	/* å¤„ç†æ•°æ® */
-	sprintf(version,"%s%s.%s",ECU_EMA_VERSION,MAJORVERSION,MINORVERSION);
-	version_number[0] = '3';
-	version_number[1] = '\0';
-	file_get_one(area, sizeof(area),
-			"/yuneng/area.con");
+    /* ´¦ÀíÊý¾Ý */
+    sprintf(version,"%s%s.%s",ECU_EMA_VERSION,MAJORVERSION,MINORVERSION);
+    version_number[0] = '3';
+    version_number[1] = '\0';
+    file_get_one(area, sizeof(area),
+                 "/yuneng/area.con");
 
-	if(strlen(version_number)){
-		sprintf(version_msg, "%02d%s%s--%s",
-				strlen(version) + strlen(area) + 2 + strlen(version_number),
-				version,
-				area,
-				version_number);
-	}
-	else{
-		sprintf(version_msg, "%02d%s%s", strlen(version), version, area);
-	}
-	strncpy(timestamp, &recvbuffer[34], 14);
+    if(strlen(version_number)){
+        sprintf(version_msg, "%02d%s%s--%s",
+                strlen(version) + strlen(area) + 2 + strlen(version_number),
+                version,
+                area,
+                version_number);
+    }
+    else{
+        sprintf(version_msg, "%02d%s%s", strlen(version), version, area);
+    }
+    strncpy(timestamp, &recvbuffer[34], 14);
 
-	/* æ‹¼æŽ¥ECUä¿¡æ¯ */
-	msgcat_s(sendbuffer, 12, ecu.id);
-	strcat(sendbuffer, version_msg);
-	msgcat_d(sendbuffer, 3, num);
-	msgcat_s(sendbuffer, 14, timestamp);
-	msgcat_s(sendbuffer, 3, "END");
+    /* Æ´½ÓECUÐÅÏ¢ */
+    msgcat_s(sendbuffer, 12, ecu.id);
+    strcat(sendbuffer, version_msg);
+    msgcat_d(sendbuffer, 3, num);
+    msgcat_s(sendbuffer, 14, timestamp);
+    msgcat_s(sendbuffer, 3, "END");
 
-	return 0;
+    return 0;
 }
 
-/* åè®®çš„é€†å˜å™¨éƒ¨åˆ† */
+/* Ð­ÒéµÄÄæ±äÆ÷²¿·Ö */
 int inverter_msg(char *sendbuffer, char* id)
 {
-	//æ·»åŠ é€†å˜å™¨ID
-	strcat(sendbuffer, id); //é€†å˜å™¨ID
-	strcat(sendbuffer, "00"); 	 //é€†å˜å™¨ç±»åž‹
-	strcat(sendbuffer, "00000"); //é€†å˜å™¨ç‰ˆæœ¬å·
-	strcat(sendbuffer, "END"); 	 //ç»“æŸç¬¦
+    //Ìí¼ÓÄæ±äÆ÷ID
+    strcat(sendbuffer, id); //Äæ±äÆ÷ID
+    strcat(sendbuffer, "00"); 	 //Äæ±äÆ÷ÀàÐÍ
+    strcat(sendbuffer, "00000"); //Äæ±äÆ÷°æ±¾ºÅ
+    strcat(sendbuffer, "END"); 	 //½áÊø·û
 
-	return 0;
+    return 0;
 }
 
-/* æ·»åŠ é€†å˜å™¨ï¼ˆè¿”å›žæ·»åŠ æˆåŠŸçš„å°æ•°ï¼‰ */
+/* Ìí¼ÓÄæ±äÆ÷£¨·µ»ØÌí¼Ó³É¹¦µÄÌ¨Êý£© */
 int add_id(const char *msg, int num)
 {
-	int i, count = 0;
-	char inverter_id[13] = {'\0'};
-	int fd;
-	char buff[50];
-	fd = open("/home/data/id", O_WRONLY | O_APPEND | O_CREAT,0);
-	if (fd >= 0)
-	{	
-		for(i=0; i<num; i++)
-		{
-			strncpy(inverter_id, &msg[i*15], 12);
-			inverter_id[12] = '\0';
-			sprintf(buff,"%s,,,,,,\n",inverter_id);
-			write(fd,buff,strlen(buff));
-			count++;
-		}
-		
-		close(fd);
-	}
+    int i, count = 0;
+    char inverter_id[13] = {'\0'};
+    int fd;
+    char buff[50];
+    fd = open("/home/data/id", O_WRONLY | O_APPEND | O_CREAT,0);
+    if (fd >= 0)
+    {
+        for(i=0; i<num; i++)
+        {
+            strncpy(inverter_id, &msg[i*15], 12);
+            inverter_id[12] = '\0';
+            sprintf(buff,"%s,,,,,,\n",inverter_id);
+            write(fd,buff,strlen(buff));
+            count++;
+        }
 
-	echo("/yuneng/limiteid.con","1");
-	return count;
+        close(fd);
+    }
+
+    echo("/yuneng/limiteid.con","1");
+    return count;
 
 }
 
-/* åˆ é™¤é€†å˜å™¨ï¼ˆè¿”å›žåˆ é™¤æˆåŠŸçš„å°æ•°ï¼‰ */
+/* É¾³ýÄæ±äÆ÷£¨·µ»ØÉ¾³ý³É¹¦µÄÌ¨Êý£© */
 int delete_id(const char *msg, int num)
 {
-	int i, count = 0;
-	char inverter_id[13] = {'\0'};
+    int i, count = 0;
+    char inverter_id[13] = {'\0'};
 
-	for(i=0; i<num; i++)
-	{
-		//èŽ·å–ä¸€å°é€†å˜å™¨çš„IDå·
-		strncpy(inverter_id, &msg[i*15], 12);
-		inverter_id[12] = '\0';
-		//åˆ é™¤ä¸€ä¸ªé€†å˜å™¨ID
-		delete_line("/home/data/id","/home/data/idtmp",inverter_id,12);
-		count++;
-	}
-	return count;
+    for(i=0; i<num; i++)
+    {
+        //»ñÈ¡Ò»Ì¨Äæ±äÆ÷µÄIDºÅ
+        strncpy(inverter_id, &msg[i*15], 12);
+        inverter_id[12] = '\0';
+        //É¾³ýÒ»¸öÄæ±äÆ÷ID
+        delete_line("/home/data/id","/home/data/idtmp",inverter_id,12);
+        count++;
+    }
+    return count;
 }
 
-/* æ¸…ç©ºé€†å˜å™¨ */
+/* Çå¿ÕÄæ±äÆ÷ */
 int clear_id()
 {
-	unlink("/home/data/id");
-	return 0;
+    unlink("/home/data/id");
+    return 0;
 }
 
 
-/* ã€A102ã€‘ECUä¸ŠæŠ¥é€†å˜å™¨ID */
+/* ¡¾A102¡¿ECUÉÏ±¨Äæ±äÆ÷ID */
 int response_inverter_id(const char *recvbuffer, char *sendbuffer)
 {
-	//è®°å½•é€†å˜å™¨æ•°é‡
-	int num = 0,i;
-	char inverter_ids[MAXINVERTERCOUNT][13];
-	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
-	/* Head */
-	strcpy(sendbuffer, "APS13AAAAAA102AAA0"); //äº¤ç»™åè®®å‡½æ•°
+    //¼ÇÂ¼Äæ±äÆ÷ÊýÁ¿
+    int num = 0,i;
+    char inverter_ids[MAXINVERTERCOUNT][13];
+    rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
+    /* Head */
+    strcpy(sendbuffer, "APS13AAAAAA102AAA0"); //½»¸øÐ­Òéº¯Êý
 
-	{
-		//é€†å˜å™¨æ•°é‡
-		num = get_num_from_id(inverter_ids);
-		/* ECU Message */
-		ecu_msg(sendbuffer, num, recvbuffer);
+    {
+        //Äæ±äÆ÷ÊýÁ¿
+        num = get_num_from_id(inverter_ids);
+        /* ECU Message */
+        ecu_msg(sendbuffer, num, recvbuffer);
 
-		for(i = 0; i < num;i++)
-		{
-			if(12 == strlen(inverter_ids[i]))
-			{
-				/* Inverter Message */
-				inverter_msg(sendbuffer,inverter_ids[i]);		
-			}
-		}
-		
-	}
-	rt_mutex_release(record_data_lock);
-	return 0;
+        for(i = 0; i < num;i++)
+        {
+            if(12 == strlen(inverter_ids[i]))
+            {
+                /* Inverter Message */
+                inverter_msg(sendbuffer,inverter_ids[i]);
+            }
+        }
+
+    }
+    rt_mutex_release(record_data_lock);
+    return 0;
 }
 
-/* ã€A103ã€‘EMAè®¾ç½®é€†å˜å™¨ID */
+/* ¡¾A103¡¿EMAÉèÖÃÄæ±äÆ÷ID */
 int set_inverter_id(const char *recvbuffer, char *sendbuffer)
 {
-	int flag, num;
-	int ack_flag = SUCCESS;
-	char timestamp[15] = {'\0'};
-	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
-	
-	//èŽ·å–è®¾ç½®ç±»åž‹æ ‡å¿—ä½: 0æ¸…é™¤é€†å˜å™¨; 1æ·»åŠ é€†å˜å™¨; 2åˆ é™¤é€†å˜å™¨
-	sscanf(&recvbuffer[30], "%1d", &flag);
-	//èŽ·å–é€†å˜å™¨æ•°é‡
-	num = msg_get_int(&recvbuffer[31], 3);
-	//èŽ·å–æ—¶é—´æˆ³
-	strncpy(timestamp, &recvbuffer[34], 14);
+    int flag, num;
+    int ack_flag = SUCCESS;
+    char timestamp[15] = {'\0'};
+    rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
 
-	//æ£€æŸ¥æ ¼å¼
-	if(!msg_num_check(&recvbuffer[51], num, 12, 1))
-	{
-		ack_flag = FORMAT_ERROR;
-	}
-	else
-	{
-		{
-			//æ•°æ®åº“æ‰“å¼€æˆåŠŸï¼Œè¿›è¡Œæ•°æ®æ“ä½œ
-			switch(flag)
-			{
-				case 0:
-					//æ¸…ç©ºé€†å˜å™¨
-					if(clear_id())
-						ack_flag = DB_ERROR;
-					break;
-				case 1:
-					//æ·»åŠ é€†å˜å™¨
-					if(add_id(&recvbuffer[51], num) < num)
-						ack_flag = DB_ERROR;
-					break;
-				case 2:
-					//åˆ é™¤é€†å˜å™¨
-					if(delete_id(&recvbuffer[51], num) < num)
-						ack_flag = DB_ERROR;
-					break;
-				default:
-					ack_flag = FORMAT_ERROR; //æ ¼å¼é”™è¯¯
-					break;
-			}
-		}
-		//é‡å¯ä¸»çº¿ç¨‹
-		init_inverter_A103(inverter);
-		threadRestartTimer(20,TYPE_MAIN);
-		//restartThread(TYPE_MAIN);
-	}
+    //»ñÈ¡ÉèÖÃÀàÐÍ±êÖ¾Î»: 0Çå³ýÄæ±äÆ÷; 1Ìí¼ÓÄæ±äÆ÷; 2É¾³ýÄæ±äÆ÷
+    sscanf(&recvbuffer[30], "%1d", &flag);
+    //»ñÈ¡Äæ±äÆ÷ÊýÁ¿
+    num = msg_get_int(&recvbuffer[31], 3);
+    //»ñÈ¡Ê±¼ä´Á
+    strncpy(timestamp, &recvbuffer[34], 14);
 
-	//æ‹¼æŽ¥åº”ç­”æ¶ˆæ¯
-	msg_ACK(sendbuffer, "A103", timestamp, ack_flag);
-	rt_mutex_release(record_data_lock);
-	return 102; //è¿”å›žä¸‹ä¸€ä¸ªæ‰§è¡Œå‘½ä»¤çš„å‘½ä»¤å·
+    //¼ì²é¸ñÊ½
+    if(!msg_num_check(&recvbuffer[51], num, 12, 1))
+    {
+        ack_flag = FORMAT_ERROR;
+    }
+    else
+    {
+        {
+            //Êý¾Ý¿â´ò¿ª³É¹¦£¬½øÐÐÊý¾Ý²Ù×÷
+            switch(flag)
+            {
+            case 0:
+                //Çå¿ÕÄæ±äÆ÷
+                if(clear_id())
+                    ack_flag = DB_ERROR;
+                break;
+            case 1:
+                //Ìí¼ÓÄæ±äÆ÷
+                if(add_id(&recvbuffer[51], num) < num)
+                    ack_flag = DB_ERROR;
+                break;
+            case 2:
+                //É¾³ýÄæ±äÆ÷
+                if(delete_id(&recvbuffer[51], num) < num)
+                    ack_flag = DB_ERROR;
+                break;
+            default:
+                ack_flag = FORMAT_ERROR; //¸ñÊ½´íÎó
+                break;
+            }
+        }
+        //ÖØÆôÖ÷Ïß³Ì
+        init_inverter_A103(inverter);
+        threadRestartTimer(20,TYPE_MAIN);
+        //restartThread(TYPE_MAIN);
+    }
+
+    //Æ´½ÓÓ¦´ðÏûÏ¢
+    msg_ACK(sendbuffer, "A103", timestamp, ack_flag);
+    rt_mutex_release(record_data_lock);
+    return 102; //·µ»ØÏÂÒ»¸öÖ´ÐÐÃüÁîµÄÃüÁîºÅ
 }

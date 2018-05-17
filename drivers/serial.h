@@ -98,7 +98,7 @@
     NRZ_NORMAL,       /* Normal mode */    \
     RT_SERIAL_RB_BUFSZ, /* Buffer size */  \
     0                                      \
-}
+    }
 
 struct serial_configure
 {
@@ -114,7 +114,7 @@ struct serial_configure
 };
 
 /*
- * Serial FIFO mode 
+ * Serial FIFO mode
  */
 struct rt_serial_rx_fifo
 {

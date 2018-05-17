@@ -62,7 +62,7 @@ static rt_err_t _spi_bus_device_control(rt_device_t dev,
     {
     case 0: /* set device */
         break;
-    case 1: 
+    case 1:
         break;
     }
 
@@ -127,7 +127,7 @@ static rt_err_t _spidev_device_control(rt_device_t dev,
     {
     case 0: /* set device */
         break;
-    case 1: 
+    case 1:
         break;
     }
 

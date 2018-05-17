@@ -20,9 +20,9 @@
 /*****************************************************************************/
 /*  Definitions                                                              */
 /*****************************************************************************/
-#define DS1302CLK GPIO_Pin_0   //ä¸æ—¶é’Ÿçº¿ç›¸è¿çš„èŠ¯ç‰‡çš„ç®¡è„š
-#define DS1302DAT GPIO_Pin_8   //ä¸æ•°æ®çº¿ç›¸è¿çš„èŠ¯ç‰‡çš„ç®¡è„š
-#define DS1302RST GPIO_Pin_2   //ä¸å¤ä½ç«¯ç›¸è¿çš„èŠ¯ç‰‡çš„ç®¡è„š
+#define DS1302CLK GPIO_Pin_0   //ÓëÊ±ÖÓÏßÏàÁ¬µÄĞ¾Æ¬µÄ¹Ü½Å
+#define DS1302DAT GPIO_Pin_8   //ÓëÊı¾İÏßÏàÁ¬µÄĞ¾Æ¬µÄ¹Ü½Å
+#define DS1302RST GPIO_Pin_2   //Óë¸´Î»¶ËÏàÁ¬µÄĞ¾Æ¬µÄ¹Ü½Å
 
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
@@ -36,78 +36,78 @@ static struct rt_device rtc;
 
 void ds1302_writebyte(unsigned char dat)
 {
-	unsigned char i = 0;
-	//è®¾ç½®ä¸ºæ¨å…è¾“å‡º
-	GPIO_InitTypeDef GPIO_InitStructure;
-	GPIO_InitStructure.GPIO_Pin =  DS1302DAT;   
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;  
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;    
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-	
-	GPIO_ResetBits(GPIOC,DS1302CLK);           //åˆå§‹æ—¶é’Ÿçº¿ç½®ä¸º0
-	for(i=0;i<8;i++)    //å¼€å§‹ä¼ è¾“8ä¸ªå­—èŠ‚çš„æ•°æ®
-	{
-		
-		if(dat&0x01)	//å–æœ€ä½ä½ï¼Œæ³¨æ„ DS1302çš„æ•°æ®å’Œåœ°å€éƒ½æ˜¯ä»æœ€ä½ä½å¼€å§‹ä¼ è¾“çš„
-		{
-			GPIO_SetBits(GPIOC,DS1302DAT);
-		}else
-		{
-			GPIO_ResetBits(GPIOC,DS1302DAT);
-		}
-		GPIO_SetBits(GPIOC,DS1302CLK);       //æ—¶é’Ÿçº¿æ‹‰é«˜ï¼Œåˆ¶é€ ä¸Šå‡æ²¿ï¼ŒSDAçš„æ•°æ®è¢«ä¼ è¾“
-		GPIO_ResetBits(GPIOC,DS1302CLK);       //æ—¶é’Ÿçº¿æ‹‰ä½ï¼Œä¸ºä¸‹ä¸€ä¸ªä¸Šå‡æ²¿åšå‡†å¤‡
-		dat>>=1;        //æ•°æ®å³ç§»ä¸€ä½ï¼Œå‡†å¤‡ä¼ è¾“ä¸‹ä¸€ä½æ•°æ®
-	}
+    unsigned char i = 0;
+    //ÉèÖÃÎªÍÆÃâÊä³ö
+    GPIO_InitTypeDef GPIO_InitStructure;
+    GPIO_InitStructure.GPIO_Pin =  DS1302DAT;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+    GPIO_ResetBits(GPIOC,DS1302CLK);           //³õÊ¼Ê±ÖÓÏßÖÃÎª0
+    for(i=0;i<8;i++)    //¿ªÊ¼´«Êä8¸ö×Ö½ÚµÄÊı¾İ
+    {
+
+        if(dat&0x01)	//È¡×îµÍÎ»£¬×¢Òâ DS1302µÄÊı¾İºÍµØÖ·¶¼ÊÇ´Ó×îµÍÎ»¿ªÊ¼´«ÊäµÄ
+        {
+            GPIO_SetBits(GPIOC,DS1302DAT);
+        }else
+        {
+            GPIO_ResetBits(GPIOC,DS1302DAT);
+        }
+        GPIO_SetBits(GPIOC,DS1302CLK);       //Ê±ÖÓÏßÀ­¸ß£¬ÖÆÔìÉÏÉıÑØ£¬SDAµÄÊı¾İ±»´«Êä
+        GPIO_ResetBits(GPIOC,DS1302CLK);       //Ê±ÖÓÏßÀ­µÍ£¬ÎªÏÂÒ»¸öÉÏÉıÑØ×ö×¼±¸
+        dat>>=1;        //Êı¾İÓÒÒÆÒ»Î»£¬×¼±¸´«ÊäÏÂÒ»Î»Êı¾İ
+    }
 }
 
 unsigned char ds1302_readbyte(void)
 {
-	unsigned char i = 0,dat = 0;
-	//è®¾ç½®ä¸ºä¸Šæ‹‰è¾“å…¥
-	GPIO_InitTypeDef GPIO_InitStructure;
-	GPIO_InitStructure.GPIO_Pin =  DS1302DAT;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;    
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
+    unsigned char i = 0,dat = 0;
+    //ÉèÖÃÎªÉÏÀ­ÊäÈë
+    GPIO_InitTypeDef GPIO_InitStructure;
+    GPIO_InitStructure.GPIO_Pin =  DS1302DAT;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-	for(i=0;i<8;i++)
-	{
-		dat>>=1;        //è¦è¿”å›çš„æ•°æ®å·¦ç§»ä¸€ä½
-		if(GPIO_ReadInputDataBit(GPIOC,DS1302DAT) == 1)     //å½“æ•°æ®çº¿ä¸ºé«˜æ—¶ï¼Œè¯æ˜è¯¥ä½æ•°æ®ä¸º 1
-			dat|=0x80;  //è¦ä¼ è¾“æ•°æ®çš„å½“å‰å€¼ç½®ä¸º 1,è‹¥ä¸æ˜¯,åˆ™ä¸º 0
-		GPIO_SetBits(GPIOC,DS1302CLK);       //æ‹‰é«˜æ—¶é’Ÿçº¿
+    for(i=0;i<8;i++)
+    {
+        dat>>=1;        //Òª·µ»ØµÄÊı¾İ×óÒÆÒ»Î»
+        if(GPIO_ReadInputDataBit(GPIOC,DS1302DAT) == 1)     //µ±Êı¾İÏßÎª¸ßÊ±£¬Ö¤Ã÷¸ÃÎ»Êı¾İÎª 1
+            dat|=0x80;  //Òª´«ÊäÊı¾İµÄµ±Ç°ÖµÖÃÎª 1,Èô²»ÊÇ,ÔòÎª 0
+        GPIO_SetBits(GPIOC,DS1302CLK);       //À­¸ßÊ±ÖÓÏß
 
-		GPIO_ResetBits(GPIOC,DS1302CLK);       //åˆ¶é€ ä¸‹é™æ²¿
-	}
-	return dat;         //è¿”å›è¯»å–å‡ºçš„æ•°æ®
+        GPIO_ResetBits(GPIOC,DS1302CLK);       //ÖÆÔìÏÂ½µÑØ
+    }
+    return dat;         //·µ»Ø¶ÁÈ¡³öµÄÊı¾İ
 }
 
 unsigned char ds1302_read(unsigned char cmd)
 {
-	unsigned char data = 0;
+    unsigned char data = 0;
 
-	GPIO_ResetBits(GPIOC,DS1302RST);
-	GPIO_ResetBits(GPIOC,DS1302CLK);	
-	GPIO_SetBits(GPIOC,DS1302RST);	
-	ds1302_writebyte(cmd);
-	data = ds1302_readbyte();
-	GPIO_SetBits(GPIOC,DS1302CLK);
-	GPIO_ResetBits(GPIOC,DS1302RST);	
+    GPIO_ResetBits(GPIOC,DS1302RST);
+    GPIO_ResetBits(GPIOC,DS1302CLK);
+    GPIO_SetBits(GPIOC,DS1302RST);
+    ds1302_writebyte(cmd);
+    data = ds1302_readbyte();
+    GPIO_SetBits(GPIOC,DS1302CLK);
+    GPIO_ResetBits(GPIOC,DS1302RST);
 
-	return data;
+    return data;
 }
 
 void ds1302_write(unsigned char cmd, unsigned char data)
 {
-	GPIO_ResetBits(GPIOC,DS1302RST);
-	GPIO_ResetBits(GPIOC,DS1302CLK);
-	GPIO_SetBits(GPIOC,DS1302RST);		
-	
-	ds1302_writebyte(cmd);
-	ds1302_writebyte(data);
-	GPIO_SetBits(GPIOC,DS1302CLK);
-	GPIO_ResetBits(GPIOC,DS1302RST);	
+    GPIO_ResetBits(GPIOC,DS1302RST);
+    GPIO_ResetBits(GPIOC,DS1302CLK);
+    GPIO_SetBits(GPIOC,DS1302RST);
+
+    ds1302_writebyte(cmd);
+    ds1302_writebyte(data);
+    GPIO_SetBits(GPIOC,DS1302CLK);
+    GPIO_ResetBits(GPIOC,DS1302RST);
 }
 
 static rt_err_t rt_rtc_open(rt_device_t dev, rt_uint16_t oflag)
@@ -122,113 +122,113 @@ static rt_err_t rt_rtc_open(rt_device_t dev, rt_uint16_t oflag)
 
 static rt_size_t rt_rtc_read(rt_device_t dev, rt_off_t pos, void* buffer, rt_size_t size)
 {
-	int ret;
-	unsigned char year, month, day, hour, minute, second;
-	char datetime[20] = {'\0'};
-	char temp[5] = {'\0'};
-	rt_err_t result = rt_mutex_take(RTC_lock, RT_WAITING_FOREVER);
-	if(result == RT_EOK)
-	{
-		year = ds1302_read(0x8D);
-		month = ds1302_read(0x89);
-		day = ds1302_read(0x87);
-		hour = ds1302_read(0x85);
-		minute = ds1302_read(0x83);
-		second = ds1302_read(0x81);
+    int ret;
+    unsigned char year, month, day, hour, minute, second;
+    char datetime[20] = {'\0'};
+    char temp[5] = {'\0'};
+    rt_err_t result = rt_mutex_take(RTC_lock, RT_WAITING_FOREVER);
+    if(result == RT_EOK)
+    {
+        year = ds1302_read(0x8D);
+        month = ds1302_read(0x89);
+        day = ds1302_read(0x87);
+        hour = ds1302_read(0x85);
+        minute = ds1302_read(0x83);
+        second = ds1302_read(0x81);
 
-		strcat(datetime, "20");
-		//rt_kprintf("year: %x, month: %x, day: %x, hour: %x, minute: %x, second: %x\n", year, month, day, hour, minute, second);
+        strcat(datetime, "20");
+        //rt_kprintf("year: %x, month: %x, day: %x, hour: %x, minute: %x, second: %x\n", year, month, day, hour, minute, second);
 
-		rt_sprintf(temp, "%d", ((year >> 4) & 0x0f));
-		strcat(datetime, temp);
-		memset(temp, '\0', 5);
+        rt_sprintf(temp, "%d", ((year >> 4) & 0x0f));
+        strcat(datetime, temp);
+        memset(temp, '\0', 5);
 
-		rt_sprintf(temp, "%d", (year & 0x0f));
-		strcat(datetime, temp);
-		memset(temp, '\0', 5);
+        rt_sprintf(temp, "%d", (year & 0x0f));
+        strcat(datetime, temp);
+        memset(temp, '\0', 5);
 
-		rt_sprintf(temp, "%d", ((month >> 4) & 0x0f));
-		strcat(datetime, temp);
-		memset(temp, '\0', 5);
+        rt_sprintf(temp, "%d", ((month >> 4) & 0x0f));
+        strcat(datetime, temp);
+        memset(temp, '\0', 5);
 
-		rt_sprintf(temp, "%d", (month & 0x0f));
-		strcat(datetime, temp);
-		memset(temp, '\0', 5);
+        rt_sprintf(temp, "%d", (month & 0x0f));
+        strcat(datetime, temp);
+        memset(temp, '\0', 5);
 
-		rt_sprintf(temp, "%d", ((day >> 4) & 0x0f));
-		strcat(datetime, temp);
-		memset(temp, '\0', 5);
+        rt_sprintf(temp, "%d", ((day >> 4) & 0x0f));
+        strcat(datetime, temp);
+        memset(temp, '\0', 5);
 
-		rt_sprintf(temp, "%d", (day & 0x0f));
-		strcat(datetime, temp);
-		memset(temp, '\0', 5);
+        rt_sprintf(temp, "%d", (day & 0x0f));
+        strcat(datetime, temp);
+        memset(temp, '\0', 5);
 
-		rt_sprintf(temp, "%d", ((hour >> 4) & 0x07));
-		strcat(datetime, temp);
-		memset(temp, '\0', 5);
+        rt_sprintf(temp, "%d", ((hour >> 4) & 0x07));
+        strcat(datetime, temp);
+        memset(temp, '\0', 5);
 
-		rt_sprintf(temp, "%d", (hour & 0x0f));
-		strcat(datetime, temp);
-		memset(temp, '\0', 5);
+        rt_sprintf(temp, "%d", (hour & 0x0f));
+        strcat(datetime, temp);
+        memset(temp, '\0', 5);
 
-		rt_sprintf(temp, "%d", ((minute >> 4) & 0x0f));
-		strcat(datetime, temp);
-		memset(temp, '\0', 5);
+        rt_sprintf(temp, "%d", ((minute >> 4) & 0x0f));
+        strcat(datetime, temp);
+        memset(temp, '\0', 5);
 
-		rt_sprintf(temp, "%d", (minute & 0x0f));
-		strcat(datetime, temp);
-		memset(temp, '\0', 5);
+        rt_sprintf(temp, "%d", (minute & 0x0f));
+        strcat(datetime, temp);
+        memset(temp, '\0', 5);
 
-		rt_sprintf(temp, "%d", ((second >> 4) & 0x0f));
-		strcat(datetime, temp);
-		memset(temp, '\0', 5);
+        rt_sprintf(temp, "%d", ((second >> 4) & 0x0f));
+        strcat(datetime, temp);
+        memset(temp, '\0', 5);
 
-		rt_sprintf(temp, "%d", (second & 0x0f));
-		strcat(datetime, temp);
-		memset(temp, '\0', 5);
+        rt_sprintf(temp, "%d", (second & 0x0f));
+        strcat(datetime, temp);
+        memset(temp, '\0', 5);
 
-		ret = strlen(datetime);
-		rt_memcpy(buffer,datetime,strlen(datetime));
-	}
-	rt_mutex_release(RTC_lock);
-	return ret;
+        ret = strlen(datetime);
+        rt_memcpy(buffer,datetime,strlen(datetime));
+    }
+    rt_mutex_release(RTC_lock);
+    return ret;
 }
 
 static rt_size_t rt_rtc_write(struct rt_device *dev,
-                                 rt_off_t          pos,
-                                 const void       *buffer,
-                                 rt_size_t         size)
+                              rt_off_t          pos,
+                              const void       *buffer,
+                              rt_size_t         size)
 {
-	int ret=0;
-	unsigned year, month, day, hour, minute, second;
-	unsigned char datetime[20] = {'\0'};
+    int ret=0;
+    unsigned year, month, day, hour, minute, second;
+    unsigned char datetime[20] = {'\0'};
 
-	rt_err_t result = rt_mutex_take(RTC_lock, RT_WAITING_FOREVER);
-	if(result == RT_EOK)
-	{
-		rt_memcpy(datetime,buffer,size);
-		ret = size;
+    rt_err_t result = rt_mutex_take(RTC_lock, RT_WAITING_FOREVER);
+    if(result == RT_EOK)
+    {
+        rt_memcpy(datetime,buffer,size);
+        ret = size;
 
-		//rt_kprintf("%s\n", datetime);
+        //rt_kprintf("%s\n", datetime);
 
-		year = ((datetime[2] - 0x30) << 4) | (datetime[3] - 0x30);
-		month = ((datetime[4] - 0x30) << 4) | (datetime[5] - 0x30);
-		day = ((datetime[6] - 0x30) << 4) | (datetime[7] - 0x30);
-		hour = ((datetime[8] - 0x30) << 4) | (datetime[9] - 0x30);
-		minute = ((datetime[10] - 0x30) << 4) | (datetime[11] - 0x30);
-		second = ((datetime[12] - 0x30) << 4) | (datetime[13] - 0x30);
+        year = ((datetime[2] - 0x30) << 4) | (datetime[3] - 0x30);
+        month = ((datetime[4] - 0x30) << 4) | (datetime[5] - 0x30);
+        day = ((datetime[6] - 0x30) << 4) | (datetime[7] - 0x30);
+        hour = ((datetime[8] - 0x30) << 4) | (datetime[9] - 0x30);
+        minute = ((datetime[10] - 0x30) << 4) | (datetime[11] - 0x30);
+        second = ((datetime[12] - 0x30) << 4) | (datetime[13] - 0x30);
 
-		//rt_kprintf("%x, %x, %x, %x, %x, %x\n", year, month, day, hour, minute, second);
+        //rt_kprintf("%x, %x, %x, %x, %x, %x\n", year, month, day, hour, minute, second);
 
-		ds1302_write(0x8C, year);
-		ds1302_write(0x88, month);
-		ds1302_write(0x86, day);
-		ds1302_write(0x84, hour);
-		ds1302_write(0x82, minute);
-		ds1302_write(0x80, second);
-	}
-	rt_mutex_release(RTC_lock);
-  return ret;
+        ds1302_write(0x8C, year);
+        ds1302_write(0x88, month);
+        ds1302_write(0x86, day);
+        ds1302_write(0x84, hour);
+        ds1302_write(0x82, minute);
+        ds1302_write(0x80, second);
+    }
+    rt_mutex_release(RTC_lock);
+    return ret;
 }
 
 /*******************************************************************************
@@ -240,17 +240,17 @@ static rt_size_t rt_rtc_write(struct rt_device *dev,
 *******************************************************************************/
 int RTC_Configuration(void)
 {
-	GPIO_InitTypeDef GPIO_InitStructure;
-	/* PC 2,8,ä¸ºè¾“å‡º*/
-	GPIO_InitStructure.GPIO_Pin =  DS1302CLK | DS1302RST;   
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;    
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;    
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-	GPIO_SetBits(GPIOC,DS1302CLK);
-	GPIO_SetBits(GPIOC,DS1302RST);
-	
-	ds1302_write(0x8e, 0x00);	//å…³é—­å†™ä¿æŠ¤
-  return 0;
+    GPIO_InitTypeDef GPIO_InitStructure;
+    /* PC 2,8,ÎªÊä³ö*/
+    GPIO_InitStructure.GPIO_Pin =  DS1302CLK | DS1302RST;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
+    GPIO_SetBits(GPIOC,DS1302CLK);
+    GPIO_SetBits(GPIOC,DS1302RST);
+
+    ds1302_write(0x8e, 0x00);	//¹Ø±ÕĞ´±£»¤
+    return 0;
 }
 
 void rt_hw_rtc_init(void)
@@ -274,12 +274,12 @@ void rt_hw_rtc_init(void)
     /* no private */
     rtc.user_data = RT_NULL;
 
-		RTC_lock = rt_mutex_create("RTC_lock", RT_IPC_FLAG_FIFO);
-		if (RTC_lock != RT_NULL)
-		{
-			rt_kprintf("Initialize RTC successful!\n");
-		}
-		
+    RTC_lock = rt_mutex_create("RTC_lock", RT_IPC_FLAG_FIFO);
+    if (RTC_lock != RT_NULL)
+    {
+        rt_kprintf("Initialize RTC successful!\n");
+    }
+
     rt_device_register(&rtc, "rtc", RT_DEVICE_FLAG_RDWR);
 
     return;

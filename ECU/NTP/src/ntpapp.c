@@ -28,60 +28,60 @@
 /*****************************************************************************/
 int get_time_from_NTP()
 {
-	int sockfd;
-  int ret,times, i=0;
-  struct timeval newtime,timeout;
-  struct sockaddr_in serversocket;
-  NTPPACKET receivepacket;
-  fd_set readfd;
+    int sockfd;
+    int ret,times, i=0;
+    struct timeval newtime,timeout;
+    struct sockaddr_in serversocket;
+    NTPPACKET receivepacket;
+    fd_set readfd;
 
-  sockfd = create_socket_ntp();
-  if(-1==sockfd)
-  {
-    printmsg(ECU_DBG_NTP,"Create socket error!");
+    sockfd = create_socket_ntp();
+    if(-1==sockfd)
+    {
+        printmsg(ECU_DBG_NTP,"Create socket error!");
 
-    return -1;
-  }
-  else{
-		printdecmsg(ECU_DBG_NTP,"socket",sockfd);
+        return -1;
+    }
+    else{
+        printdecmsg(ECU_DBG_NTP,"socket",sockfd);
 
-  }
-  ret = connecttoserver(sockfd, &serversocket);
-  if(-1==ret)
-  {
-    printmsg(ECU_DBG_NTP,"Connect server error!");
-	closesocket(sockfd);
-    return -1;
-  }
-  else{
-    printdecmsg(ECU_DBG_NTP,"socket",ret);
-  }
+    }
+    ret = connecttoserver(sockfd, &serversocket);
+    if(-1==ret)
+    {
+        printmsg(ECU_DBG_NTP,"Connect server error!");
+        closesocket(sockfd);
+        return -1;
+    }
+    else{
+        printdecmsg(ECU_DBG_NTP,"socket",ret);
+    }
 
-	for(i=0; i<2; i++){
-		send_packet(sockfd);
-		rt_hw_us_delay(1);
-		for(times=0;times<2;times++){
-			timeout.tv_sec = 6;
-			timeout.tv_usec = 0;
-			rt_hw_us_delay(1);
-			ret = select(sockfd+1, &readfd, NULL, NULL, &timeout);
-			
-			printdecmsg(ECU_DBG_NTP,"ret",ret);
+    for(i=0; i<2; i++){
+        send_packet(sockfd);
+        rt_hw_us_delay(1);
+        for(times=0;times<2;times++){
+            timeout.tv_sec = 6;
+            timeout.tv_usec = 0;
+            rt_hw_us_delay(1);
+            ret = select(sockfd+1, &readfd, NULL, NULL, &timeout);
 
-			if(ret>0){
-				if(-1!=receive_packet(sockfd, &receivepacket, &serversocket)){
-					gettimepacket(&receivepacket, &newtime);
+            printdecmsg(ECU_DBG_NTP,"ret",ret);
 
-					printdecmsg(ECU_DBG_NTP,"time_t ",newtime.tv_sec);
+            if(ret>0){
+                if(-1!=receive_packet(sockfd, &receivepacket, &serversocket)){
+                    gettimepacket(&receivepacket, &newtime);
 
-				}
-				update_time(&newtime);
-				closesocket(sockfd);
-				return 0;
-			}
-		}
-		if(ret>0)
-			break;
+                    printdecmsg(ECU_DBG_NTP,"time_t ",newtime.tv_sec);
+
+                }
+                update_time(&newtime);
+                closesocket(sockfd);
+                return 0;
+            }
+        }
+        if(ret>0)
+            break;
     }
     
     closesocket(sockfd);
@@ -93,7 +93,7 @@ int get_time_from_NTP()
 #include <finsh.h>
 void ntpget()
 {
-	get_time_from_NTP();
+    get_time_from_NTP();
 }
 FINSH_FUNCTION_EXPORT(ntpget, eg:ntpget());
 #endif

@@ -6,114 +6,114 @@
 #include "rtthread.h"
 #include "dfs_posix.h"
 /*********************************************************************
-clrgfdiè¡¨æ ¼å­—æ®µï¼š
+clrgfdi±í¸ñ×Ö¶Î£º
 id, set_flag
 **********************************************************************/
 extern rt_mutex_t record_data_lock;
 
 
-/* æ¸…é™¤æ‰€æœ‰é€†å˜å™¨çš„GFDI */
+/* Çå³ıËùÓĞÄæ±äÆ÷µÄGFDI */
 int clear_all()
 {
-	char inverter_ids[MAXINVERTERCOUNT][13] = {"\0"};
-	int i, err_count = 0,num = 0;
-	char str[50];
-	int fd = 0;
-	fd = open("/home/data/clrgfdi", O_WRONLY | O_TRUNC | O_CREAT,0);
-	if(fd >= 0)
-	{
-		//æŸ¥è¯¢æ‰€æœ‰é€†å˜å™¨IDå·
-		num = get_num_from_id(inverter_ids);
-		
-		for(i=1; i<=num; i++)
-		{
-			sprintf(str,"%s,1\n",inverter_ids[i-1]);
-			
-			//æ’å…¥æ•°æ®
-			if(write(fd,str,strlen(str)) <= 0)
-			{
-				err_count++;
-			}
-		}
-		close(fd);
-		printdecmsg(ECU_DBG_CONTROL_CLIENT,"clear_all",err_count);	
-	}
+    char inverter_ids[MAXINVERTERCOUNT][13] = {"\0"};
+    int i, err_count = 0,num = 0;
+    char str[50];
+    int fd = 0;
+    fd = open("/home/data/clrgfdi", O_WRONLY | O_TRUNC | O_CREAT,0);
+    if(fd >= 0)
+    {
+        //²éÑ¯ËùÓĞÄæ±äÆ÷IDºÅ
+        num = get_num_from_id(inverter_ids);
+
+        for(i=1; i<=num; i++)
+        {
+            sprintf(str,"%s,1\n",inverter_ids[i-1]);
+
+            //²åÈëÊı¾İ
+            if(write(fd,str,strlen(str)) <= 0)
+            {
+                err_count++;
+            }
+        }
+        close(fd);
+        printdecmsg(ECU_DBG_CONTROL_CLIENT,"clear_all",err_count);
+    }
 
 
-	return err_count;
+    return err_count;
 }
 
-/* æ¸…é™¤æŒ‡å®šå°æ•°é€†å˜å™¨çš„GFDI */
+/* Çå³ıÖ¸¶¨Ì¨ÊıÄæ±äÆ÷µÄGFDI */
 int clear_num(const char *msg, int num)
 {
-	int i, err_count = 0;
-	char inverter_id[13] = {'\0'};
-	char str[50];
-	int fd = 0;
-	fd = open("/home/data/clrgfdi", O_WRONLY | O_TRUNC | O_CREAT,0);
-	if(fd >= 0)
-	{
-		for(i=0; i<num; i++)
-		{
-			//è·å–ä¸€å°é€†å˜å™¨çš„IDå·
-			strncpy(inverter_id, &msg[i*16], 12);
-			//è·å–æ¸…é™¤GFDIæ ‡å¿—(æ³¨æ„:åè®®ä¸­0æ˜¯ç»´æŒåŸæ ·,1æ˜¯æ¸…é™¤æ ‡å¿—;ä½†åœ¨ECUæ•°æ®åº“ä¸­1æ˜¯æ¸…é™¤æ ‡å¿—ï¼Œå¹¶æ²¡æœ‰0)
-			if(msg_get_int(&msg[i*16 + 12], 1)){
-				//æ’å…¥ä¸€æ¡é€†å˜å™¨å¼€å…³æœºæŒ‡ä»¤
-				sprintf(str,"%s,1\n",inverter_id);
-				//æ’å…¥æ•°æ®
-				if(write(fd,str,strlen(str)) <= 0)
-				{
-					err_count++;
-				}
-			}
-		}
-		close(fd);
-	}
+    int i, err_count = 0;
+    char inverter_id[13] = {'\0'};
+    char str[50];
+    int fd = 0;
+    fd = open("/home/data/clrgfdi", O_WRONLY | O_TRUNC | O_CREAT,0);
+    if(fd >= 0)
+    {
+        for(i=0; i<num; i++)
+        {
+            //»ñÈ¡Ò»Ì¨Äæ±äÆ÷µÄIDºÅ
+            strncpy(inverter_id, &msg[i*16], 12);
+            //»ñÈ¡Çå³ıGFDI±êÖ¾(×¢Òâ:Ğ­ÒéÖĞ0ÊÇÎ¬³ÖÔ­Ñù,1ÊÇÇå³ı±êÖ¾;µ«ÔÚECUÊı¾İ¿âÖĞ1ÊÇÇå³ı±êÖ¾£¬²¢Ã»ÓĞ0)
+            if(msg_get_int(&msg[i*16 + 12], 1)){
+                //²åÈëÒ»ÌõÄæ±äÆ÷¿ª¹Ø»úÖ¸Áî
+                sprintf(str,"%s,1\n",inverter_id);
+                //²åÈëÊı¾İ
+                if(write(fd,str,strlen(str)) <= 0)
+                {
+                    err_count++;
+                }
+            }
+        }
+        close(fd);
+    }
 
-	return err_count;
+    return err_count;
 }
 
-/* ã€A112ã€‘EMAè®¾ç½®é€†å˜å™¨GFDI */
+/* ¡¾A112¡¿EMAÉèÖÃÄæ±äÆ÷GFDI */
 int clear_inverter_gfdi(const char *recvbuffer, char *sendbuffer)
 {
 
-	int ack_flag = SUCCESS;
-	int type, num;
-	char timestamp[15] = {'\0'};
-	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
-	
-	//è·å–è®¾ç½®ç±»å‹æ ‡å¿—ä½: 0å…¨éƒ¨æ¸…é™¤, 1æŒ‡å®šé€†å˜å™¨æ¸…é™¤
-	type = msg_get_int(&recvbuffer[30], 1);
-	//è·å–é€†å˜å™¨æ•°é‡
-	num = msg_get_int(&recvbuffer[31], 4);
-	//è·å–æ—¶é—´æˆ³
-	strncpy(timestamp, &recvbuffer[35], 14);
+    int ack_flag = SUCCESS;
+    int type, num;
+    char timestamp[15] = {'\0'};
+    rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
 
-	switch(type)
-	{
-		case 0:
-			if(clear_all() > 0)
-				ack_flag = DB_ERROR;
-			break;
-		case 1:
-			//æ£€æŸ¥æ ¼å¼
-			if(!msg_num_check(&recvbuffer[52], num, 13, 1)){
-				ack_flag = FORMAT_ERROR;
-			}
-			else{
-				printdecmsg(ECU_DBG_CONTROL_CLIENT,"num",num);
-				if(clear_num(&recvbuffer[52], num) > 0)
-					ack_flag = DB_ERROR;
-			}
-			break;
-		default:
-			ack_flag = FORMAT_ERROR;
-			break;
-	}
+    //»ñÈ¡ÉèÖÃÀàĞÍ±êÖ¾Î»: 0È«²¿Çå³ı, 1Ö¸¶¨Äæ±äÆ÷Çå³ı
+    type = msg_get_int(&recvbuffer[30], 1);
+    //»ñÈ¡Äæ±äÆ÷ÊıÁ¿
+    num = msg_get_int(&recvbuffer[31], 4);
+    //»ñÈ¡Ê±¼ä´Á
+    strncpy(timestamp, &recvbuffer[35], 14);
 
-	//æ‹¼æ¥åº”ç­”æ¶ˆæ¯
-	msg_ACK(sendbuffer, "A112", timestamp, ack_flag);
-	rt_mutex_release(record_data_lock);
-	return 0;
+    switch(type)
+    {
+    case 0:
+        if(clear_all() > 0)
+            ack_flag = DB_ERROR;
+        break;
+    case 1:
+        //¼ì²é¸ñÊ½
+        if(!msg_num_check(&recvbuffer[52], num, 13, 1)){
+            ack_flag = FORMAT_ERROR;
+        }
+        else{
+            printdecmsg(ECU_DBG_CONTROL_CLIENT,"num",num);
+            if(clear_num(&recvbuffer[52], num) > 0)
+                ack_flag = DB_ERROR;
+        }
+        break;
+    default:
+        ack_flag = FORMAT_ERROR;
+        break;
+    }
+
+    //Æ´½ÓÓ¦´ğÏûÏ¢
+    msg_ACK(sendbuffer, "A112", timestamp, ack_flag);
+    rt_mutex_release(record_data_lock);
+    return 0;
 }

@@ -35,223 +35,223 @@ extern ecu_info ecu;
 
 typedef struct comm_config
 {
-	int port1;
-	int port2;
-	int timeout;
-	int report_interval;
-	int socket_type;
-	char socket_addr[32];
+    int port1;
+    int port2;
+    int timeout;
+    int report_interval;
+    int socket_type;
+    char socket_addr[32];
 }Comm_Cfg;
 
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
 
-/* å°†ä»æ–‡ä»¶ä¸­è¯»å–çš„é”®å€¼å¯¹ä¿å­˜åˆ°é€šä¿¡é…ç½®å‚æ•°ç»“æ„ä½“ä¸­ */
+/* ½«´ÓÎÄ¼şÖĞ¶ÁÈ¡µÄ¼üÖµ¶Ô±£´æµ½Í¨ĞÅÅäÖÃ²ÎÊı½á¹¹ÌåÖĞ */
 int get_cfg(Comm_Cfg *cfg, MyArray *array)
 {
-	int i;
+    int i;
 
-	for(i=0; i<NUM; i++){
-		if(!strlen(array[i].name))break;
-		//è¶…æ—¶æ—¶é—´
-		if(!strcmp(array[i].name, "Timeout")){
-			cfg->timeout = atoi(array[i].value);
-		}
-		//è½®è¯¢æ—¶é—´
-		else if(!strcmp(array[i].name, "Report_Interval")){
-			cfg->report_interval = atoi(array[i].value);
-		}
-		//åŸŸå
-		else if(!strcmp(array[i].name, "Domain")){
-			if(strlen(array[i].value)){
-				cfg->socket_type = 1;
-				strncpy(cfg->socket_addr, array[i].value, 32);
-			}
-			else{
-				cfg->socket_type = 0;
-			}
-		}
-		//IPåœ°å€
-		else if(!strcmp(array[i].name, "IP")){
-			if(cfg->socket_type != 1){
-				strncpy(cfg->socket_addr, array[i].value, 32);
-			}
-		}
-		//ç«¯å£1
-		else if(!strcmp(array[i].name, "Port1")){
-			cfg->port1 = atoi(array[i].value);
-		}
-		//ç«¯å£2
-		else if(!strcmp(array[i].name, "Port2")){
-			cfg->port2 = atoi(array[i].value);
-		}
-	}
-	return 0;
+    for(i=0; i<NUM; i++){
+        if(!strlen(array[i].name))break;
+        //³¬Ê±Ê±¼ä
+        if(!strcmp(array[i].name, "Timeout")){
+            cfg->timeout = atoi(array[i].value);
+        }
+        //ÂÖÑ¯Ê±¼ä
+        else if(!strcmp(array[i].name, "Report_Interval")){
+            cfg->report_interval = atoi(array[i].value);
+        }
+        //ÓòÃû
+        else if(!strcmp(array[i].name, "Domain")){
+            if(strlen(array[i].value)){
+                cfg->socket_type = 1;
+                strncpy(cfg->socket_addr, array[i].value, 32);
+            }
+            else{
+                cfg->socket_type = 0;
+            }
+        }
+        //IPµØÖ·
+        else if(!strcmp(array[i].name, "IP")){
+            if(cfg->socket_type != 1){
+                strncpy(cfg->socket_addr, array[i].value, 32);
+            }
+        }
+        //¶Ë¿Ú1
+        else if(!strcmp(array[i].name, "Port1")){
+            cfg->port1 = atoi(array[i].value);
+        }
+        //¶Ë¿Ú2
+        else if(!strcmp(array[i].name, "Port2")){
+            cfg->port2 = atoi(array[i].value);
+        }
+    }
+    return 0;
 }
 
-/* å°†é€šä¿¡é…ç½®å‚æ•°ç»“æ„ä½“ä¸­çš„å‚æ•°ä¿å­˜åˆ°å³å°†å†™å…¥æ–‡ä»¶çš„é”®å€¼å¯¹ä¸­ */
+/* ½«Í¨ĞÅÅäÖÃ²ÎÊı½á¹¹ÌåÖĞµÄ²ÎÊı±£´æµ½¼´½«Ğ´ÈëÎÄ¼şµÄ¼üÖµ¶ÔÖĞ */
 int save_cfg(Comm_Cfg *cfg, MyArray *array, const char *buffer)
 {
-	int i;
+    int i;
 
-	cfg->port1 = msg_get_int(&buffer[1], 5);
-	cfg->port2 = msg_get_int(&buffer[6], 5);
-	cfg->timeout = msg_get_int(&buffer[11], 3);
-	cfg->report_interval = msg_get_int(&buffer[14], 2);
-	cfg->socket_type = msg_get_int(&buffer[16], 1);
-	strncpy(cfg->socket_addr, &buffer[17], 32);
+    cfg->port1 = msg_get_int(&buffer[1], 5);
+    cfg->port2 = msg_get_int(&buffer[6], 5);
+    cfg->timeout = msg_get_int(&buffer[11], 3);
+    cfg->report_interval = msg_get_int(&buffer[14], 2);
+    cfg->socket_type = msg_get_int(&buffer[16], 1);
+    strncpy(cfg->socket_addr, &buffer[17], 32);
 
-	for(i=0; i<NUM; i++){
-		if(!strcmp(array[i].name, "Timeout")){
-			snprintf(array[i].value, sizeof(array[i].value), "%d", cfg->timeout);
-		}
-		else if(!strcmp(array[i].name, "Report_Interval")){
-			snprintf(array[i].value, sizeof(array[i].value), "%d", cfg->report_interval);
-		}
-		else if(!strcmp(array[i].name, "Domain")){
-			if(1 == cfg->socket_type){
-				snprintf(array[i].value, sizeof(array[i].value), "%s", cfg->socket_addr);
-			}
-		}
-		else if(!strcmp(array[i].name, "IP")){
-			if(0 == cfg->socket_type){
-				snprintf(array[i].value, sizeof(array[i].value), "%s", cfg->socket_addr);
-			}
-		}
-		else if(!strcmp(array[i].name, "Port1")){
-			snprintf(array[i].value, sizeof(array[i].value), "%d", cfg->port1);
-		}
-		else if(!strcmp(array[i].name, "Port2")){
-			snprintf(array[i].value, sizeof(array[i].value), "%d", cfg->port2);
-		}
-	}
-	return 0;
+    for(i=0; i<NUM; i++){
+        if(!strcmp(array[i].name, "Timeout")){
+            snprintf(array[i].value, sizeof(array[i].value), "%d", cfg->timeout);
+        }
+        else if(!strcmp(array[i].name, "Report_Interval")){
+            snprintf(array[i].value, sizeof(array[i].value), "%d", cfg->report_interval);
+        }
+        else if(!strcmp(array[i].name, "Domain")){
+            if(1 == cfg->socket_type){
+                snprintf(array[i].value, sizeof(array[i].value), "%s", cfg->socket_addr);
+            }
+        }
+        else if(!strcmp(array[i].name, "IP")){
+            if(0 == cfg->socket_type){
+                snprintf(array[i].value, sizeof(array[i].value), "%s", cfg->socket_addr);
+            }
+        }
+        else if(!strcmp(array[i].name, "Port1")){
+            snprintf(array[i].value, sizeof(array[i].value), "%d", cfg->port1);
+        }
+        else if(!strcmp(array[i].name, "Port2")){
+            snprintf(array[i].value, sizeof(array[i].value), "%d", cfg->port2);
+        }
+    }
+    return 0;
 }
 
-/* ã€A106ã€‘ECUä¸ŠæŠ¥é€šä¿¡é…ç½®å‚æ•° */
+/* ¡¾A106¡¿ECUÉÏ±¨Í¨ĞÅÅäÖÃ²ÎÊı */
 int response_comm_config(const char *recvbuffer, char *sendbuffer)
 {
-	int comm_cfg_num = 0;
-	int comm_cfg_type[3] = {0};
-	char timestamp[15] = {'\0'}; //æ—¶é—´æˆ³
-	MyArray array[NUM] = {'\0'}; //é€šä¿¡é…ç½®å‚æ•°ç»“æ„ä½“æ•°ç»„
-	Comm_Cfg cfg1 = {'\0'};
-	Comm_Cfg cfg2 = {'\0'};
-	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
+    int comm_cfg_num = 0;
+    int comm_cfg_type[3] = {0};
+    char timestamp[15] = {'\0'}; //Ê±¼ä´Á
+    MyArray array[NUM] = {'\0'}; //Í¨ĞÅÅäÖÃ²ÎÊı½á¹¹ÌåÊı×é
+    Comm_Cfg cfg1 = {'\0'};
+    Comm_Cfg cfg2 = {'\0'};
+    rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
 
-	//æ—¶é—´æˆ³
-	strncpy(timestamp, &recvbuffer[34], 14);
+    //Ê±¼ä´Á
+    strncpy(timestamp, &recvbuffer[34], 14);
 
-	//[1]é€†å˜å™¨è¿è¡Œæ•°æ®é€šä¿¡é…ç½®
-	if(file_get_array(array, NUM, "/yuneng/client.con") == 0){
-		get_cfg(&cfg1, array);
-	}
-	else{
-		cfg1.timeout = 10;
-		cfg1.report_interval = 5;
-	}
-	if(file_get_array(array, NUM, "/yuneng/datacent.con") == 0){
-		comm_cfg_num++;
-		comm_cfg_type[1] = 1;
-		get_cfg(&cfg1, array);
-	}
+    //[1]Äæ±äÆ÷ÔËĞĞÊı¾İÍ¨ĞÅÅäÖÃ
+    if(file_get_array(array, NUM, "/yuneng/client.con") == 0){
+        get_cfg(&cfg1, array);
+    }
+    else{
+        cfg1.timeout = 10;
+        cfg1.report_interval = 5;
+    }
+    if(file_get_array(array, NUM, "/yuneng/datacent.con") == 0){
+        comm_cfg_num++;
+        comm_cfg_type[1] = 1;
+        get_cfg(&cfg1, array);
+    }
 
-	//[2]è¿œç¨‹æ§åˆ¶é€šä¿¡é…ç½®
-	if(file_get_array(array, NUM, "/yuneng/control.con") == 0){
-		comm_cfg_num++;
-		comm_cfg_type[2] = 1;
-		get_cfg(&cfg2, array);
-	}
+    //[2]Ô¶³Ì¿ØÖÆÍ¨ĞÅÅäÖÃ
+    if(file_get_array(array, NUM, "/yuneng/control.con") == 0){
+        comm_cfg_num++;
+        comm_cfg_type[2] = 1;
+        get_cfg(&cfg2, array);
+    }
 
-	/* æ‹¼æ¥åè®® */
-	msg_Header(sendbuffer, "A106");
-	msgcat_s(sendbuffer, 12, ecu.id);
-	msgcat_d(sendbuffer, 1, comm_cfg_num);
-	msgcat_s(sendbuffer, 14, timestamp);
-	strcat(sendbuffer, "END");
-	if(comm_cfg_type[1]){
-		strcat(sendbuffer, "1");
-		msgcat_d(sendbuffer, 5, cfg1.port1);
-		msgcat_d(sendbuffer, 5, cfg1.port2);
-		msgcat_d(sendbuffer, 3, cfg1.timeout);
-		msgcat_d(sendbuffer, 2, cfg1.report_interval);
-		msgcat_d(sendbuffer, 1, cfg1.socket_type);
-		strcat(sendbuffer, cfg1.socket_addr);
-		strcat(sendbuffer, "END");
-	}
-	if(comm_cfg_type[2]){
-		strcat(sendbuffer, "2");
-		msgcat_d(sendbuffer, 5, cfg2.port1);
-		msgcat_d(sendbuffer, 5, cfg2.port2);
-		msgcat_d(sendbuffer, 3, cfg2.timeout);
-		msgcat_d(sendbuffer, 2, cfg2.report_interval);
-		msgcat_d(sendbuffer, 1, cfg2.socket_type);
-		strcat(sendbuffer, cfg2.socket_addr);
-		strcat(sendbuffer, "END");
-	}
-	rt_mutex_release(record_data_lock);
-	return 0;
+    /* Æ´½ÓĞ­Òé */
+    msg_Header(sendbuffer, "A106");
+    msgcat_s(sendbuffer, 12, ecu.id);
+    msgcat_d(sendbuffer, 1, comm_cfg_num);
+    msgcat_s(sendbuffer, 14, timestamp);
+    strcat(sendbuffer, "END");
+    if(comm_cfg_type[1]){
+        strcat(sendbuffer, "1");
+        msgcat_d(sendbuffer, 5, cfg1.port1);
+        msgcat_d(sendbuffer, 5, cfg1.port2);
+        msgcat_d(sendbuffer, 3, cfg1.timeout);
+        msgcat_d(sendbuffer, 2, cfg1.report_interval);
+        msgcat_d(sendbuffer, 1, cfg1.socket_type);
+        strcat(sendbuffer, cfg1.socket_addr);
+        strcat(sendbuffer, "END");
+    }
+    if(comm_cfg_type[2]){
+        strcat(sendbuffer, "2");
+        msgcat_d(sendbuffer, 5, cfg2.port1);
+        msgcat_d(sendbuffer, 5, cfg2.port2);
+        msgcat_d(sendbuffer, 3, cfg2.timeout);
+        msgcat_d(sendbuffer, 2, cfg2.report_interval);
+        msgcat_d(sendbuffer, 1, cfg2.socket_type);
+        strcat(sendbuffer, cfg2.socket_addr);
+        strcat(sendbuffer, "END");
+    }
+    rt_mutex_release(record_data_lock);
+    return 0;
 }
 
-/* ã€A107ã€‘EMAè®¾ç½®é€šä¿¡é…ç½®å‚æ•° */
+/* ¡¾A107¡¿EMAÉèÖÃÍ¨ĞÅÅäÖÃ²ÎÊı */
 int set_comm_config(const char *recvbuffer, char *sendbuffer)
 {
-	int ack_flag = SUCCESS;
-	int comm_cfg_num = 0;
-	int comm_cfg_type = 0;
-	int cfg_begin = 48;
-	char timestamp[15] = {'\0'};
-	char buffer[256] = {'\0'};
-	Comm_Cfg cfg1 = {'\0'};
-	Comm_Cfg cfg2 = {'\0'};
-	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
+    int ack_flag = SUCCESS;
+    int comm_cfg_num = 0;
+    int comm_cfg_type = 0;
+    int cfg_begin = 48;
+    char timestamp[15] = {'\0'};
+    char buffer[256] = {'\0'};
+    Comm_Cfg cfg1 = {'\0'};
+    Comm_Cfg cfg2 = {'\0'};
+    rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
 
-	MyArray array[NUM] = {
-		{"Timeout", ""},
-		{"Report_Interval", ""},
-		{"Domain", ""},
-		{"IP", ""},
-		{"Port1", ""},
-		{"Port2", ""},
-	};
+    MyArray array[NUM] = {
+        {"Timeout", ""},
+        {"Report_Interval", ""},
+        {"Domain", ""},
+        {"IP", ""},
+        {"Port1", ""},
+        {"Port2", ""},
+    };
 
-	//è·å–é€šä¿¡é…ç½®æ•°é‡
-	comm_cfg_num = msg_get_int(&recvbuffer[30], 1);
-	//è·å–æ—¶é—´æˆ³
-	strncpy(timestamp, &recvbuffer[31], 14);
-	while(comm_cfg_num--){
-		//å¤åˆ¶å‡ºåˆ°"END"ä¸ºæ­¢çš„å­—ç¬¦ä¸²
-		memset(buffer, 0, sizeof(buffer));
-		cfg_begin += msg_get_one_section(buffer, &recvbuffer[cfg_begin]) + 3;
+    //»ñÈ¡Í¨ĞÅÅäÖÃÊıÁ¿
+    comm_cfg_num = msg_get_int(&recvbuffer[30], 1);
+    //»ñÈ¡Ê±¼ä´Á
+    strncpy(timestamp, &recvbuffer[31], 14);
+    while(comm_cfg_num--){
+        //¸´ÖÆ³öµ½"END"ÎªÖ¹µÄ×Ö·û´®
+        memset(buffer, 0, sizeof(buffer));
+        cfg_begin += msg_get_one_section(buffer, &recvbuffer[cfg_begin]) + 3;
 
-		//é€šä¿¡åè®®ç§ç±»
-		comm_cfg_type = msg_get_int(buffer, 1);
-		printdecmsg(ECU_DBG_CONTROL_CLIENT,"comm_cfg_type",comm_cfg_type);
-		//[1]é€†å˜å™¨è¿è¡Œæ•°æ®é€šä¿¡é…ç½®
-		if(comm_cfg_type == 1){
-			file_get_array(&array[2], 4, "/yuneng/datacent.con");
-			save_cfg(&cfg1, array, buffer);
-			file_set_array(array, 2, "/yuneng/client.con");
-			file_set_array(&array[2], 4, "/yuneng/datacent.con");
-			threadRestartTimer(10,TYPE_CLIENT);
-			reboot_timer(10);
-		}
-		//[2]è¿œç¨‹æ§åˆ¶é€šä¿¡é…ç½®
-		else if(comm_cfg_type == 2){
-			file_get_array(array, 6, "/yuneng/control.con");
-			save_cfg(&cfg2, array, buffer);
-			file_set_array(array, 6, "/yuneng/control.con");
-			reboot_timer(10);
-		}
-		else{
-			ack_flag = FORMAT_ERROR;
-		}
+        //Í¨ĞÅĞ­ÒéÖÖÀà
+        comm_cfg_type = msg_get_int(buffer, 1);
+        printdecmsg(ECU_DBG_CONTROL_CLIENT,"comm_cfg_type",comm_cfg_type);
+        //[1]Äæ±äÆ÷ÔËĞĞÊı¾İÍ¨ĞÅÅäÖÃ
+        if(comm_cfg_type == 1){
+            file_get_array(&array[2], 4, "/yuneng/datacent.con");
+            save_cfg(&cfg1, array, buffer);
+            file_set_array(array, 2, "/yuneng/client.con");
+            file_set_array(&array[2], 4, "/yuneng/datacent.con");
+            threadRestartTimer(10,TYPE_CLIENT);
+            reboot_timer(10);
+        }
+        //[2]Ô¶³Ì¿ØÖÆÍ¨ĞÅÅäÖÃ
+        else if(comm_cfg_type == 2){
+            file_get_array(array, 6, "/yuneng/control.con");
+            save_cfg(&cfg2, array, buffer);
+            file_set_array(array, 6, "/yuneng/control.con");
+            reboot_timer(10);
+        }
+        else{
+            ack_flag = FORMAT_ERROR;
+        }
 
-	}
-	//æ‹¼æ¥åº”ç­”æ¶ˆæ¯
-	msg_ACK(sendbuffer, "A107", timestamp, ack_flag);
-	rt_mutex_release(record_data_lock);
-	return 106;
+    }
+    //Æ´½ÓÓ¦´ğÏûÏ¢
+    msg_ACK(sendbuffer, "A107", timestamp, ack_flag);
+    rt_mutex_release(record_data_lock);
+    return 106;
 
 }

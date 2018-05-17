@@ -23,25 +23,25 @@
 #define WIFI_USE 
 //restartThread parameter
 typedef enum THREADTYPE {
-	TYPE_LED = 1,
-	TYPE_LANRST = 2,
-  TYPE_UPDATE = 3,
-	TYPE_IDWRITE = 4,
-  TYPE_MAIN = 5,
-  TYPE_CLIENT = 6,
-  TYPE_CONTROL_CLIENT = 7,
-	TYPE_NTP = 8,
-	TYPE_DRM = 9
+    TYPE_LED = 1,
+    TYPE_LANRST = 2,
+    TYPE_UPDATE = 3,
+    TYPE_IDWRITE = 4,
+    TYPE_MAIN = 5,
+    TYPE_CLIENT = 6,
+    TYPE_CONTROL_CLIENT = 7,
+    TYPE_NTP = 8,
+    TYPE_DRM = 9
 }threadType;
 
 typedef struct IPConfig
 {
-	IP_t IPAddr;
-	IP_t MSKAddr;
-	IP_t GWAddr;
-	IP_t DNS1Addr;
-	IP_t DNS2Addr;
-		
+    IP_t IPAddr;
+    IP_t MSKAddr;
+    IP_t GWAddr;
+    IP_t DNS1Addr;
+    IP_t DNS2Addr;
+
 } IPConfig_t;
 
 #define WIFI_MODULE_TYPE	2

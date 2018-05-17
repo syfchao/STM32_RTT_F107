@@ -35,7 +35,7 @@ void rt_hw_powerIO_off(void)
 
 void rt_hw_ETHIO_init(void)
 {
-	GPIO_InitTypeDef GPIO_InitStructure;
+    GPIO_InitTypeDef GPIO_InitStructure;
 
     RCC_APB2PeriphClockCmd(ethio_rcc,ENABLE);
 
@@ -44,38 +44,38 @@ void rt_hw_ETHIO_init(void)
 
     GPIO_InitStructure.GPIO_Pin   = ethio_pin;
     GPIO_Init(ethio_gpio, &GPIO_InitStructure);
-		
+
 
 }
 
 int rt_hw_ETHIO_status(void)
 {
-	return GPIO_ReadInputDataBit(ethio_gpio,ethio_pin);
+    return GPIO_ReadInputDataBit(ethio_gpio,ethio_pin);
 }
 #ifdef RT_USING_FINSH
 #include <finsh.h>
 void power(rt_uint32_t value)
 {
-	rt_hw_powerIO_init();
+    rt_hw_powerIO_init();
 
     /* set led status */
     switch (value)
     {
-        case 0:
-            rt_hw_powerIO_off();
-            break;
-        case 1:
-            rt_hw_powerIO_on();
-            break;
-        default:
-			break;
+    case 0:
+        rt_hw_powerIO_off();
+        break;
+    case 1:
+        rt_hw_powerIO_on();
+        break;
+    default:
+        break;
     }
 
 }
 void ethio(void)
 {
-	rt_hw_ETHIO_init();
-	rt_kprintf("ethio:%d\n",rt_hw_ETHIO_status());
+    rt_hw_ETHIO_init();
+    rt_kprintf("ethio:%d\n",rt_hw_ETHIO_status());
 }
 FINSH_FUNCTION_EXPORT(power, set power on[1] or off[0].)
 FINSH_FUNCTION_EXPORT(ethio, ethio.)

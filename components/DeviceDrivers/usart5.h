@@ -13,9 +13,9 @@
 #include "stdio.h"
 typedef enum 
 {
-	SOCKET_A = 1,
-	SOCKET_B = 2,
-	SOCKET_C = 3,
+    SOCKET_A = 1,
+    SOCKET_B = 2,
+    SOCKET_C = 3,
 } eSocketType;
 
 #define USART_REC_LEN  				4096  	//定义最大接收字节数 2048
@@ -25,12 +25,12 @@ typedef enum
 
 typedef struct socket_config
 {
-	char domain[32];	//域名
-	char ip[16];		//IP
-	int port1;			//端口1
-	int port2;			//端口2
-	int timeout;
-	int report_interval;
+    char domain[32];	//域名
+    char ip[16];		//IP
+    int port1;			//端口1
+    int port2;			//端口2
+    int timeout;
+    int report_interval;
 
 }Socket_Cfg;
 
@@ -52,7 +52,7 @@ extern unsigned int WIFI_Recv_SocketC_LEN;
 unsigned short packetlen_A(unsigned char *packet);
 unsigned short packetlen_B(unsigned char *packet);
 unsigned short packetlen_C(unsigned char *packet);
-	  	
+
 
 void initSocketArgs(void);
 int randport(Socket_Cfg cfg);

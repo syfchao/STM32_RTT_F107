@@ -38,7 +38,7 @@ stm32下的spi特性结构
 *********************************************************************************************************/
 struct stm32_io_spi_bus
 {
-  struct rt_spi_bus parent;
+    struct rt_spi_bus parent;
 };
 
 
@@ -47,8 +47,8 @@ struct stm32_io_spi_bus
 *********************************************************************************************************/
 struct stm32_spi_cs
 {
-	rt_uint32_t gpio_base;
-	rt_uint16_t gpio_pin;
+    rt_uint32_t gpio_base;
+    rt_uint16_t gpio_pin;
 };
 
 
@@ -59,9 +59,9 @@ void rt_hw_io_spi_init(void);
 
 
 #ifdef __cplusplus
-    }
+}
 #endif      // __cplusplus
-    
+
 #endif      // __BOARD_IO_SPI_H__
 /*********************************************************************************************************
 END FILE

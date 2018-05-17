@@ -39,7 +39,7 @@ extern "C" {
 *********************************************************************************************************/
 #define RT_MACRO_START     do {
 #define RT_MACRO_END       } while (0)
-    
+
 /*********************************************************************************************************
 ** 访问寄存器的宏定义
 *********************************************************************************************************/
@@ -55,114 +55,114 @@ extern "C" {
 *********************************************************************************************************/
 //  8位访问寄存器的宏定义
 #define HAL_READ_UINT8( _register_, _value_ )       \
-        ((_value_) = *((volatile rt_uint8_t *)(_register_)))
+    ((_value_) = *((volatile rt_uint8_t *)(_register_)))
 
 #define HAL_WRITE_UINT8( _register_, _value_ )      \
-        (*((volatile rt_uint8_t *)(_register_)) = (_value_))
+    (*((volatile rt_uint8_t *)(_register_)) = (_value_))
 
 #define HAL_READ_UINT8_VECTOR( _register_, _buf_, _count_, _step_ )     \
     RT_MACRO_START                                                      \
     rt_uint32_t _i_,_j_;                                                \
     for( _i_ = 0, _j_ = 0; _i_ < (_count_); _i_++, _j_ += (_step_))     \
-        (_buf_)[_i_] = ((volatile rt_uint8_t *)(_register_))[_j_];      \
+    (_buf_)[_i_] = ((volatile rt_uint8_t *)(_register_))[_j_];      \
     RT_MACRO_END
 
 #define HAL_WRITE_UINT8_VECTOR( _register_, _buf_, _count_, _step_ )    \
     RT_MACRO_START                                                      \
     rt_uint32_t _i_,_j_;                                                \
     for( _i_ = 0, _j_ = 0; _i_ < (_count_); _i_++, _j_ += (_step_))     \
-        ((volatile rt_uint8_t *)(_register_))[_j_] = (_buf_)[_i_];      \
+    ((volatile rt_uint8_t *)(_register_))[_j_] = (_buf_)[_i_];      \
     RT_MACRO_END
 
 #define HAL_READ_UINT8_STRING( _register_, _buf_, _count_ )             \
     RT_MACRO_START                                                      \
     rt_uint32_t _i_;                                                    \
     for( _i_ = 0; _i_ < (_count_); _i_++)                               \
-        (_buf_)[_i_] = ((volatile rt_uint8_t *)(_register_))[_i_];      \
+    (_buf_)[_i_] = ((volatile rt_uint8_t *)(_register_))[_i_];      \
     RT_MACRO_END
 
 #define HAL_WRITE_UINT8_STRING( _register_, _buf_, _count_ )            \
     RT_MACRO_START                                                      \
     rt_uint32_t _i_;                                                    \
     for( _i_ = 0; _i_ < (_count_); _i_++)                               \
-        ((volatile rt_uint8_t *)(_register_)) = (_buf_)[_i_];           \
+    ((volatile rt_uint8_t *)(_register_)) = (_buf_)[_i_];           \
     RT_MACRO_END
 
 //  16位访问寄存器的宏定义
 #define HAL_READ_UINT16( _register_, _value_ )      \
-        ((_value_) = *((volatile rt_uint16_t *)(_register_)))
+    ((_value_) = *((volatile rt_uint16_t *)(_register_)))
 
 #define HAL_WRITE_UINT16( _register_, _value_ )     \
-        (*((volatile rt_uint16_t *)(_register_)) = (_value_))
+    (*((volatile rt_uint16_t *)(_register_)) = (_value_))
 
 #define HAL_READ_UINT16_VECTOR( _register_, _buf_, _count_, _step_ )    \
     RT_MACRO_START                                                      \
     rt_uint32_t _i_,_j_;                                                \
     for( _i_ = 0, _j_ = 0; _i_ < (_count_); _i_++, _j_ += (_step_))     \
-        (_buf_)[_i_] = ((volatile rt_uint16_t *)(_register_))[_j_];     \
+    (_buf_)[_i_] = ((volatile rt_uint16_t *)(_register_))[_j_];     \
     RT_MACRO_END
 
 #define HAL_WRITE_UINT16_VECTOR( _register_, _buf_, _count_, _step_ )   \
     RT_MACRO_START                                                      \
     rt_uint32_t _i_,_j_;                                                \
     for( _i_ = 0, _j_ = 0; _i_ < (_count_); _i_++, _j_ += (_step_))     \
-        ((volatile rt_uint16_t *)(_register_))[_j_] = (_buf_)[_i_];     \
+    ((volatile rt_uint16_t *)(_register_))[_j_] = (_buf_)[_i_];     \
     RT_MACRO_END
 
 #define HAL_READ_UINT16_STRING( _register_, _buf_, _count_)             \
     RT_MACRO_START                                                      \
     rt_uint32_t _i_;                                                    \
     for( _i_ = 0; _i_ < (_count_); _i_++)                               \
-        (_buf_)[_i_] = ((volatile rt_uint16_t *)(_register_))[_i_];     \
+    (_buf_)[_i_] = ((volatile rt_uint16_t *)(_register_))[_i_];     \
     RT_MACRO_END
 
 #define HAL_WRITE_UINT16_STRING( _register_, _buf_, _count_)            \
     RT_MACRO_START                                                      \
     rt_uint32_t _i_;                                                    \
     for( _i_ = 0; _i_ < (_count_); _i_++)                               \
-        ((volatile rt_uint16_t *)(_register_))[_i_] = (_buf_)[_i_];     \
+    ((volatile rt_uint16_t *)(_register_))[_i_] = (_buf_)[_i_];     \
     RT_MACRO_END
 
 // 32位访问寄存器的宏定义
 #define HAL_READ_UINT32( _register_, _value_ )      \
-        ((_value_) = *((volatile rt_uint32_t *)(_register_)))
+    ((_value_) = *((volatile rt_uint32_t *)(_register_)))
 
 #define HAL_WRITE_UINT32( _register_, _value_ )     \
-        (*((volatile rt_uint32_t *)(_register_)) = (_value_))
+    (*((volatile rt_uint32_t *)(_register_)) = (_value_))
 
 #define HAL_READ_UINT32_VECTOR( _register_, _buf_, _count_, _step_ )    \
     RT_MACRO_START                                                      \
     rt_uint32_t _i_,_j_;                                                \
     for( _i_ = 0, _j_ = 0; _i_ < (_count_); _i_++, _j_ += (_step_))     \
-        (_buf_)[_i_] = ((volatile rt_uint32_t *)(_register_))[_j_];     \
+    (_buf_)[_i_] = ((volatile rt_uint32_t *)(_register_))[_j_];     \
     RT_MACRO_END
 
 #define HAL_WRITE_UINT32_VECTOR( _register_, _buf_, _count_, _step_ )   \
     RT_MACRO_START                                                      \
     rt_uint32_t _i_,_j_;                                                \
     for( _i_ = 0, _j_ = 0; _i_ < (_count_); _i_++, _j_ += (_step_))     \
-        ((volatile rt_uint32_t *)(_register_))[_j_] = (_buf_)[_i_];     \
+    ((volatile rt_uint32_t *)(_register_))[_j_] = (_buf_)[_i_];     \
     RT_MACRO_END
 
 #define HAL_READ_UINT32_STRING( _register_, _buf_, _count_)             \
     RT_MACRO_START                                                      \
     rt_uint32_t _i_;                                                    \
     for( _i_ = 0; _i_ < (_count_); _i_++)                               \
-        (_buf_)[_i_] = ((volatile rt_uint32_t *)(_register_))[_i_];     \
+    (_buf_)[_i_] = ((volatile rt_uint32_t *)(_register_))[_i_];     \
     RT_MACRO_END
 
 #define HAL_WRITE_UINT32_STRING( _register_, _buf_, _count_)            \
     RT_MACRO_START                                                      \
     rt_uint32_t _i_;                                                    \
     for( _i_ = 0; _i_ < (_count_); _i_++)                               \
-        ((volatile rt_uint32_t *)(_register_))[_i_] = (_buf_)[_i_];     \
+    ((volatile rt_uint32_t *)(_register_))[_i_] = (_buf_)[_i_];     \
     RT_MACRO_END
 
 #ifdef __cplusplus
-    }
+}
 #endif      // __cplusplus
 
 #endif // endif of __RT_REG_H__
 /*********************************************************************************************************
-  END FILE 
+  END FILE
 *********************************************************************************************************/

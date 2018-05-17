@@ -6,28 +6,28 @@
 #include "mycommand.h"
 
 extern rt_mutex_t record_data_lock;
-/* ã€A119ã€‘EMAè®¾ç½®ECUçš„é€šä¿¡å¼€å…³ */
+/* ¡¾A119¡¿EMAÉèÖÃECUµÄÍ¨ĞÅ¿ª¹Ø */
 int set_ecu_flag(const char *recvbuffer, char *sendbuffer)
 {
-	int ack_flag = SUCCESS;
-	int ecu_flag = 1;
-	char timestamp[15] = {'\0'};
-	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
-	//è·å–æ—¶é—´æˆ³
-	strncpy(timestamp, &recvbuffer[30], 14);
-	//é€šä¿¡æ ‡å¿—ä½
-	ecu_flag = msg_get_int(&recvbuffer[44], 1);
+    int ack_flag = SUCCESS;
+    int ecu_flag = 1;
+    char timestamp[15] = {'\0'};
+    rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
+    //»ñÈ¡Ê±¼ä´Á
+    strncpy(timestamp, &recvbuffer[30], 14);
+    //Í¨ĞÅ±êÖ¾Î»
+    ecu_flag = msg_get_int(&recvbuffer[44], 1);
 
-	if(ecu_flag == 0)
-		file_set_one("0", "/yuneng/ecu_flag.con");
-	else if(ecu_flag == 1)
-		file_set_one("1", "/yuneng/ecu_flag.con");
-	else
-		ack_flag = FORMAT_ERROR;
-	
-	reboot_timer(10);
-	//æ‹¼æ¥åº”ç­”æ¶ˆæ¯
-	msg_ACK(sendbuffer, "A119", timestamp, ack_flag);
-	rt_mutex_release(record_data_lock);
-	return -1;
+    if(ecu_flag == 0)
+        file_set_one("0", "/yuneng/ecu_flag.con");
+    else if(ecu_flag == 1)
+        file_set_one("1", "/yuneng/ecu_flag.con");
+    else
+        ack_flag = FORMAT_ERROR;
+
+    reboot_timer(10);
+    //Æ´½ÓÓ¦´ğÏûÏ¢
+    msg_ACK(sendbuffer, "A119", timestamp, ack_flag);
+    rt_mutex_release(record_data_lock);
+    return -1;
 }

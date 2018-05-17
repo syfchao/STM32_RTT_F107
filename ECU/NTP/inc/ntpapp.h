@@ -25,7 +25,7 @@ typedef struct ntptime
     unsigned int usec;
 }NTPTIME;
 
-/********************************NTPåè®®åŒ…å¤´ï¼ˆ16Byteï¼‰************************/
+/********************************NTPĞ­Òé°üÍ·£¨16Byte£©************************/
 typedef struct ntpheader
 {
     union
@@ -43,7 +43,7 @@ typedef struct ntpheader
     }NTPData;
 }NTPHEADER;
 
-/********************************NTPåè®®åŒ…************************************/
+/********************************NTPĞ­Òé°ü************************************/
 typedef struct ntppacket
 {
     NTPHEADER header;

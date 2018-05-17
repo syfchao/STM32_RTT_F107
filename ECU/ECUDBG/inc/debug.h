@@ -20,14 +20,14 @@
 /*  Definitions                                                              */
 /*****************************************************************************/
 typedef enum DEBUG {
-  ECU_DBG_UPDATE = 0,
-	ECU_DBG_IDWRITE = 1,
-  ECU_DBG_MAIN = 2,
-  ECU_DBG_CLIENT = 3,
-  ECU_DBG_CONTROL_CLIENT = 4,
-	ECU_DBG_NTP = 5,
-	ECU_DBG_OTHER = 6,
-	ECU_DBG_WIFI = 7,
+    ECU_DBG_UPDATE = 0,
+    ECU_DBG_IDWRITE = 1,
+    ECU_DBG_MAIN = 2,
+    ECU_DBG_CLIENT = 3,
+    ECU_DBG_CONTROL_CLIENT = 4,
+    ECU_DBG_NTP = 5,
+    ECU_DBG_OTHER = 6,
+    ECU_DBG_WIFI = 7,
 }DebugType;
 
 

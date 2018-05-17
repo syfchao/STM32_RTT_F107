@@ -23,7 +23,7 @@
 #include "dfs_posix.h"
 
 /*********************************************************************
-upinvè¡¨æ ¼å­—æ®µï¼š
+upinv±í¸ñ×Ö¶Î£º
 id,update_result,update_time,update_flag
 **********************************************************************/
 
@@ -35,72 +35,72 @@ extern rt_mutex_t record_data_lock;
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
-/* è®¾ç½®æŒ‡å®šå°æ•°é€†å˜å™¨çš„å‡çº§æ ‡å¿— */
+/* ÉèÖÃÖ¸¶¨Ì¨ÊýÄæ±äÆ÷µÄÉý¼¶±êÖ¾ */
 int set_update_num(const char *msg, int num)
 {
-	int i, err_count = 0;
-	char inverter_id[13] = {'\0'};
-	char str[100] = {'\0'};
-	int fd;
-	char updateNum[2] = {'\0'};
-	fd = open("/home/data/upinv", O_WRONLY  |O_TRUNC  | O_CREAT,0);
-	if (fd >= 0)
-	{		
-		for(i=0; i<num; i++)
-		{
-			//èŽ·å–ä¸€å°é€†å˜å™¨çš„IDå·
-			strncpy(inverter_id, &msg[i*13], 12);
-			updateNum[0] = msg[i*13 + 12];
-			updateNum[1] = '\0';
-			sprintf(str,"%s,,,%s\n",inverter_id,updateNum);
-			write(fd,str,strlen(str));
-		}
+    int i, err_count = 0;
+    char inverter_id[13] = {'\0'};
+    char str[100] = {'\0'};
+    int fd;
+    char updateNum[2] = {'\0'};
+    fd = open("/home/data/upinv", O_WRONLY  |O_TRUNC  | O_CREAT,0);
+    if (fd >= 0)
+    {
+        for(i=0; i<num; i++)
+        {
+            //»ñÈ¡Ò»Ì¨Äæ±äÆ÷µÄIDºÅ
+            strncpy(inverter_id, &msg[i*13], 12);
+            updateNum[0] = msg[i*13 + 12];
+            updateNum[1] = '\0';
+            sprintf(str,"%s,,,%s\n",inverter_id,updateNum);
+            write(fd,str,strlen(str));
+        }
 
-		
-		close(fd);
-	}
 
-	return err_count;
+        close(fd);
+    }
+
+    return err_count;
 }
 
-/* ã€A136ã€‘EMAè¿œç¨‹å‡çº§é€†å˜å™¨ */
+/* ¡¾A136¡¿EMAÔ¶³ÌÉý¼¶Äæ±äÆ÷ */
 int set_inverter_update(const char *recvbuffer, char *sendbuffer)
 {
-	int ack_flag = SUCCESS;
-	int type, num;
-	char timestamp[15] = {'\0'};
-	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
-	//èŽ·å–è®¾ç½®ç±»åž‹æ ‡å¿—ä½: 0å‡çº§æ‰€æœ‰é€†å˜å™¨ï¼ˆæ³¨ï¼šç›®å‰æ²¡æœ‰è¿˜åŽŸæ‰€æœ‰è¿™ä¸ªåŠŸèƒ½ï¼‰ï¼Œ1å‡çº§æŒ‡å®šé€†å˜å™¨
-	type = msg_get_int(&recvbuffer[30], 1);
-	//èŽ·å–é€†å˜å™¨æ•°é‡
-	num = msg_get_int(&recvbuffer[31], 4);
-	//èŽ·å–æ—¶é—´æˆ³
-	strncpy(timestamp, &recvbuffer[35], 14);
-	switch(type)
-	{
-		case 0:
-			//ä¸èƒ½å‡çº§æ‰€æœ‰é€†å˜å™¨
-			ack_flag = UNSUPPORTED;
-			break;
-		case 1:
-			//æ£€æŸ¥æ ¼å¼ï¼ˆé€†å˜å™¨æ•°é‡ï¼‰
-			if(!msg_num_check(&recvbuffer[52], num, 13, 0)){
-				ack_flag = FORMAT_ERROR;
-			}
-			else{
-				//å‡çº§æŒ‡å®šé€†å˜å™¨ï¼Œå­˜å…¥æ•°æ®åº“
-				if(set_update_num(&recvbuffer[52], num) > 0)
-					ack_flag = DB_ERROR;
-				//reboot_timer(10);
-				restartThread(TYPE_UPDATE);
-			}
-			break;
-		default:
-			ack_flag = FORMAT_ERROR;
-			break;
-	}
-	//æ‹¼æŽ¥åº”ç­”æ¶ˆæ¯
-	msg_ACK(sendbuffer, "A136", timestamp, ack_flag);
-	rt_mutex_release(record_data_lock);
-	return 0;
+    int ack_flag = SUCCESS;
+    int type, num;
+    char timestamp[15] = {'\0'};
+    rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
+    //»ñÈ¡ÉèÖÃÀàÐÍ±êÖ¾Î»: 0Éý¼¶ËùÓÐÄæ±äÆ÷£¨×¢£ºÄ¿Ç°Ã»ÓÐ»¹Ô­ËùÓÐÕâ¸ö¹¦ÄÜ£©£¬1Éý¼¶Ö¸¶¨Äæ±äÆ÷
+    type = msg_get_int(&recvbuffer[30], 1);
+    //»ñÈ¡Äæ±äÆ÷ÊýÁ¿
+    num = msg_get_int(&recvbuffer[31], 4);
+    //»ñÈ¡Ê±¼ä´Á
+    strncpy(timestamp, &recvbuffer[35], 14);
+    switch(type)
+    {
+    case 0:
+        //²»ÄÜÉý¼¶ËùÓÐÄæ±äÆ÷
+        ack_flag = UNSUPPORTED;
+        break;
+    case 1:
+        //¼ì²é¸ñÊ½£¨Äæ±äÆ÷ÊýÁ¿£©
+        if(!msg_num_check(&recvbuffer[52], num, 13, 0)){
+            ack_flag = FORMAT_ERROR;
+        }
+        else{
+            //Éý¼¶Ö¸¶¨Äæ±äÆ÷£¬´æÈëÊý¾Ý¿â
+            if(set_update_num(&recvbuffer[52], num) > 0)
+                ack_flag = DB_ERROR;
+            //reboot_timer(10);
+            restartThread(TYPE_UPDATE);
+        }
+        break;
+    default:
+        ack_flag = FORMAT_ERROR;
+        break;
+    }
+    //Æ´½ÓÓ¦´ðÏûÏ¢
+    msg_ACK(sendbuffer, "A136", timestamp, ack_flag);
+    rt_mutex_release(record_data_lock);
+    return 0;
 }

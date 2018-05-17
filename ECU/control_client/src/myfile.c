@@ -27,286 +27,286 @@
 /*****************************************************************************/
 void delete_newline(char *s)
 {
-	if(10 == s[strlen(s)-1])
-		s[strlen(s)-1] = '\0';
+    if(10 == s[strlen(s)-1])
+        s[strlen(s)-1] = '\0';
 }
 
-/* è·å–(å­˜å‚¨å•ä¸ªå‚æ•°çš„)é…ç½®æ–‡ä»¶ä¸­çš„å€¼ */
+/* »ñÈ¡(´æ´¢µ¥¸ö²ÎÊıµÄ)ÅäÖÃÎÄ¼şÖĞµÄÖµ */
 char *file_get_one(char *s, int count, const char *filename)
 {
-	
-	FILE *fp;
-	
-	fp = fopen(filename, "r");
-	if(fp == NULL){
-		print2msg(ECU_DBG_CONTROL_CLIENT,(char *)filename,"open error!");
-		return NULL;
-	}
-	fgets(s, count, fp);
-	if (10 == s[strlen(s) - 1])
-		s[strlen(s) - 1] = '\0';
-	fclose(fp);
-	return s;
+
+    FILE *fp;
+
+    fp = fopen(filename, "r");
+    if(fp == NULL){
+        print2msg(ECU_DBG_CONTROL_CLIENT,(char *)filename,"open error!");
+        return NULL;
+    }
+    fgets(s, count, fp);
+    if (10 == s[strlen(s) - 1])
+        s[strlen(s) - 1] = '\0';
+    fclose(fp);
+    return s;
 }
 
-/* å°†å•ä¸ªå‚æ•°å€¼å†™å…¥é…ç½®æ–‡ä»¶ä¸­ */
+/* ½«µ¥¸ö²ÎÊıÖµĞ´ÈëÅäÖÃÎÄ¼şÖĞ */
 int file_set_one(const char *s, const char *filename)
 {
-	FILE *fp;
-	fp = fopen(filename, "w");
-	if(fp == NULL){
-		printmsg(ECU_DBG_CONTROL_CLIENT,(char *)filename);
-		return -1;
-	}
-	if(EOF == fputs(s, fp)){
-		fclose(fp);
-		return -1;
-	}
-	fclose(fp);
-	return 0;
+    FILE *fp;
+    fp = fopen(filename, "w");
+    if(fp == NULL){
+        printmsg(ECU_DBG_CONTROL_CLIENT,(char *)filename);
+        return -1;
+    }
+    if(EOF == fputs(s, fp)){
+        fclose(fp);
+        return -1;
+    }
+    fclose(fp);
+    return 0;
 }
 
-/* è·å–(å­˜å‚¨å¤šä¸ªå‚æ•°çš„)é…ç½®æ–‡ä»¶ä¸­çš„å€¼ */
+/* »ñÈ¡(´æ´¢¶à¸ö²ÎÊıµÄ)ÅäÖÃÎÄ¼şÖĞµÄÖµ */
 int file_get_array(MyArray *array, int num, const char *filename)
 {
-	FILE *fp;
-	int count = 0;
-	char buffer[128] = {'\0'};
-	memset(array, 0 ,sizeof(MyArray)*num);
-	fp = fopen(filename, "r");
-	if(fp == NULL){
-		printmsg(ECU_DBG_CONTROL_CLIENT,(char *)filename);
-		return -1;
-	}
-	while(!feof(fp))
-	{
-		if(count >= num)
-		{
-			fclose(fp);
-			return 0;
-		}
-		memset(buffer, 0 ,sizeof(buffer));
-		fgets(buffer, 128, fp);
-		if(!strlen(buffer))continue;
+    FILE *fp;
+    int count = 0;
+    char buffer[128] = {'\0'};
+    memset(array, 0 ,sizeof(MyArray)*num);
+    fp = fopen(filename, "r");
+    if(fp == NULL){
+        printmsg(ECU_DBG_CONTROL_CLIENT,(char *)filename);
+        return -1;
+    }
+    while(!feof(fp))
+    {
+        if(count >= num)
+        {
+            fclose(fp);
+            return 0;
+        }
+        memset(buffer, 0 ,sizeof(buffer));
+        fgets(buffer, 128, fp);
+        if(!strlen(buffer))continue;
 
-		strncpy(array[count].name, buffer, strcspn(buffer, "="));
-		strncpy(array[count].value, &buffer[strlen(array[count].name)+1], 64);
-		delete_newline(array[count].value);
-		count++;
-	}
-	fclose(fp);
-	return 0;
+        strncpy(array[count].name, buffer, strcspn(buffer, "="));
+        strncpy(array[count].value, &buffer[strlen(array[count].name)+1], 64);
+        delete_newline(array[count].value);
+        count++;
+    }
+    fclose(fp);
+    return 0;
 }
 
 int file_set_array(const MyArray *array, int num, const char *filename)
 {
-	FILE *fp;
-	int i;
+    FILE *fp;
+    int i;
 
-	fp = fopen(filename, "w");
-	if(fp == NULL){
-		printmsg(ECU_DBG_CONTROL_CLIENT,(char *)filename);
-		return -1;
-	}
-	for(i=0; i<num; i++){
-		fprintf(fp, "%s=%s\n", array[i].name, array[i].value);
-	}
-	fclose(fp);
-	return 0;
+    fp = fopen(filename, "w");
+    if(fp == NULL){
+        printmsg(ECU_DBG_CONTROL_CLIENT,(char *)filename);
+        return -1;
+    }
+    for(i=0; i<num; i++){
+        fprintf(fp, "%s=%s\n", array[i].name, array[i].value);
+    }
+    fclose(fp);
+    return 0;
 }
 
-//æ¸…é™¤æ–‡ä»¶
+//Çå³ıÎÄ¼ş
 int clear_file(char *filename)
 {
-	FILE *fp;
-	fp = fopen(filename, "w");
-	if(fp == NULL){
-		printmsg(ECU_DBG_CONTROL_CLIENT,(char *)filename);
-		return -1;
-	}
-	fclose(fp);
-	return 0;
+    FILE *fp;
+    fp = fopen(filename, "w");
+    if(fp == NULL){
+        printmsg(ECU_DBG_CONTROL_CLIENT,(char *)filename);
+        return -1;
+    }
+    fclose(fp);
+    return 0;
 }
 
 
-//åˆ é™¤æ–‡ä»¶ä»¥è¡Œ
+//É¾³ıÎÄ¼şÒÔĞĞ
 int delete_line(char* filename,char* temfilename,char* compareData,int len)
 {
-	FILE *fin,*ftp;
-  char data[512] = {'\0'};
-  fin=fopen(filename,"r");//è¯»æ‰“å¼€åŸæ–‡ä»¶123.txt
-	if(fin == NULL)
-	{
-		print2msg(ECU_DBG_OTHER,"Open the file failure",filename);
-    return -1;
-	}
-	
-  ftp=fopen(temfilename,"w");
-	if( ftp==NULL){
-		print2msg(ECU_DBG_OTHER,"Open the filefailure",temfilename);
-		fclose(fin);
-    return -1;
-  }
-  while(fgets(data,512,fin))//ä»åŸæ–‡ä»¶è¯»å–ä¸€è¡Œ
-	{
-		if(memcmp(data,compareData,len))
-		{
-			//print2msg(ECU_DBG_OTHER,"delete_line",data);
-			fputs(data,ftp);//ä¸æ˜¯åˆ™å°†è¿™ä¸€è¡Œå†™å…¥ä¸´æ—¶æ–‡ä»¶
-		}
-	}
-  fclose(fin);
-  fclose(ftp);
-  remove(filename);//åˆ é™¤åŸæ–‡ä»¶
-  rename(temfilename,filename);//å°†ä¸´æ—¶æ–‡ä»¶åæ”¹ä¸ºåŸæ–‡ä»¶å
-  return 0;
-	
+    FILE *fin,*ftp;
+    char data[512] = {'\0'};
+    fin=fopen(filename,"r");//¶Á´ò¿ªÔ­ÎÄ¼ş123.txt
+    if(fin == NULL)
+    {
+        print2msg(ECU_DBG_OTHER,"Open the file failure",filename);
+        return -1;
+    }
+
+    ftp=fopen(temfilename,"w");
+    if( ftp==NULL){
+        print2msg(ECU_DBG_OTHER,"Open the filefailure",temfilename);
+        fclose(fin);
+        return -1;
+    }
+    while(fgets(data,512,fin))//´ÓÔ­ÎÄ¼ş¶ÁÈ¡Ò»ĞĞ
+    {
+        if(memcmp(data,compareData,len))
+        {
+            //print2msg(ECU_DBG_OTHER,"delete_line",data);
+            fputs(data,ftp);//²»ÊÇÔò½«ÕâÒ»ĞĞĞ´ÈëÁÙÊ±ÎÄ¼ş
+        }
+    }
+    fclose(fin);
+    fclose(ftp);
+    remove(filename);//É¾³ıÔ­ÎÄ¼ş
+    rename(temfilename,filename);//½«ÁÙÊ±ÎÄ¼şÃû¸ÄÎªÔ­ÎÄ¼şÃû
+    return 0;
+
 }
 
 
 int get_num_from_id(char inverter_ids[MAXINVERTERCOUNT][13])
 {
-	int num=0,i,sameflag;
-	FILE *fp;
-	char data[200];
-	fp = fopen("/home/data/id", "r");
-	if(fp)
-	{
-		while(NULL != fgets(data,200,fp))
-		{
-			//ä¸å‰é¢å‡ è¡Œæ¯”è¾ƒ å¦‚æœå½“å‰è¡Œå­˜åœ¨æ•°æ®ï¼Œè¡¨ç¤ºå­˜åœ¨ä¸€ä¸ªé€†å˜å™¨
-			sameflag = 0;
-			for(i = 0;i<num;i++)
-			{
-				if(!memcmp(data,inverter_ids[i],12))
-					sameflag = 1;
-			}
-			if(sameflag == 1)
-			{
-				continue;
-			}
-			memcpy(inverter_ids[num],data,12);
-			inverter_ids[num][12] = '\0';
-			num++;
-		}
-		fclose(fp);
-	}	
-	
-	
-	return num;
+    int num=0,i,sameflag;
+    FILE *fp;
+    char data[200];
+    fp = fopen("/home/data/id", "r");
+    if(fp)
+    {
+        while(NULL != fgets(data,200,fp))
+        {
+            //ÓëÇ°Ãæ¼¸ĞĞ±È½Ï Èç¹ûµ±Ç°ĞĞ´æÔÚÊı¾İ£¬±íÊ¾´æÔÚÒ»¸öÄæ±äÆ÷
+            sameflag = 0;
+            for(i = 0;i<num;i++)
+            {
+                if(!memcmp(data,inverter_ids[i],12))
+                    sameflag = 1;
+            }
+            if(sameflag == 1)
+            {
+                continue;
+            }
+            memcpy(inverter_ids[num],data,12);
+            inverter_ids[num][12] = '\0';
+            num++;
+        }
+        fclose(fp);
+    }
+
+
+    return num;
 }
 
 int insert_line(char * filename,char *str)
 {
-	int fd;
-	fd = open(filename, O_WRONLY | O_APPEND | O_CREAT,0);
-	if (fd >= 0)
-	{		
+    int fd;
+    fd = open(filename, O_WRONLY | O_APPEND | O_CREAT,0);
+    if (fd >= 0)
+    {
 
-		write(fd,str,strlen(str));
-		close(fd);
-	}
-	
-	return search_line(filename,str,strlen(str));
-	
+        write(fd,str,strlen(str));
+        close(fd);
+    }
+
+    return search_line(filename,str,strlen(str));
+
 }
 
 int search_line(char* filename,char* compareData,int len)
 {
-	FILE *fin;
-  char data[300];
-  fin=fopen(filename,"r");
-	if(fin == NULL)
-	{
-		print2msg(ECU_DBG_OTHER,"search_line failure1",filename);
+    FILE *fin;
+    char data[300];
+    fin=fopen(filename,"r");
+    if(fin == NULL)
+    {
+        print2msg(ECU_DBG_OTHER,"search_line failure1",filename);
+        return -1;
+    }
+
+    while(fgets(data,300,fin))//´ÓÔ­ÎÄ¼ş¶ÁÈ¡Ò»ĞĞ
+    {
+        if(!memcmp(data,compareData,len))
+        {
+            //´æÔÚÏàÍ¬ĞĞ£¬¹Ø±ÕÎÄ¼ş   È»ºó·µ»Ø1  ±íÊ¾´æÔÚ¸ÃĞĞ
+            fclose(fin);
+            return 1;
+        }
+    }
+    fclose(fin);
     return -1;
-	}
-	
-  while(fgets(data,300,fin))//ä»åŸæ–‡ä»¶è¯»å–ä¸€è¡Œ
-	{
-		if(!memcmp(data,compareData,len))
-		{
-			//å­˜åœ¨ç›¸åŒè¡Œï¼Œå…³é—­æ–‡ä»¶   ç„¶åè¿”å›1  è¡¨ç¤ºå­˜åœ¨è¯¥è¡Œ
-			fclose(fin);
-			return 1;
-		}
-	}
-  fclose(fin);
-  return -1;
 }
 
 
 int get_protection_from_file(const char pro_name[][32],float *pro_value,int *pro_flag,int num)
 {
-	FILE *fp;
-	char list[3][32];
-	char data[200];
-	int j = 0;
-	fp = fopen("/home/data/setpropa", "r");
-	if(fp)
-	{
-		while(NULL != fgets(data,200,fp))
-		{
-			memset(list,0,sizeof(list));
-			splitString(data,list);
-			for(j=0; j<num; j++){
-				if(!memcmp(list[0], pro_name[j],strlen(list[0]))){
-					pro_value[j] = atof(list[1]);
-					pro_flag[j] = 1;
-					break;
-				}
-			}
-		}
-		fclose(fp);
-	}
-	return -1;
+    FILE *fp;
+    char list[3][32];
+    char data[200];
+    int j = 0;
+    fp = fopen("/home/data/setpropa", "r");
+    if(fp)
+    {
+        while(NULL != fgets(data,200,fp))
+        {
+            memset(list,0,sizeof(list));
+            splitString(data,list);
+            for(j=0; j<num; j++){
+                if(!memcmp(list[0], pro_name[j],strlen(list[0]))){
+                    pro_value[j] = atof(list[1]);
+                    pro_flag[j] = 1;
+                    break;
+                }
+            }
+        }
+        fclose(fp);
+    }
+    return -1;
 }
 
-//è¿”å›1 ä¾¿æ˜¯å¯»æ‰¾åˆ°è¡Œ   è¿”å›-1è¡¨ç¤ºæœªå¯»æ‰¾åˆ°
+//·µ»Ø1 ±ãÊÇÑ°ÕÒµ½ĞĞ   ·µ»Ø-1±íÊ¾Î´Ñ°ÕÒµ½
 int read_line(char* filename,char *linedata,char* compareData,int len)
 {
-	FILE *fin;
-  fin=fopen(filename,"r");
-	if(fin == NULL)
-	{
-		//print2msg(ECU_DBG_OTHER,"read_line failure2",filename);
+    FILE *fin;
+    fin=fopen(filename,"r");
+    if(fin == NULL)
+    {
+        //print2msg(ECU_DBG_OTHER,"read_line failure2",filename);
+        return -1;
+    }
+
+    while(fgets(linedata,100,fin))//´ÓÔ­ÎÄ¼ş¶ÁÈ¡Ò»ĞĞ
+    {
+        if(!memcmp(linedata,compareData,len))
+        {
+            //´æÔÚÏàÍ¬ĞĞ£¬¹Ø±ÕÎÄ¼ş   È»ºó·µ»Ø1  ±íÊ¾´æÔÚ¸ÃĞĞ
+            fclose(fin);
+            return 1;
+        }
+    }
+    fclose(fin);
     return -1;
-	}
-	
-  while(fgets(linedata,100,fin))//ä»åŸæ–‡ä»¶è¯»å–ä¸€è¡Œ
-	{
-		if(!memcmp(linedata,compareData,len))
-		{
-			//å­˜åœ¨ç›¸åŒè¡Œï¼Œå…³é—­æ–‡ä»¶   ç„¶åè¿”å›1  è¡¨ç¤ºå­˜åœ¨è¯¥è¡Œ
-			fclose(fin);
-			return 1;
-		}
-	}
-  fclose(fin);
-  return -1;
 }
 
 int read_line_end(char* filename,char *linedata,char* compareData,int len)
 {
-		FILE *fin;
-  fin=fopen(filename,"r");
-	if(fin == NULL)
-	{
-		print2msg(ECU_DBG_OTHER,"read_line_end failure3",filename);
-    	return -1;
-	}
-	
-  while(fgets(linedata,100,fin))//ä»åŸæ–‡ä»¶è¯»å–ä¸€è¡Œ
-	{
-		if(!memcmp(&linedata[strlen(linedata)-len-1],compareData,len))
-		{
-			//å­˜åœ¨ç›¸åŒè¡Œï¼Œå…³é—­æ–‡ä»¶   ç„¶åè¿”å›1  è¡¨ç¤ºå­˜åœ¨è¯¥è¡Œ
-			fclose(fin);
-			return 1;
-		}
-	}
-  fclose(fin);
-  return -1;
+    FILE *fin;
+    fin=fopen(filename,"r");
+    if(fin == NULL)
+    {
+        print2msg(ECU_DBG_OTHER,"read_line_end failure3",filename);
+        return -1;
+    }
+
+    while(fgets(linedata,100,fin))//´ÓÔ­ÎÄ¼ş¶ÁÈ¡Ò»ĞĞ
+    {
+        if(!memcmp(&linedata[strlen(linedata)-len-1],compareData,len))
+        {
+            //´æÔÚÏàÍ¬ĞĞ£¬¹Ø±ÕÎÄ¼ş   È»ºó·µ»Ø1  ±íÊ¾´æÔÚ¸ÃĞĞ
+            fclose(fin);
+            return 1;
+        }
+    }
+    fclose(fin);
+    return -1;
 }
 
 

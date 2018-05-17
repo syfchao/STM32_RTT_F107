@@ -160,14 +160,14 @@ void rt_init_thread_entry(void* parameter)
         extern void rt_platform_init(void);
         rt_platform_init();
     }
-		
-	/* Filesystem Initialization */
-#if defined(RT_USING_DFS) && defined(RT_USING_DFS_ELMFAT)
-	/* initialize the device file system */
-	dfs_init();
 
-	/* initialize the elm chan FatFS file system*/
-	elm_init();
+    /* Filesystem Initialization */
+#if defined(RT_USING_DFS) && defined(RT_USING_DFS_ELMFAT)
+    /* initialize the device file system */
+    dfs_init();
+
+    /* initialize the elm chan FatFS file system*/
+    elm_init();
     
     /* mount flash fat partition 1 as root directory */
     if (dfs_mount("flash", "/", "elm", 0, 0) == 0)
@@ -176,65 +176,65 @@ void rt_init_thread_entry(void* parameter)
     }
     else
     {
-		rt_kprintf("File System initialzation failed!\n");
-		dfs_mkfs("elm","flash");
-		if (dfs_mount("flash", "/", "elm", 0, 0) == 0)
-		{
-			rt_kprintf("File System initialized!\n");
-		}
-		initPath();
-		rt_kprintf("PATH initialized!\n");
+        rt_kprintf("File System initialzation failed!\n");
+        dfs_mkfs("elm","flash");
+        if (dfs_mount("flash", "/", "elm", 0, 0) == 0)
+        {
+            rt_kprintf("File System initialized!\n");
+        }
+        initPath();
+        rt_kprintf("PATH initialized!\n");
     }
 #endif /* RT_USING_DFS && RT_USING_DFS_ELMFAT */
 
 #ifdef RT_USING_LWIP
-	/* initialize eth interface */
-	rt_hw_stm32_eth_init();
+    /* initialize eth interface */
+    rt_hw_stm32_eth_init();
 
-	/* initialize lwip stack */
-	/* register ethernetif device */
-	eth_system_device_init();
+    /* initialize lwip stack */
+    /* register ethernetif device */
+    eth_system_device_init();
 
-	/* initialize lwip system */
-	lwip_system_init();
-	rt_kprintf("TCP/IP initialized!\n");
+    /* initialize lwip system */
+    lwip_system_init();
+    rt_kprintf("TCP/IP initialized!\n");
 #endif
 
 
 #ifdef RT_USING_FINSH
-	/* initialize finsh */
-	finsh_system_init();
-	finsh_set_device(RT_CONSOLE_DEVICE_NAME);
+    /* initialize finsh */
+    finsh_system_init();
+    finsh_set_device(RT_CONSOLE_DEVICE_NAME);
 #endif
-	/* initialize rtc */
-	rt_hw_rtc_init();		
-		
-	/* initialize lock for home/record/data */
-	record_data_lock = rt_mutex_create("record_data_lock", RT_IPC_FLAG_FIFO);
-	if (record_data_lock != RT_NULL)
-	{
-		rt_kprintf("Initialize record_data_lock successful!\n");
-	}
+    /* initialize rtc */
+    rt_hw_rtc_init();
 
-	/* WiFi Serial Initialize*/
-	if(wifi_uart_lock == NULL)
-	{
-		wifi_uart_lock = rt_mutex_create("wifi_uart_lock", RT_IPC_FLAG_FIFO);
-	}
-	
-	cpu_usage_init();
-	EXTIX_Init();									//恢复出厂设置IO中断初始化
-	APEXTIX_Init();
-	uart5_init(115200);	
+    /* initialize lock for home/record/data */
+    record_data_lock = rt_mutex_create("record_data_lock", RT_IPC_FLAG_FIFO);
+    if (record_data_lock != RT_NULL)
+    {
+        rt_kprintf("Initialize record_data_lock successful!\n");
+    }
 
-	rt_hw_powerIO_init();
-	rt_hw_ETHIO_init();
-	rt_hw_powerIO_on();
-	initSocketArgs();
-	sysDirDetection();
-	
-	//usart485_init(115200);
-	
+    /* WiFi Serial Initialize*/
+    if(wifi_uart_lock == NULL)
+    {
+        wifi_uart_lock = rt_mutex_create("wifi_uart_lock", RT_IPC_FLAG_FIFO);
+    }
+
+    cpu_usage_init();
+    EXTIX_Init();									//恢复出厂设置IO中断初始化
+    APEXTIX_Init();
+    uart5_init(115200);
+
+    rt_hw_powerIO_init();
+    rt_hw_ETHIO_init();
+    rt_hw_powerIO_on();
+    initSocketArgs();
+    sysDirDetection();
+
+    //usart485_init(115200);
+
 }
 
 /*****************************************************************************/
@@ -253,53 +253,53 @@ void rt_init_thread_entry(void* parameter)
 #ifdef THREAD_PRIORITY_LED
 static void led_thread_entry(void* parameter)
 {	
-	rt_uint8_t major,minor;
-	int index = 0,ATFaliedNum = 0;
-	/* Initialize led */
-	rt_hw_led_init();
-	rt_hw_watchdog_init();
-	MCP1316_init();
+    rt_uint8_t major,minor;
+    int index = 0,ATFaliedNum = 0;
+    /* Initialize led */
+    rt_hw_led_init();
+    rt_hw_watchdog_init();
+    MCP1316_init();
 
-	while (1)
-	{
-		kickwatchdog();
-		MCP1316_kickwatchdog();
-		if(LED_Status == 0)
-		{
-			rt_hw_led_off();
-		}else
-		{
-			rt_hw_led_on();
-		}
+    while (1)
+    {
+        kickwatchdog();
+        MCP1316_kickwatchdog();
+        if(LED_Status == 0)
+        {
+            rt_hw_led_off();
+        }else
+        {
+            rt_hw_led_on();
+        }
 
-		if(LED_IDWrite_Status == 1)	//判断IDWrite，当IDWrite发送点亮时，长期点亮直到关机
-		{
-			rt_hw_led_on();
-		}
-		rt_thread_delay( RT_TICK_PER_SECOND/2);
-		index++;
-		if(index >= ESP07S_AT_TEST_CYCLE)
-		{
-			if(-1 == WIFI_Test())
-			{
-				ATFaliedNum++;
-				printf("WIFI_Test failed NUM:%d\n",ATFaliedNum);
-				if(ATFaliedNum >= ESP07S_AT_TEST_FAILED_NUM)	//连续失败2次
-				{
-					WIFI_RST_Event = 1;
-					ATFaliedNum = 0;
-				}
-				
-			}else
-			{
-				ATFaliedNum = 0;
-			}
-			index = 0;
-		}
-		kickwatchdog();
-		MCP1316_kickwatchdog();
-		cpu_usage_get(&major, &minor);
-		//printf("CPU : %d.%d%\n", major, minor);
+        if(LED_IDWrite_Status == 1)	//判断IDWrite，当IDWrite发送点亮时，长期点亮直到关机
+        {
+            rt_hw_led_on();
+        }
+        rt_thread_delay( RT_TICK_PER_SECOND/2);
+        index++;
+        if(index >= ESP07S_AT_TEST_CYCLE)
+        {
+            if(-1 == WIFI_Test())
+            {
+                ATFaliedNum++;
+                printf("WIFI_Test failed NUM:%d\n",ATFaliedNum);
+                if(ATFaliedNum >= ESP07S_AT_TEST_FAILED_NUM)	//连续失败2次
+                {
+                    WIFI_RST_Event = 1;
+                    ATFaliedNum = 0;
+                }
+
+            }else
+            {
+                ATFaliedNum = 0;
+            }
+            index = 0;
+        }
+        kickwatchdog();
+        MCP1316_kickwatchdog();
+        cpu_usage_get(&major, &minor);
+        //printf("CPU : %d.%d%\n", major, minor);
     }
 }
 #endif
@@ -320,27 +320,27 @@ static void led_thread_entry(void* parameter)
 #ifdef THREAD_PRIORITY_LAN8720_RST
 static void lan8720_rst_thread_entry(void* parameter)
 {
-	int value;
-	char Time[15] = {'\0'};
-	while (1)
-	{
-		value = ETH_ReadPHYRegister(0x00, 0);
-			
-		if(0 == value)	//判断控制寄存器是否变为0  表示断开
-		{
-			//printf("reg 0:%x\n",value);
-			rt_hw_lan8720_rst();
-		}
+    int value;
+    char Time[15] = {'\0'};
+    while (1)
+    {
+        value = ETH_ReadPHYRegister(0x00, 0);
 
-		apstime(Time);
-		if(!memcmp(&Time[8],"0200",4))
-		{
-			printf("reboot :%s\n",Time);
-			reboot();
-		}
-			
-      	rt_thread_delay( RT_TICK_PER_SECOND*50 );
-	}
+        if(0 == value)	//判断控制寄存器是否变为0  表示断开
+        {
+            //printf("reg 0:%x\n",value);
+            rt_hw_lan8720_rst();
+        }
+
+        apstime(Time);
+        if(!memcmp(&Time[8],"0200",4))
+        {
+            printf("reboot :%s\n",Time);
+            reboot();
+        }
+
+        rt_thread_delay( RT_TICK_PER_SECOND*50 );
+    }
 
 
 }
@@ -362,23 +362,23 @@ static void lan8720_rst_thread_entry(void* parameter)
 #ifdef THREAD_PRIORITY_NTP
 static void ntp_thread_entry(void* parameter)
 {
-	int i = 0;
-	rt_thread_delay(START_TIME_NTP * RT_TICK_PER_SECOND);
-	while(1)
-	{
-		printmsg(ECU_DBG_NTP,"start--------------------------------------------------------");
-		i = 0;
-		for(i = 0;i < 5;i++)
-		{
-			if(0 == get_time_from_NTP())
-				break;
-			rt_thread_delay(RT_TICK_PER_SECOND * 10);
-		}
-		printmsg(ECU_DBG_NTP,"end----------------------------------------------------------");
-		//rt_thread_delay(RT_TICK_PER_SECOND * 60);
-		rt_thread_delay(RT_TICK_PER_SECOND * 86400);
-		
-	}
+    int i = 0;
+    rt_thread_delay(START_TIME_NTP * RT_TICK_PER_SECOND);
+    while(1)
+    {
+        printmsg(ECU_DBG_NTP,"start--------------------------------------------------------");
+        i = 0;
+        for(i = 0;i < 5;i++)
+        {
+            if(0 == get_time_from_NTP())
+                break;
+            rt_thread_delay(RT_TICK_PER_SECOND * 10);
+        }
+        printmsg(ECU_DBG_NTP,"end----------------------------------------------------------");
+        //rt_thread_delay(RT_TICK_PER_SECOND * 60);
+        rt_thread_delay(RT_TICK_PER_SECOND * 86400);
+
+    }
 
 }
 #endif
@@ -398,68 +398,68 @@ static void ntp_thread_entry(void* parameter)
 /*****************************************************************************/
 void tasks_new(void)
 {
-	rt_err_t result;
-	rt_thread_t tid;
-	
-	/* init init thread */
-  tid = rt_thread_create("init",rt_init_thread_entry, RT_NULL,1024, THREAD_PRIORITY_INIT, 20);
-	if (tid != RT_NULL) rt_thread_startup(tid);
-	
+    rt_err_t result;
+    rt_thread_t tid;
+
+    /* init init thread */
+    tid = rt_thread_create("init",rt_init_thread_entry, RT_NULL,1024, THREAD_PRIORITY_INIT, 20);
+    if (tid != RT_NULL) rt_thread_startup(tid);
+
 #ifdef THREAD_PRIORITY_LED
-  /* init led thread */
-  result = rt_thread_init(&led_thread,"led",led_thread_entry,RT_NULL,(rt_uint8_t*)&led_stack[0],sizeof(led_stack),THREAD_PRIORITY_LED,5);
-  if (result == RT_EOK)	rt_thread_startup(&led_thread);
+    /* init led thread */
+    result = rt_thread_init(&led_thread,"led",led_thread_entry,RT_NULL,(rt_uint8_t*)&led_stack[0],sizeof(led_stack),THREAD_PRIORITY_LED,5);
+    if (result == RT_EOK)	rt_thread_startup(&led_thread);
 #endif
-	
+
 #ifdef	THREAD_PRIORITY_DRM
-  result = rt_thread_init(&DRM_thread,"DRM",DRM_Connect_thread_entry,RT_NULL,(rt_uint8_t*)&DRM_stack[0],sizeof(DRM_stack),THREAD_PRIORITY_DRM,5);
-  if (result == RT_EOK)	rt_thread_startup(&DRM_thread);
+    result = rt_thread_init(&DRM_thread,"DRM",DRM_Connect_thread_entry,RT_NULL,(rt_uint8_t*)&DRM_stack[0],sizeof(DRM_stack),THREAD_PRIORITY_DRM,5);
+    if (result == RT_EOK)	rt_thread_startup(&DRM_thread);
 #endif
 
 #ifdef THREAD_PRIORITY_LAN8720_RST
-  /* init LAN8720RST thread */
-  result = rt_thread_init(&lan8720_rst_thread,"lanrst",lan8720_rst_thread_entry,RT_NULL,(rt_uint8_t*)&lan8720_rst_stack[0],sizeof(lan8720_rst_stack),THREAD_PRIORITY_LAN8720_RST,5);
-  if (result == RT_EOK)	rt_thread_startup(&lan8720_rst_thread);
+    /* init LAN8720RST thread */
+    result = rt_thread_init(&lan8720_rst_thread,"lanrst",lan8720_rst_thread_entry,RT_NULL,(rt_uint8_t*)&lan8720_rst_stack[0],sizeof(lan8720_rst_stack),THREAD_PRIORITY_LAN8720_RST,5);
+    if (result == RT_EOK)	rt_thread_startup(&lan8720_rst_thread);
 #endif
-	
+
 #ifdef THREAD_PRIORITY_NTP
-  /* init ntp thread */
-  result = rt_thread_init(&ntp_thread,"ntp",ntp_thread_entry,RT_NULL,(rt_uint8_t*)&ntp_stack[0],sizeof(ntp_stack),THREAD_PRIORITY_NTP,5);
-  if (result == RT_EOK) rt_thread_startup(&ntp_thread);
+    /* init ntp thread */
+    result = rt_thread_init(&ntp_thread,"ntp",ntp_thread_entry,RT_NULL,(rt_uint8_t*)&ntp_stack[0],sizeof(ntp_stack),THREAD_PRIORITY_NTP,5);
+    if (result == RT_EOK) rt_thread_startup(&ntp_thread);
 #endif
-	
+
 #ifdef THREAD_PRIORITY_UPDATE	
-  /* init update thread */
-	result = rt_thread_init(&update_thread,"update",remote_update_thread_entry,RT_NULL,(rt_uint8_t*)&update_stack[0],sizeof(update_stack),THREAD_PRIORITY_UPDATE,5);
-  if (result == RT_EOK) rt_thread_startup(&update_thread);
+    /* init update thread */
+    result = rt_thread_init(&update_thread,"update",remote_update_thread_entry,RT_NULL,(rt_uint8_t*)&update_stack[0],sizeof(update_stack),THREAD_PRIORITY_UPDATE,5);
+    if (result == RT_EOK) rt_thread_startup(&update_thread);
 #endif
-	
+
 #ifdef THREAD_PRIORITY_IDWRITE	
-  /* init idwrite thread */
-	result = rt_thread_init(&idwrite_thread,"idwrite",idwrite_thread_entry,RT_NULL,(rt_uint8_t*)&idwrite_stack[0],sizeof(idwrite_stack),THREAD_PRIORITY_IDWRITE,5);
-  if (result == RT_EOK) rt_thread_startup(&idwrite_thread);
+    /* init idwrite thread */
+    result = rt_thread_init(&idwrite_thread,"idwrite",idwrite_thread_entry,RT_NULL,(rt_uint8_t*)&idwrite_stack[0],sizeof(idwrite_stack),THREAD_PRIORITY_IDWRITE,5);
+    if (result == RT_EOK) rt_thread_startup(&idwrite_thread);
 #endif
-		
+
 #ifdef THREAD_PRIORITY_MAIN
-	/* init main thread */
-	result = rt_thread_init(&main_thread,"main",main_thread_entry,RT_NULL,(rt_uint8_t*)&main_stack[0],sizeof(main_stack),THREAD_PRIORITY_MAIN,5);
-  if (result == RT_EOK) rt_thread_startup(&main_thread);
+    /* init main thread */
+    result = rt_thread_init(&main_thread,"main",main_thread_entry,RT_NULL,(rt_uint8_t*)&main_stack[0],sizeof(main_stack),THREAD_PRIORITY_MAIN,5);
+    if (result == RT_EOK) rt_thread_startup(&main_thread);
 #endif
-	
+
 #ifdef THREAD_PRIORITY_CLIENT
-	/* init client thread */
-	result = rt_thread_init(&client_thread,"client",client_thread_entry,RT_NULL,(rt_uint8_t*)&client_stack[0],sizeof(client_stack),THREAD_PRIORITY_CLIENT,5);
-  if (result == RT_EOK)	rt_thread_startup(&client_thread);
+    /* init client thread */
+    result = rt_thread_init(&client_thread,"client",client_thread_entry,RT_NULL,(rt_uint8_t*)&client_stack[0],sizeof(client_stack),THREAD_PRIORITY_CLIENT,5);
+    if (result == RT_EOK)	rt_thread_startup(&client_thread);
 #endif
-	
+
 #ifdef THREAD_PRIORITY_CONTROL_CLIENT
-	result = rt_thread_init(&control_client_thread,"control",control_client_thread_entry,RT_NULL,(rt_uint8_t*)&control_client_stack[0],sizeof(control_client_stack),THREAD_PRIORITY_CONTROL_CLIENT,5);
-  if (result == RT_EOK)	rt_thread_startup(&control_client_thread);
+    result = rt_thread_init(&control_client_thread,"control",control_client_thread_entry,RT_NULL,(rt_uint8_t*)&control_client_stack[0],sizeof(control_client_stack),THREAD_PRIORITY_CONTROL_CLIENT,5);
+    if (result == RT_EOK)	rt_thread_startup(&control_client_thread);
 #endif	
-	
+
 #ifdef THREAD_PRIORITY_PHONE_SERVER
-	result = rt_thread_init(&phone_server_thread,"phone",phone_server_thread_entry,RT_NULL,(rt_uint8_t*)&phone_server_stack[0],sizeof(phone_server_stack),THREAD_PRIORITY_PHONE_SERVER,5);
-  if (result == RT_EOK)	rt_thread_startup(&phone_server_thread);
+    result = rt_thread_init(&phone_server_thread,"phone",phone_server_thread_entry,RT_NULL,(rt_uint8_t*)&phone_server_stack[0],sizeof(phone_server_stack),THREAD_PRIORITY_PHONE_SERVER,5);
+    if (result == RT_EOK)	rt_thread_startup(&phone_server_thread);
 #endif	
 }
 
@@ -485,91 +485,91 @@ void tasks_new(void)
 /*****************************************************************************/
 void restartThread(threadType type)
 {
-	rt_err_t result;
-	switch(type)
-	{
+    rt_err_t result;
+    switch(type)
+    {
 #ifdef THREAD_PRIORITY_LED
-		case TYPE_LED:
-			rt_thread_detach(&led_thread);
-			/* init led thread */
-			result = rt_thread_init(&led_thread,"led",led_thread_entry,RT_NULL,(rt_uint8_t*)&led_stack[0],sizeof(led_stack),THREAD_PRIORITY_LED,5);
-			if (result == RT_EOK)	rt_thread_startup(&led_thread);
-			break;
+    case TYPE_LED:
+        rt_thread_detach(&led_thread);
+        /* init led thread */
+        result = rt_thread_init(&led_thread,"led",led_thread_entry,RT_NULL,(rt_uint8_t*)&led_stack[0],sizeof(led_stack),THREAD_PRIORITY_LED,5);
+        if (result == RT_EOK)	rt_thread_startup(&led_thread);
+        break;
 #endif 
 
 #ifdef THREAD_PRIORITY_LAN8720_RST
-		case TYPE_LANRST:
-			rt_thread_detach(&lan8720_rst_thread);
-			/* init LAN8720RST thread */
-			result = rt_thread_init(&lan8720_rst_thread,"lanrst",lan8720_rst_thread_entry,RT_NULL,(rt_uint8_t*)&lan8720_rst_stack[0],sizeof(lan8720_rst_stack),THREAD_PRIORITY_LAN8720_RST,5);
-			if (result == RT_EOK)	rt_thread_startup(&lan8720_rst_thread);
-			break;
+    case TYPE_LANRST:
+        rt_thread_detach(&lan8720_rst_thread);
+        /* init LAN8720RST thread */
+        result = rt_thread_init(&lan8720_rst_thread,"lanrst",lan8720_rst_thread_entry,RT_NULL,(rt_uint8_t*)&lan8720_rst_stack[0],sizeof(lan8720_rst_stack),THREAD_PRIORITY_LAN8720_RST,5);
+        if (result == RT_EOK)	rt_thread_startup(&lan8720_rst_thread);
+        break;
 #endif 			
-			
+
 #ifdef THREAD_PRIORITY_UPDATE
-		case TYPE_UPDATE:
-			rt_thread_detach(&update_thread);
-		  /* init update thread */
-			result = rt_thread_init(&update_thread,"update",remote_update_thread_entry,RT_NULL,(rt_uint8_t*)&update_stack[0],sizeof(update_stack),THREAD_PRIORITY_UPDATE,5);
-			if (result == RT_EOK)	rt_thread_startup(&update_thread);
-			break;
+    case TYPE_UPDATE:
+        rt_thread_detach(&update_thread);
+        /* init update thread */
+        result = rt_thread_init(&update_thread,"update",remote_update_thread_entry,RT_NULL,(rt_uint8_t*)&update_stack[0],sizeof(update_stack),THREAD_PRIORITY_UPDATE,5);
+        if (result == RT_EOK)	rt_thread_startup(&update_thread);
+        break;
 #endif
-			
+
 #ifdef THREAD_PRIORITY_IDWRITE
-		case TYPE_IDWRITE:
-			rt_thread_detach(&idwrite_thread);
-			/* init idwrite thread */
-			result = rt_thread_init(&idwrite_thread,"idwrite",idwrite_thread_entry,RT_NULL,(rt_uint8_t*)&idwrite_stack[0],sizeof(idwrite_stack),THREAD_PRIORITY_IDWRITE,5);
-			if (result == RT_EOK)	rt_thread_startup(&idwrite_thread);
-			break;
+    case TYPE_IDWRITE:
+        rt_thread_detach(&idwrite_thread);
+        /* init idwrite thread */
+        result = rt_thread_init(&idwrite_thread,"idwrite",idwrite_thread_entry,RT_NULL,(rt_uint8_t*)&idwrite_stack[0],sizeof(idwrite_stack),THREAD_PRIORITY_IDWRITE,5);
+        if (result == RT_EOK)	rt_thread_startup(&idwrite_thread);
+        break;
 #endif
-			
+
 #ifdef THREAD_PRIORITY_MAIN
-		case TYPE_MAIN:
-			rt_thread_detach(&main_thread);
-			/* init main thread */
-			result = rt_thread_init(&main_thread,"main",main_thread_entry,RT_NULL,(rt_uint8_t*)&main_stack[0],sizeof(main_stack),THREAD_PRIORITY_MAIN,5);
-			if (result == RT_EOK)	rt_thread_startup(&main_thread);
-			break;
+    case TYPE_MAIN:
+        rt_thread_detach(&main_thread);
+        /* init main thread */
+        result = rt_thread_init(&main_thread,"main",main_thread_entry,RT_NULL,(rt_uint8_t*)&main_stack[0],sizeof(main_stack),THREAD_PRIORITY_MAIN,5);
+        if (result == RT_EOK)	rt_thread_startup(&main_thread);
+        break;
 #endif
-		
+
 #ifdef THREAD_PRIORITY_CLIENT
-		case TYPE_CLIENT:
-			rt_thread_detach(&client_thread);
-			/* init client thread */
-			result = rt_thread_init(&client_thread,"client",client_thread_entry,RT_NULL,(rt_uint8_t*)&client_stack[0],sizeof(client_stack),THREAD_PRIORITY_CLIENT,5);
-			if (result == RT_EOK)	rt_thread_startup(&client_thread);
-			break;
+    case TYPE_CLIENT:
+        rt_thread_detach(&client_thread);
+        /* init client thread */
+        result = rt_thread_init(&client_thread,"client",client_thread_entry,RT_NULL,(rt_uint8_t*)&client_stack[0],sizeof(client_stack),THREAD_PRIORITY_CLIENT,5);
+        if (result == RT_EOK)	rt_thread_startup(&client_thread);
+        break;
 #endif
-		
+
 #ifdef THREAD_PRIORITY_CONTROL_CLIENT
-		case TYPE_CONTROL_CLIENT:
-			rt_thread_detach(&control_client_thread);
-			result = rt_thread_init(&control_client_thread,"control",control_client_thread_entry,RT_NULL,(rt_uint8_t*)&control_client_stack[0],sizeof(control_client_stack),THREAD_PRIORITY_CONTROL_CLIENT,5);
-			if (result == RT_EOK)	rt_thread_startup(&control_client_thread);
-			break;
+    case TYPE_CONTROL_CLIENT:
+        rt_thread_detach(&control_client_thread);
+        result = rt_thread_init(&control_client_thread,"control",control_client_thread_entry,RT_NULL,(rt_uint8_t*)&control_client_stack[0],sizeof(control_client_stack),THREAD_PRIORITY_CONTROL_CLIENT,5);
+        if (result == RT_EOK)	rt_thread_startup(&control_client_thread);
+        break;
 #endif 
-			
+
 #ifdef THREAD_PRIORITY_NTP
-		case TYPE_NTP:
-			rt_thread_detach(&ntp_thread);
-			result = rt_thread_init(&ntp_thread,"ntp",ntp_thread_entry,RT_NULL,(rt_uint8_t*)&ntp_stack[0],sizeof(ntp_stack),THREAD_PRIORITY_NTP,5);
-			if (result == RT_EOK)	rt_thread_startup(&ntp_thread);
-			break;
+    case TYPE_NTP:
+        rt_thread_detach(&ntp_thread);
+        result = rt_thread_init(&ntp_thread,"ntp",ntp_thread_entry,RT_NULL,(rt_uint8_t*)&ntp_stack[0],sizeof(ntp_stack),THREAD_PRIORITY_NTP,5);
+        if (result == RT_EOK)	rt_thread_startup(&ntp_thread);
+        break;
 #endif 
 
 #ifdef THREAD_PRIORITY_DRM
-		case TYPE_DRM:
-			rt_thread_detach(&DRM_thread);
-			/* init DRM thread */
-			result = rt_thread_init(&DRM_thread,"DRM",DRM_Connect_thread_entry,RT_NULL,(rt_uint8_t*)&DRM_stack[0],sizeof(DRM_stack),THREAD_PRIORITY_DRM,5);
-  			if (result == RT_EOK)	rt_thread_startup(&DRM_thread);
-			break;
+    case TYPE_DRM:
+        rt_thread_detach(&DRM_thread);
+        /* init DRM thread */
+        result = rt_thread_init(&DRM_thread,"DRM",DRM_Connect_thread_entry,RT_NULL,(rt_uint8_t*)&DRM_stack[0],sizeof(DRM_stack),THREAD_PRIORITY_DRM,5);
+        if (result == RT_EOK)	rt_thread_startup(&DRM_thread);
+        break;
 #endif 
 
-		default:
-			break;
-	}
+    default:
+        break;
+    }
 }
 
 
@@ -585,19 +585,19 @@ threadType threadRestartType;
 //定时器超时函数   复位超时
 static void threadRestartTimeout(void* parameter)
 {
-	restartThread(threadRestartType);
+    restartThread(threadRestartType);
 }
 
 //定时重启某个线程
 void threadRestartTimer(int timeout,threadType Type)			
 {
-	threadRestartType = Type;
-	threadRestarttimer = rt_timer_create("Restart", /* 定时器名字为 read */
-					threadRestartTimeout, /* 超时时回调的处理函数 */
-					RT_NULL, /* 超时函数的入口参数 */
-					timeout*RT_TICK_PER_SECOND, /* 定时时间长度,以OS Tick为单位*/
-					 RT_TIMER_FLAG_ONE_SHOT); /* 单周期定时器 */
-	if (threadRestarttimer != RT_NULL) rt_timer_start(threadRestarttimer);
+    threadRestartType = Type;
+    threadRestarttimer = rt_timer_create("Restart", /* 定时器名字为 read */
+                                         threadRestartTimeout, /* 超时时回调的处理函数 */
+                                         RT_NULL, /* 超时函数的入口参数 */
+                                         timeout*RT_TICK_PER_SECOND, /* 定时时间长度,以OS Tick为单位*/
+                                         RT_TIMER_FLAG_ONE_SHOT); /* 单周期定时器 */
+    if (threadRestarttimer != RT_NULL) rt_timer_start(threadRestarttimer);
 }
 
 
@@ -605,76 +605,76 @@ void threadRestartTimer(int timeout,threadType Type)
 #include <finsh.h>
 void restart(int type)
 {
-	restartThread((threadType)type);
+    restartThread((threadType)type);
 }
 FINSH_FUNCTION_EXPORT(restart, eg:restart());
 
 #include "arch/sys_arch.h"
 void dhcpreset(void)
 {
-	dhcp_reset();
+    dhcp_reset();
 }
 FINSH_FUNCTION_EXPORT(dhcpreset, eg:dhcpreset());
 
 void teststaticIP(void)
 {
-	IP_t IPAddr,MSKAddr,GWAddr,DNS1Addr,DNS2Addr;
-	IPAddr.IP1 = 192;
-	IPAddr.IP2 = 168;
-	IPAddr.IP3 = 131;
-	IPAddr.IP4 = 228;
+    IP_t IPAddr,MSKAddr,GWAddr,DNS1Addr,DNS2Addr;
+    IPAddr.IP1 = 192;
+    IPAddr.IP2 = 168;
+    IPAddr.IP3 = 131;
+    IPAddr.IP4 = 228;
 
-	MSKAddr.IP1 = 255;
-	MSKAddr.IP2 = 255;
-	MSKAddr.IP3 = 255;
-	MSKAddr.IP4 = 0;
+    MSKAddr.IP1 = 255;
+    MSKAddr.IP2 = 255;
+    MSKAddr.IP3 = 255;
+    MSKAddr.IP4 = 0;
 
-	GWAddr.IP1 = 192;
-	GWAddr.IP2 = 168;
-	GWAddr.IP3 = 1;
-	GWAddr.IP4 = 1;
-	
-	DNS1Addr.IP1 = 0;
-	DNS1Addr.IP2 = 0;
-	DNS1Addr.IP3 = 0;
-	DNS1Addr.IP4 = 0;
+    GWAddr.IP1 = 192;
+    GWAddr.IP2 = 168;
+    GWAddr.IP3 = 1;
+    GWAddr.IP4 = 1;
 
-	DNS1Addr.IP1 = 0;
-	DNS1Addr.IP2 = 0;
-	DNS1Addr.IP3 = 0;
-	DNS1Addr.IP4 = 0;
-	
-	StaticIP(IPAddr,MSKAddr,GWAddr,DNS1Addr,DNS2Addr);	
+    DNS1Addr.IP1 = 0;
+    DNS1Addr.IP2 = 0;
+    DNS1Addr.IP3 = 0;
+    DNS1Addr.IP4 = 0;
+
+    DNS1Addr.IP1 = 0;
+    DNS1Addr.IP2 = 0;
+    DNS1Addr.IP3 = 0;
+    DNS1Addr.IP4 = 0;
+
+    StaticIP(IPAddr,MSKAddr,GWAddr,DNS1Addr,DNS2Addr);
 
 }
 FINSH_FUNCTION_EXPORT(teststaticIP, eg:teststaticIP());
 
 void sysclock(void)
 {
-	RCC_ClocksTypeDef  RCC_Clocks;
-	RCC_GetClocksFreq(&RCC_Clocks); //获取各个时钟频率
+    RCC_ClocksTypeDef  RCC_Clocks;
+    RCC_GetClocksFreq(&RCC_Clocks); //获取各个时钟频率
 
-	printf("SYSCLK_Frequency %d \r\n",RCC_Clocks.SYSCLK_Frequency);
-	printf("HCLK_Frequency %d \r\n",RCC_Clocks.HCLK_Frequency);
-	printf("PCLK1_Frequency %d \r\n",RCC_Clocks.PCLK1_Frequency);
-	printf("PCLK2_Frequency %d \r\n",RCC_Clocks.PCLK2_Frequency);
-	printf("ADCCLK_Frequency %d \r\n",RCC_Clocks.ADCCLK_Frequency);
-	printf("SystemCoreClock:%d\n",SystemCoreClock);
+    printf("SYSCLK_Frequency %d \r\n",RCC_Clocks.SYSCLK_Frequency);
+    printf("HCLK_Frequency %d \r\n",RCC_Clocks.HCLK_Frequency);
+    printf("PCLK1_Frequency %d \r\n",RCC_Clocks.PCLK1_Frequency);
+    printf("PCLK2_Frequency %d \r\n",RCC_Clocks.PCLK2_Frequency);
+    printf("ADCCLK_Frequency %d \r\n",RCC_Clocks.ADCCLK_Frequency);
+    printf("SystemCoreClock:%d\n",SystemCoreClock);
 }
 FINSH_FUNCTION_EXPORT(sysclock, eg:sysclock());
 
 void delayRTS(int s)
 {
-	printf("RTS %d Start\n",s);
-	rt_thread_delay(RT_TICK_PER_SECOND*s);
-	printf("RTS %d End\n",s);
+    printf("RTS %d Start\n",s);
+    rt_thread_delay(RT_TICK_PER_SECOND*s);
+    printf("RTS %d End\n",s);
 }
 
 void delayHWS(int s)
 {
-	printf("HWS %d Start\n",s);
-	rt_hw_s_delay(s);
-	printf("HWS %d End\n",s);
+    printf("HWS %d Start\n",s);
+    rt_hw_s_delay(s);
+    printf("HWS %d End\n",s);
 }
 
 

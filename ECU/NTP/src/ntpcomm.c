@@ -13,8 +13,8 @@
 /*  Include Files                                                            */
 /*****************************************************************************/
 #include <rtthread.h>
-#include <lwip/netdb.h> /* ä¸ºäº†è§£æä¸»æœºåï¼Œéœ€è¦åŒ…å«netdb.hå¤´æ–‡ä»¶ */
-#include <lwip/sockets.h> /* ä½¿ç”¨BSD socketï¼Œéœ€è¦åŒ…å«sockets.hå¤´æ–‡ä»¶ */
+#include <lwip/netdb.h> /* ÎªÁË½âÎöÖ÷»úÃû£¬ĞèÒª°üº¬netdb.hÍ·ÎÄ¼ş */
+#include <lwip/sockets.h> /* Ê¹ÓÃBSD socket£¬ĞèÒª°üº¬sockets.hÍ·ÎÄ¼ş */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,7 +38,7 @@ extern rt_mutex_t record_data_lock;
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
-/****************************åˆ›å»ºsocket***************************************/
+/****************************´´½¨socket***************************************/
 int create_socket_ntp( void )
 {
     int sockfd;
@@ -54,21 +54,21 @@ int create_socket_ntp( void )
 
     if(-1==(sockfd = socket( AF_INET , SOCK_DGRAM , IPPROTO_UDP )))
     {
-      printmsg(ECU_DBG_NTP,"Create socket error");
-      return -1;
+        printmsg(ECU_DBG_NTP,"Create socket error");
+        return -1;
     }
 
     ret = bind(sockfd , (struct sockaddr*)&addr_src , addr_len);
     if(-1==ret)
     {
-     printmsg(ECU_DBG_NTP,"socket Bind error!");
-      return -1;
+        printmsg(ECU_DBG_NTP,"socket Bind error!");
+        return -1;
     }
 
     return sockfd;
 }
 
-/********************************è¿æ¥NTPæœåŠ¡å™¨*******************************/
+/********************************Á¬½ÓNTP·şÎñÆ÷*******************************/
 int connecttoserver(int sockfd, struct sockaddr_in * serversocket_in)
 {
     int addr_len;
@@ -80,7 +80,7 @@ int connecttoserver(int sockfd, struct sockaddr_in * serversocket_in)
     memset(&addr_dst, 0, addr_len);
     addr_dst.sin_family = AF_INET;
     host = gethostbyname("cn.pool.ntp.org");
-		
+
     memcpy(&(addr_dst.sin_addr.s_addr), host->h_addr_list[0], 4);
     addr_dst.sin_port = htons(123);
 
@@ -88,22 +88,22 @@ int connecttoserver(int sockfd, struct sockaddr_in * serversocket_in)
     ret = connect(sockfd, (struct sockaddr *)&addr_dst, addr_len);
     if(-1==ret)
     {
-      printmsg(ECU_DBG_NTP,"Socket Connect error!");
+        printmsg(ECU_DBG_NTP,"Socket Connect error!");
 
-      closesocket(sockfd);
-      return -1;
+        closesocket(sockfd);
+        return -1;
     }
     else{
-      printmsg(ECU_DBG_NTP,"Connect successfully!");
+        printmsg(ECU_DBG_NTP,"Connect successfully!");
     }
 
     return sockfd;
 }
 
-/*********************************å‘é€åè®®åŒ…**********************************/
+/*********************************·¢ËÍĞ­Òé°ü**********************************/
 void send_packet(int sockfd)
 {
-		int bytes=0;
+    int bytes=0;
     NTPPACKET sendpacked;
     struct timeval now;
     memset(&sendpacked, 0, sizeof(sendpacked));
@@ -125,11 +125,11 @@ void send_packet(int sockfd)
 
     if((rt_bool_t)(bytes=send(sockfd, &sendpacked, sizeof(sendpacked), 0)))
     {
-      printmsg(ECU_DBG_NTP,"send successfully!");
-      printdecmsg(ECU_DBG_NTP,"send bytes",bytes);
+        printmsg(ECU_DBG_NTP,"send successfully!");
+        printdecmsg(ECU_DBG_NTP,"send bytes",bytes);
     }
     else{
-      printmsg(ECU_DBG_NTP,"send failure!");
+        printmsg(ECU_DBG_NTP,"send failure!");
     }
 }
 
@@ -139,15 +139,15 @@ int receive_packet(int sockfd, NTPPACKET *recvpacked, struct sockaddr_in * serve
     int addr_len = sizeof(struct sockaddr_in);
 
     {
-      receivebytes = recvfrom(sockfd, recvpacked, sizeof(NTPPACKET), 0, (struct sockaddr *)serversocket_in, (socklen_t *)&addr_len);
-      printdecmsg(ECU_DBG_NTP,"recevicing",receivebytes);
+        receivebytes = recvfrom(sockfd, recvpacked, sizeof(NTPPACKET), 0, (struct sockaddr *)serversocket_in, (socklen_t *)&addr_len);
+        printdecmsg(ECU_DBG_NTP,"recevicing",receivebytes);
     }
 
     if(-1==receivebytes)
     {
-      printmsg(ECU_DBG_NTP,"Receive error!");
-      closesocket(sockfd);
-      return -1;
+        printmsg(ECU_DBG_NTP,"Receive error!");
+        closesocket(sockfd);
+        return -1;
     }
 
     return receivebytes;
@@ -166,87 +166,87 @@ extern int day_tab[2][12];
 
 void transfer_time(struct tm *timenow,int timezone)
 {
-	int leapflag = 0;
-	
-	
-	leapflag = leap((timenow->tm_year+1900)); 
-	//è½¬æ¢å°æ—¶æ—¶é—´
-	timenow->tm_hour  = timenow->tm_hour + timezone;//æ—¶é—´å¯èƒ½  å¤§äº24  æˆ–è€…  å°äº0
-	
-	if(timenow->tm_hour > 24)
-	{
-		timenow->tm_hour  -= 24;
-		//è¶…è¿‡24ç‚¹ï¼Œæ—¶é—´å¢åŠ ä¸€å¤©
-		//åˆ¤æ–­æ˜¯å¦æ˜¯å½“æœˆçš„æœ€åä¸€å¤©
-		if(timenow->tm_mday == day_tab[leapflag][timenow->tm_mon])
-		{
-			//å¦‚æœæ˜¯æœ€åä¸€å¤©ï¼Œè·³è½¬åˆ°ä¸‹ä¸ªæœˆçš„ç¬¬ä¸€å¤©
-			timenow->tm_mday = 1;
-			
-			//åˆ¤æ–­æ˜¯å¦æ˜¯æœ€åä¸€ä¸ªæœˆ
-			if(11 == timenow->tm_mon)
-			{
-				timenow->tm_mon = 0;
-				timenow->tm_year++;
-			}else
-			{
-				timenow->tm_mon++;
-			}
-			
-		}
-		else
-		{
-			timenow->tm_mday++;
-		}
-	}
-	else if(timenow->tm_hour < 0)
-	{
-		//å°äº 0ç‚¹ï¼Œæ—¶é—´å‡å°‘ä¸€å¤©
-		timenow->tm_hour  += 24;
-		//å°äº24ç‚¹ï¼Œæ—¶é—´å‡å°‘ä¸€å¤©
-		//åˆ¤æ–­æ˜¯å¦æ˜¯å½“æœˆçš„ç¬¬ä¸€å¤©
-		if(1 == day_tab[leapflag][timenow->tm_mon])
-		{
-			
-			
-			//åˆ¤æ–­æ˜¯å¦æ˜¯ç¬¬ä¸€ä¸ªæœˆ
-			if(0 == timenow->tm_mon)
-			{
-				//å¦‚æœæ˜¯ç¬¬ä¸€å¤©ï¼Œè·³è½¬åˆ°ä¸Šä¸ªæœˆçš„æœ€åä¸€å¤©
-				timenow->tm_mday = 31;
-				timenow->tm_mon = 11;
-				timenow->tm_year--;
-			}else
-			{
-				//å¦‚æœæ˜¯ç¬¬ä¸€å¤©ï¼Œè·³è½¬åˆ°ä¸Šä¸ªæœˆçš„æœ€åä¸€å¤©
-				timenow->tm_mday = day_tab[leapflag][timenow->tm_mon-1];
-				timenow->tm_mon--;
-			}
-			
-		}
-		else
-		{
-			timenow->tm_mday--;
-		}
-	}
+    int leapflag = 0;
+
+
+    leapflag = leap((timenow->tm_year+1900));
+    //×ª»»Ğ¡Ê±Ê±¼ä
+    timenow->tm_hour  = timenow->tm_hour + timezone;//Ê±¼ä¿ÉÄÜ  ´óÓÚ24  »òÕß  Ğ¡ÓÚ0
+
+    if(timenow->tm_hour > 24)
+    {
+        timenow->tm_hour  -= 24;
+        //³¬¹ı24µã£¬Ê±¼äÔö¼ÓÒ»Ìì
+        //ÅĞ¶ÏÊÇ·ñÊÇµ±ÔÂµÄ×îºóÒ»Ìì
+        if(timenow->tm_mday == day_tab[leapflag][timenow->tm_mon])
+        {
+            //Èç¹ûÊÇ×îºóÒ»Ìì£¬Ìø×ªµ½ÏÂ¸öÔÂµÄµÚÒ»Ìì
+            timenow->tm_mday = 1;
+
+            //ÅĞ¶ÏÊÇ·ñÊÇ×îºóÒ»¸öÔÂ
+            if(11 == timenow->tm_mon)
+            {
+                timenow->tm_mon = 0;
+                timenow->tm_year++;
+            }else
+            {
+                timenow->tm_mon++;
+            }
+
+        }
+        else
+        {
+            timenow->tm_mday++;
+        }
+    }
+    else if(timenow->tm_hour < 0)
+    {
+        //Ğ¡ÓÚ 0µã£¬Ê±¼ä¼õÉÙÒ»Ìì
+        timenow->tm_hour  += 24;
+        //Ğ¡ÓÚ24µã£¬Ê±¼ä¼õÉÙÒ»Ìì
+        //ÅĞ¶ÏÊÇ·ñÊÇµ±ÔÂµÄµÚÒ»Ìì
+        if(1 == day_tab[leapflag][timenow->tm_mon])
+        {
+
+
+            //ÅĞ¶ÏÊÇ·ñÊÇµÚÒ»¸öÔÂ
+            if(0 == timenow->tm_mon)
+            {
+                //Èç¹ûÊÇµÚÒ»Ìì£¬Ìø×ªµ½ÉÏ¸öÔÂµÄ×îºóÒ»Ìì
+                timenow->tm_mday = 31;
+                timenow->tm_mon = 11;
+                timenow->tm_year--;
+            }else
+            {
+                //Èç¹ûÊÇµÚÒ»Ìì£¬Ìø×ªµ½ÉÏ¸öÔÂµÄ×îºóÒ»Ìì
+                timenow->tm_mday = day_tab[leapflag][timenow->tm_mon-1];
+                timenow->tm_mon--;
+            }
+
+        }
+        else
+        {
+            timenow->tm_mday--;
+        }
+    }
 }
 
 void update_time(struct timeval * new_time)
 {
-	char nowtime[15] = {'\0'};
-	int timezone = 8;
-  struct tm *timenow;
-	time_t newtime = (time_t)new_time->tv_sec;
-	rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
-  timenow = localtime(&newtime);
-	//è·å–æ—¶åŒº	æ–‡ä»¶åä¸º/yuneng/timezone.con
-	timezone = 	getTimeZone();
-	printdecmsg(ECU_DBG_NTP,"timezone",timezone);
-	transfer_time(timenow,timezone);
-	sprintf(nowtime,"%04d%02d%02d%02d%02d%02d",(timenow->tm_year+1900),(timenow->tm_mon+1),timenow->tm_mday,timenow->tm_hour,timenow->tm_min,timenow->tm_sec);
-	print2msg(ECU_DBG_NTP,"nowtime",nowtime);
-	set_time(nowtime);
-	rt_mutex_release(record_data_lock);
-	
+    char nowtime[15] = {'\0'};
+    int timezone = 8;
+    struct tm *timenow;
+    time_t newtime = (time_t)new_time->tv_sec;
+    rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
+    timenow = localtime(&newtime);
+    //»ñÈ¡Ê±Çø	ÎÄ¼şÃûÎª/yuneng/timezone.con
+    timezone = 	getTimeZone();
+    printdecmsg(ECU_DBG_NTP,"timezone",timezone);
+    transfer_time(timenow,timezone);
+    sprintf(nowtime,"%04d%02d%02d%02d%02d%02d",(timenow->tm_year+1900),(timenow->tm_mon+1),timenow->tm_mday,timenow->tm_hour,timenow->tm_min,timenow->tm_sec);
+    print2msg(ECU_DBG_NTP,"nowtime",nowtime);
+    set_time(nowtime);
+    rt_mutex_release(record_data_lock);
+
 }
 

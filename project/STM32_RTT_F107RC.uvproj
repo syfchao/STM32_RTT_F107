@@ -721,6 +721,11 @@
               <FileType>1</FileType>
               <FilePath>..\components\DeviceDrivers\usart5.c</FilePath>
             </File>
+            <File>
+              <FileName>powerIO.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\DeviceDrivers\powerIO.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

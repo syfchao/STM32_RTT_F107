@@ -150,16 +150,16 @@ struct rt_data_queue
 /* workqueue implementation */
 struct rt_workqueue
 {
-	rt_list_t   work_list;
-	rt_thread_t work_thread;
+    rt_list_t   work_list;
+    rt_thread_t work_thread;
 };
 
 struct rt_work
 {
-	rt_list_t list;
+    rt_list_t list;
 
-	void (*work_func)(struct rt_work* work, void* work_data);
-	void *work_data;
+    void (*work_func)(struct rt_work* work, void* work_data);
+    void *work_data;
 };
 
 /**
@@ -303,7 +303,7 @@ rt_err_t rt_workqueue_dowork(struct rt_workqueue* queue, struct rt_work* work);
 rt_err_t rt_workqueue_cancel_work(struct rt_workqueue* queue, struct rt_work* work);
 
 rt_inline void rt_work_init(struct rt_work* work, void (*work_func)(struct rt_work* work, void* work_data),
-    void* work_data)
+                            void* work_data)
 {
     rt_list_init(&(work->list));
     work->work_func = work_func;

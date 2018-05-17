@@ -153,7 +153,7 @@ RTM_EXPORT(rt_data_queue_push);
 
 rt_err_t rt_data_queue_pop(struct rt_data_queue *queue,
                            const void** data_ptr,
-                           rt_size_t *size, 
+                           rt_size_t *size,
                            rt_int32_t timeout)
 {
     rt_ubase_t  level;
@@ -263,7 +263,7 @@ rt_err_t rt_data_queue_peak(struct rt_data_queue *queue,
 
     level = rt_hw_interrupt_disable();
 
-    if (queue->get_index == queue->put_index) 
+    if (queue->get_index == queue->put_index)
     {
         rt_hw_interrupt_enable(level);
         
