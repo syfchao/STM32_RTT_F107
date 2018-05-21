@@ -28,15 +28,12 @@
 #include "file.h"
 #include "datetime.h"
 #include "mcp1316.h"
+#include "powerIO.h"
 
 
 /*****************************************************************************/
 /*  Definitions                                                              */
 /*****************************************************************************/
-#define WIFI_RCC                    RCC_APB2Periph_GPIOC
-#define WIFI_GPIO                   GPIOC
-#define WIFI_PIN                    (GPIO_Pin_6)
-
 rt_mutex_t wifi_uart_lock = RT_NULL;
 extern unsigned char APSTA_Status;
 
@@ -249,17 +246,6 @@ void uart5_init(u32 bound){
     USART_ITConfig(UART5, USART_IT_RXNE, ENABLE);//开启中断
     USART_Cmd(UART5, ENABLE);                    //使能串口
 
-
-    RCC_APB2PeriphClockCmd(WIFI_RCC,ENABLE);
-
-    GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_Out_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-
-    GPIO_InitStructure.GPIO_Pin   = WIFI_PIN;
-    GPIO_Init(WIFI_GPIO, &GPIO_InitStructure);
-    GPIO_SetBits(WIFI_GPIO, WIFI_PIN);
-
-
 }
 
 
@@ -346,11 +332,13 @@ int detectionResetStatus(int size)		//检测到Ai-Thinker Technology Co. Ltd.  返回
             if(APSTA_Status == 1)
             {
                 AT_CWMODE3(3);
+	       printf("AP\n");
                 AT_CIPMUX1();
                 AT_CIPSERVER();
                 AT_CIPSTO();
             }else
             {
+                printf("STA\n");
                 AT_CWMODE3(1);
                 AT_CIPMUX1();
             }
@@ -441,9 +429,9 @@ void WIFI_GetEvent_ESP07S(void)
 
 int WIFI_Reset(void)
 {
-    GPIO_ResetBits(WIFI_GPIO, WIFI_PIN);
+    rt_hw_powerIO_off();
     rt_hw_ms_delay(1000);
-    GPIO_SetBits(WIFI_GPIO, WIFI_PIN);
+    rt_hw_powerIO_on();
     return 0;
 }
 

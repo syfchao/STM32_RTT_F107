@@ -1131,9 +1131,15 @@ void phone_server_thread_entry(void* parameter)
         getAddr(array, 5,&IPconfig);
         StaticIP(IPconfig.IPAddr,IPconfig.MSKAddr,IPconfig.GWAddr,IPconfig.DNS1Addr,IPconfig.DNS2Addr);
     }
-
+#if 1
     AT_CWMODE3(1);
     AT_CIPMUX1();
+#else 
+    AT_CWMODE3(3);
+    AT_CIPMUX1();
+    AT_CIPSERVER();
+    AT_CIPSTO();
+#endif
     while(1)
     {
         //иокЬ

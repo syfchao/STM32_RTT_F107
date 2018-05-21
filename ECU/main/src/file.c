@@ -135,7 +135,7 @@ int set_Passwd(char *PassWD,int length)
 void splitSpace(char *data,char *sourcePath,char *destPath)
 {
     int i,j = 0,k = 0;
-    char splitdata[3][50];
+    char splitdata[3][50]={0x00};
     for(i=0;i<strlen(data);++i){
         if(data[i] == ' ') {
             splitdata[j][k] = 0;
@@ -151,7 +151,7 @@ void splitSpace(char *data,char *sourcePath,char *destPath)
     memcpy(sourcePath,splitdata[1],strlen(splitdata[1]));
     sourcePath[strlen(splitdata[1])] = '\0';
     memcpy(destPath,splitdata[2],strlen(splitdata[2]));
-    destPath[strlen(splitdata[2])-1] = '\0';
+    destPath[strlen(splitdata[2])] = '\0';
 }
 
 
@@ -1807,6 +1807,5 @@ FINSH_FUNCTION_EXPORT(changdatacent, eg:changdatacent("139.168.200.158","111.aps
 FINSH_FUNCTION_EXPORT(addInverter, eg:addInverter("201703150001"));
 
 FINSH_FUNCTION_EXPORT(sysDirDetection, eg:sysDirDetection());
-
 
 #endif
