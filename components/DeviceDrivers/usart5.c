@@ -494,6 +494,7 @@ int SendToSocketA(char *data ,int length)
 //SOCKET B ·¢ËÍÊý¾Ý
 int SendToSocketB(char *IP ,int port,char *data ,int length)
 {
+    AT_CIPCLOSE('3');
     WIFI_Recv_SocketB_Event = 0;
     if(!AT_CIPSTART('3',"TCP",IP ,port))
     {
@@ -517,6 +518,7 @@ int SendToSocketC(char *IP ,int port,char *data ,int length)
         length++;
     }
     strncpy(&data[5], msg_length, 5);
+    AT_CIPCLOSE('4');
     WIFI_Recv_SocketC_Event = 0;
     print2msg(ECU_DBG_CONTROL_CLIENT,"Sent", data);
     if(!AT_CIPSTART('4',"TCP",IP ,port))

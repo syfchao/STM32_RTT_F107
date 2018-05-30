@@ -104,6 +104,45 @@ void add_Phone_functions(void)
 }
 
 
+
+//返回0 表示格式正确，返回1表示发送格式错误
+int strToHex(const char *recvbuff,unsigned char *buff,int length)
+{
+	int i =0;
+	for(i = 0;i<length;i++)
+	{
+		if((recvbuff[i*2] >= 'a') && (recvbuff[i*2] <= 'f'))
+		{
+			buff[i] = (recvbuff[i*2] -'a' + 10)*0x10;
+		}else if((recvbuff[i*2] >= 'A') && (recvbuff[i*2] <= 'F'))
+		{
+			buff[i] = (recvbuff[i*2] -'A' + 10)*0x10;
+		}else if((recvbuff[i*2] >= '0') && (recvbuff[i*2] <= '9'))
+		{
+			buff[i] = (recvbuff[i*2] -'0' )*0x10;
+		}else
+		{
+			return -1;
+		}
+
+		if((recvbuff[i*2+1] >= 'a') && (recvbuff[i*2+1] <= 'f'))
+		{
+			buff[i] += (recvbuff[i*2+1] -'a' + 10);
+		}else if((recvbuff[i*2+1] >= 'A') && (recvbuff[i*2+1] <= 'F'))
+		{
+			buff[i] += (recvbuff[i*2+1] -'A' + 10);
+		}else if((recvbuff[i*2+1] >= '0') && (recvbuff[i*2+1] <= '9'))
+		{
+			buff[i] += (recvbuff[i*2+1] -'0');
+		}else
+		{
+			return -1;
+		}
+		
+	}
+	return 0;
+}
+
 int getAddr(MyArray *array, int num,IPConfig_t *IPconfig)
 {
     int i;

@@ -27,7 +27,7 @@
 #include "variation.h"
 #include "usart5.h"
 #include "arch/sys_arch.h"
-
+#include "InternalFlash.h"
 
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
@@ -198,6 +198,7 @@ int get_ecu_type()
 void get_ecuid(char *ecuid)
 {
     int fd;
+    char internalECUID[13] = {'\0'};
     fd = open("/YUNENG/ECUID.CON", O_RDONLY, 0);
     if (fd >= 0)
     {
@@ -208,7 +209,16 @@ void get_ecuid(char *ecuid)
         //print2msg(ECU_DBG_OTHER,"get_ecuid",ecuid);
         close(fd);
     }
-
+    //如果读取到第0个字节不为2，读取内部的
+    if(ecuid[0] != '2')
+    {
+    	ReadPage(INTERNAL_FALSH_ID,internalECUID,12);
+			if(internalECUID[0] == '2')
+			{
+				memcpy(ecuid,internalECUID,12);
+			}
+    }
+    return;
 }
 //读取DRM开关函数   返回值为1：表示功能打开   返回值为-1表示功能关闭
 int DRMFunction(void)
@@ -1450,6 +1460,7 @@ void get_mac(rt_uint8_t  dev_addr[6])
 {
     FILE *fp;
     char macstr[18] = {'\0'};
+    char InternalMac[18] = {'\0'};
     fp = fopen("/yuneng/ecumac.con","r");
     if(fp)
     {
@@ -1462,18 +1473,27 @@ void get_mac(rt_uint8_t  dev_addr[6])
             dev_addr[3]=strtohex(&macstr[9]);
             dev_addr[4]=strtohex(&macstr[12]);
             dev_addr[5]=strtohex(&macstr[15]);
-            fclose(fp);
-            return;
         }
         fclose(fp);
     }
-    dev_addr[0]=0x00;;
-    dev_addr[1]=0x80;;
-    dev_addr[2]=0xE1;
-    dev_addr[3]=*(rt_uint8_t*)(0x1FFFF7E8+7);
-    dev_addr[4]=*(rt_uint8_t*)(0x1FFFF7E8+8);
-    dev_addr[5]=*(rt_uint8_t*)(0x1FFFF7E8+9);
-    return;
+    //查看前3个字节是否是80971B
+    if((dev_addr[0] == 0x80) &&(dev_addr[1] == 0x97) &&(dev_addr[2] == 0x1B))
+	return;
+    else
+    {
+    	ReadPage(INTERNAL_FALSH_MAC,InternalMac,17);
+	if(!memcmp(InternalMac,"80:97:1B",8))
+	{
+            dev_addr[0]=strtohex(&InternalMac[0]);
+            dev_addr[1]=strtohex(&InternalMac[3]);
+            dev_addr[2]=strtohex(&InternalMac[6]);
+            dev_addr[3]=strtohex(&InternalMac[9]);
+            dev_addr[4]=strtohex(&InternalMac[12]);
+            dev_addr[5]=strtohex(&InternalMac[15]);
+	   return;
+	}
+    }
+
 }
 
 void addInverter(char *inverter_id)
@@ -1678,7 +1698,7 @@ int setECUID(char *ECUID)
     ecuid[12] = '\0';
     fputs(ecuid,fp);
     fclose(fp);
-
+    WritePage(INTERNAL_FALSH_ID,ecuid,12);
     ret = WIFI_Factory(ecuid);
     if(ret == -1)
     {
@@ -1770,6 +1790,7 @@ int initsystem(char *mac)
     rt_hw_ms_delay(20);
 
     echo("/yuneng/ecumac.con",mac);
+    WritePage(INTERNAL_FALSH_MAC,mac,17);
     return 0;
 }
 FINSH_FUNCTION_EXPORT(initsystem, eg:initsystem("123456789012","80:97:1B:00:72:1C"));

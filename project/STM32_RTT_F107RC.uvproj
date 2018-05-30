@@ -726,6 +726,11 @@
               <FileType>1</FileType>
               <FilePath>..\components\DeviceDrivers\powerIO.c</FilePath>
             </File>
+            <File>
+              <FileName>InternalFlash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\DeviceDrivers\InternalFlash.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1220,6 +1225,16 @@
               <FileName>power_factor.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\ECU\control_client\src\power_factor.c</FilePath>
+            </File>
+            <File>
+              <FileName>ZigBeeChannel.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ECU\control_client\src\ZigBeeChannel.c</FilePath>
+            </File>
+            <File>
+              <FileName>ZigBeeTransmission.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ECU\control_client\src\ZigBeeTransmission.c</FilePath>
             </File>
           </Files>
         </Group>

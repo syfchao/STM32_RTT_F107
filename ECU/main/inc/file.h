@@ -44,6 +44,7 @@ void get_ecuid(char *ecuid);
 int get_ecu_type(void);
 unsigned short get_panid(void);
 char get_channel(void);
+int strtohex(char str[2]);
 float get_lifetime_power(void);	
 void update_life_energy(float lifetime_power);
 void updateID(void);

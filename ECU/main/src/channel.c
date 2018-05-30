@@ -166,6 +166,7 @@ void changeChannelOfInverters(int oldChannel, int newChannel)
     for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++, curinverter++)			//ÓÐÐ§Äæ±äÆ÷ÂÖÑµ
     {
         curinverter->inverterstatus.flag = 1;
+        curinverter->inverterstatus.bindflag= 0;
         num++;
     }
 

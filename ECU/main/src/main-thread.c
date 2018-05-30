@@ -35,6 +35,8 @@
 #include "debug.h"
 #include "SEGGER_RTT.h"
 #include "client.h"
+#include "ZigBeeChannel.h"
+#include "ZigBeeTransmission.h"
 
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
@@ -125,7 +127,7 @@ int init_inverter(inverter_info *inverter)
         rt_memset(curinverter->statusb, '\0', sizeof(curinverter->statusb));		//B路清空逆变器状态
 
         curinverter->inverterstatus.dataflag = 0;		//上一轮有数据的标志置位
-        //	curinverter->inverterstatus.bindflag=0;		//绑定逆变器标志位置清0
+       curinverter->inverterstatus.bindflag=0;		//绑定逆变器标志位置清0
         curinverter->no_getdata_num=0;	//ZK,清空连续获取不到的次数
         curinverter->disconnect_times=0;		//没有与逆变器通信上的次数清0, ZK
         curinverter->signalstrength=0;			//信号强度初始化为0
@@ -212,7 +214,7 @@ int init_inverter_A103(inverter_info *inverter)
         rt_memset(curinverter->statusb, '\0', sizeof(curinverter->statusb));		//B路清空逆变器状态
 
         curinverter->inverterstatus.dataflag = 0;		//上一轮有数据的标志置位
-        //	curinverter->inverterstatus.bindflag=0;		//绑定逆变器标志位置清0
+        curinverter->inverterstatus.bindflag=0;		//绑定逆变器标志位置清0
         curinverter->no_getdata_num=0;	//ZK,清空连续获取不到的次数
         curinverter->disconnect_times=0;		//没有与逆变器通信上的次数清0, ZK
         curinverter->signalstrength=0;			//信号强度初始化为0
@@ -281,6 +283,7 @@ int init_all(inverter_info *inverter)
     init_inverter(inverter);
     rateOfProgress = 100;
     init_tmpdb(inverter);
+    ResponseECUZigbeeChannel(ecu.channel,ecu.panid,0);
     //read_gfdi_turn_on_off_status(inverter);
     return 0;
 }

@@ -262,12 +262,10 @@ int serverCommunication_Client(char *sendbuff,int sendLength,char *recvbuff,int 
                 //sprint2msg(ECU_DBG_CLIENT,"serverCommunication_Client",recvbuff);
                 WIFI_Recv_SocketB_Event = 0;
                 LED_Status = 1;
-                AT_CIPCLOSE('3');
                 return 0;
             }
             rt_thread_delay(1);
         }
-        AT_CIPCLOSE('3');
         LED_Status = 0;
         return -1;
 #endif

@@ -3558,7 +3558,7 @@ void rt_hw_stm32_eth_init()
     // OUI 00-80-E1 STMICROELECTRONICS
     stm32_eth_device.dev_addr[0] = 0x80;
     stm32_eth_device.dev_addr[1] = 0x97;
-    stm32_eth_device.dev_addr[2] = 0x1B;
+    stm32_eth_device.dev_addr[2] = 0x1A;
     // generate MAC addr from 96bit unique ID (only for test)
     stm32_eth_device.dev_addr[3] = (0x04);
     stm32_eth_device.dev_addr[4] = (0x72);

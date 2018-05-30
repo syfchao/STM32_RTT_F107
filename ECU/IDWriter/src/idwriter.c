@@ -33,6 +33,7 @@
 #include "usart5.h"
 #include "file.h"
 #include "remoteupdate.h"
+#include "InternalFlash.h"
 
 /*****************************************************************************/
 /*  Definitions                                                              */
@@ -337,6 +338,7 @@ void idwrite_thread_entry(void* parameter)
             fp=fopen("/yuneng/ecuid.con","r");
             fgets(ecu.id,13,fp);
             fclose(fp);
+            
             restartThread(TYPE_MAIN);
             if(ret == 0)
             {
@@ -382,6 +384,7 @@ void idwrite_thread_entry(void* parameter)
             fp=fopen("/yuneng/ecumac.con","w");
             fputs(mac,fp);
             fclose(fp);
+            WritePage(INTERNAL_FALSH_MAC,mac,17);
             memset(mac,'\0',sizeof(mac));
 
             fp=fopen("/yuneng/ecumac.con","r");

@@ -304,6 +304,37 @@ static void led_thread_entry(void* parameter)
 }
 #endif
 
+#if 0
+ALIGN(RT_ALIGN_SIZE)
+static rt_uint8_t WiFi_stack[1024];
+static struct rt_thread WiFi_thread;
+
+static void WiFi_thread_entry(void* parameter)
+{
+    char info[100] = {'\0'};
+    int ret = 0,sum=0,successnum=0,failednum=0;	
+	rt_thread_delay(RT_TICK_PER_SECOND*10);
+    rt_hw_powerIO_init();
+    rt_hw_powerIO_on();
+    while(1)
+    {
+    	WIFI_Reset();
+	rt_thread_delay(RT_TICK_PER_SECOND*10);
+	memset(info,0x00,100);
+        ret = AT_CWJAPStatus(info);
+	sum++;
+        if(ret == 1)
+        {
+            successnum++;
+        }else
+        	{
+        	    failednum++;
+        	}
+        printf("sum:%d,success:%d,failed:%d Link:%s\n",sum,successnum,failednum,info);
+    }
+
+}
+#endif
 /*****************************************************************************/
 /* Function Description:                                                     */
 /*****************************************************************************/
@@ -461,6 +492,10 @@ void tasks_new(void)
     result = rt_thread_init(&phone_server_thread,"phone",phone_server_thread_entry,RT_NULL,(rt_uint8_t*)&phone_server_stack[0],sizeof(phone_server_stack),THREAD_PRIORITY_PHONE_SERVER,5);
     if (result == RT_EOK)	rt_thread_startup(&phone_server_thread);
 #endif	
+#if 0
+    result = rt_thread_init(&WiFi_thread,"WiFi",WiFi_thread_entry,RT_NULL,(rt_uint8_t*)&WiFi_stack[0],sizeof(WiFi_stack),18,5);
+    if (result == RT_EOK)	rt_thread_startup(&WiFi_thread);
+#endif
 }
 
 /*****************************************************************************/

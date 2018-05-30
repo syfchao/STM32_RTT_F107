@@ -34,6 +34,7 @@
 #include "clear_gfdi.h"
 #include "set_protection_parameters.h"
 #include "set_protection_parameters_inverter.h"
+#include "ZigBeeTransmission.h"
 
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
@@ -139,6 +140,31 @@ void zigbee_reset(void)
     GPIO_SetBits(GPIOC, GPIO_Pin_7);		//设置引脚为高电平输出
     rt_thread_delay(1000);
     printmsg(ECU_DBG_MAIN,"zigbee reset successful");
+}
+
+int zb_transmission_reply(char *buff)
+{
+	int temp_size = 0;
+	if(selectZigbee(400) <= 0)
+	{
+		printmsg(ECU_DBG_MAIN,"Get reply time out");
+		return -1;
+	}
+	else
+	{
+		temp_size = ZIGBEE_SERIAL.read(&ZIGBEE_SERIAL,0, buff, 255);
+		printhexmsg(ECU_DBG_MAIN,"Reply", buff, temp_size);
+		return temp_size;
+
+	}
+}
+
+int zb_transmission( char *buff, int length)
+{
+	
+	ZIGBEE_SERIAL.write(&ZIGBEE_SERIAL,0, buff, length);
+	printhexmsg(ECU_DBG_MAIN,"Send", (char *)buff, length);
+	return 0;
 }
 
 int zb_shortaddr_cmd(int shortaddr, char *buff, int length)		//zigbee 短地址报头
@@ -782,7 +808,7 @@ int zb_broadcast_cmd(char *buff, int length)		//zigbee广播包头
     }
 
     ZIGBEE_SERIAL.write(&ZIGBEE_SERIAL,0, sendbuff, length+15);
-
+    printhexmsg(ECU_DBG_MAIN,"Send", (char *)sendbuff, length+15);
     return 1;
 }
 
@@ -1408,7 +1434,7 @@ int process_all(inverter_info *firstinverter)
     clear_gfdi(firstinverter);								//清GFDI标志,ZK,3.10所加 OK
     set_protection_parameters(firstinverter);				//设置预设值广播,ZK,3.10所加
     set_protection_parameters_inverter_one(firstinverter);  //设置预设值单点,ZK,3.10所加
-
+    process_ZigBeeTransimission();
 
     //save_A145_inverter_to_all();
     processAllFlag = 0;

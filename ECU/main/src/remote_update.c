@@ -1267,7 +1267,7 @@ int remote_update(inverter_info *firstinverter)
     char splitdata[4][32];
     char Time[15] = {"/0"};
     char pre_Time[15] = {"/0"};
-    char inverter_result[128];
+    char inverter_result[128] = {'\0'};
     int remoteTypeRet = Remote_UpdateSuccessful;
     inverter_info *curinverter = firstinverter;
     unsigned  updateNum = 0;	//需要尝试升级的次数

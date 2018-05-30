@@ -44,6 +44,8 @@
 #include "usart5.h"
 #include "power_factor.h"
 #include "datelist.h"
+#include "ZigBeeTransmission.h"
+#include "ZigBeeChannel.h"
 
 /*****************************************************************************/
 /*  Definitions                                                              */
@@ -66,6 +68,7 @@ enum CommandID{
     A140, A141, A142, A143, A144, A145, A146, A147, A148, A149,
     A150, A151, A152, A153, A154, A155, A156, A157, A158, A159,
     A160, A161, A162, A163, A164, A165, A166, A167, A168, A169,
+    A170, A171, A172, A173, A174, A175, A176, A177, A178, A179,
 };
 int (*pfun[100])(const char *recvbuffer, char *sendbuffer);
 
@@ -98,7 +101,9 @@ void add_functions()
     pfun[A161] = response_inverter_protection_all;//读取逆变器保护参数
     pfun[A162] = set_inverter_protection_new;	//设置逆变器保护参数
     pfun[A168] = query_ecu_ac_protection_all;	//设置电表和防逆流开关
-
+    pfun[A171] = set_ZigBeeChannel;			//设置信道
+    pfun[A172] = response_ZigBeeChannel_Result;	//上报信道设置结果
+    pfun[A173] = transmission_ZigBeeInfo;		//ZigBee报文透传
 
 }
 
@@ -1271,7 +1276,6 @@ int check_inverter_abnormal_status_sent(int hour)
             {
                 rt_free(recv_buffer);
                 rt_free(send_buffer);
-                AT_CIPCLOSE('4');
                 return -1;
             }
 
@@ -1288,7 +1292,6 @@ int check_inverter_abnormal_status_sent(int hour)
 
             if(flag_failed == 0)
             {
-                AT_CIPCLOSE('4');
                 rt_free(recv_buffer);
                 rt_free(send_buffer);
                 return -1;
@@ -1300,7 +1303,6 @@ int check_inverter_abnormal_status_sent(int hour)
             recv_buffer[WIFI_Recv_SocketC_LEN] = '\0';
             //校验命令
             if(msg_format_check(recv_buffer) < 0){
-                AT_CIPCLOSE('4');
                 rt_free(recv_buffer);
                 rt_free(send_buffer);
                 return 0;
@@ -1318,7 +1320,6 @@ int check_inverter_abnormal_status_sent(int hour)
 
             //将flag=2的数据改为flag=1
             change_statusflag1();
-            AT_CIPCLOSE('4');
 
             //如果所有标志为0，则清空数据
             delete_statusflag0();
@@ -1434,7 +1435,6 @@ int response_inverter_abnormal_status()
                     data = NULL;
                     free(save_buffer);
                     save_buffer = NULL;
-                    AT_CIPCLOSE('4');
                     return -1;
                 }
                 for(j=0;j<800;j++)
@@ -1453,7 +1453,6 @@ int response_inverter_abnormal_status()
                     rt_free(command);
                     rt_free(send_buffer);
                     free(data);
-                    AT_CIPCLOSE('4');
                     data = NULL;
                     free(save_buffer);
                     save_buffer = NULL;
@@ -1506,7 +1505,6 @@ int response_inverter_abnormal_status()
                             data = NULL;
                             free(save_buffer);
                             save_buffer = NULL;
-                            AT_CIPCLOSE('4');
                             return -1;
                         }
                         else
@@ -1541,7 +1539,6 @@ int response_inverter_abnormal_status()
             }
             //清空inversta的flag标志位为0的标志
             delete_statusflag0();
-            AT_CIPCLOSE('4');
             rt_free(recv_buffer);
             rt_free(command);
             rt_free(send_buffer);
@@ -1709,7 +1706,6 @@ int communication_with_EMA(int next_cmd_id)
                     {
                         rt_free(recv_buffer);
                         rt_free(send_buffer);
-                        AT_CIPCLOSE('4');
                         return -1;
                     }
                     memset(send_buffer, '\0', sizeof(send_buffer));
@@ -1727,7 +1723,6 @@ int communication_with_EMA(int next_cmd_id)
                     {
                         rt_free(recv_buffer);
                         rt_free(send_buffer);
-                        AT_CIPCLOSE('4');
                         return -1;
                     }
 
@@ -1737,7 +1732,6 @@ int communication_with_EMA(int next_cmd_id)
                     print2msg(ECU_DBG_CONTROL_CLIENT,"communication_with_EMA recv",recv_buffer);
                     //校验命令
                     if(msg_format_check(recv_buffer) < 0){
-                        AT_CIPCLOSE('4');
                         continue;
                     }
                     //解析命令号
@@ -1773,7 +1767,6 @@ int communication_with_EMA(int next_cmd_id)
                 }
                 //EMA命令发送完毕
                 else if(cmd_id == 100){
-                    AT_CIPCLOSE('4');
                     break;
                 }
                 else{
@@ -1785,7 +1778,6 @@ int communication_with_EMA(int next_cmd_id)
                 //将消息发送给EMA(自动计算长度,补上回车)
                 SendToSocketC(control_client_arg.ip,randport(control_client_arg),send_buffer, strlen(send_buffer));
                 printmsg(ECU_DBG_CONTROL_CLIENT,">>End");
-                AT_CIPCLOSE('4');
                 //如果功能函数返回值小于0,则返回-1,程序会自动退出
                 if(next_cmd_id < 0){
                     rt_free(recv_buffer);
@@ -1911,12 +1903,10 @@ int response_process_result()
                 {
                     //发送一条记录
                     if(SendToSocketC(control_client_arg.ip,randport(control_client_arg),data, strlen(data)) < 0){
-                        AT_CIPCLOSE('4');
                         break;
                     }
                     //发送成功则将标志位置0
                     change_pro_result_flag(item,'0');
-                    AT_CIPCLOSE('4');
                     printmsg(ECU_DBG_CONTROL_CLIENT,">>End");
 
                 }
@@ -1969,11 +1959,9 @@ int response_process_result()
                 //有线连接失败，使用wifi传输
                 {
                     if(SendToSocketC(control_client_arg.ip,randport(control_client_arg),sendbuffer, strlen(sendbuffer)) < 0){
-                        AT_CIPCLOSE('4');
                         break;
                     }
                     change_inv_pro_result_flag(item,'0');
-                    AT_CIPCLOSE('4');
 
                 }
 #endif	

@@ -24,6 +24,7 @@
 #include "debug.h"
 #include "file.h"
 #include "rthw.h"
+#include "ZigBeeChannel.h"
 
 /*****************************************************************************/
 /*  Definitions                                                              */
@@ -93,6 +94,7 @@ int getaddrOldOrNew(char *id)
             if(!strcmp(curinverter->id,id))
             {
                 curinverter->shortaddr = short_addr;
+                ResponseZigbeeChannel(curinverter->id,ecu.channel,ecu.panid,curinverter->shortaddr);
                 break;
             }
         }
@@ -185,6 +187,7 @@ void getshortadd(char *recvbuff)
         if(!strcmp(curinverter->id,curinverterid))
         {
             curinverter->shortaddr = (recvbuff[0]*256+recvbuff[1]);
+            ResponseZigbeeChannel(curinverter->id,ecu.channel,ecu.panid,curinverter->shortaddr);
         }
     }
 }
@@ -213,6 +216,9 @@ void bind_inverters()
             if (!zb_off_report_id_and_bind(curinverter->shortaddr)) {
                 //绑定失败,重置短地址
                 curinverter->shortaddr = 0;
+            }else
+            {
+            	ResponseZigbeeChannel(curinverter->id,ecu.channel,ecu.panid,curinverter->shortaddr);
             }
         }
     }
