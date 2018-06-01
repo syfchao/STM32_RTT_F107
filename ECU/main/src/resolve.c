@@ -303,8 +303,8 @@ int resolvedata_600(char *data, struct inverter_info_t *inverter)
     inverter->curacctime = data[7]*256 + data[8];
 
 
-    inverter->dvb = ((data[17]<<4) + (data[16] & 0xF0)) * 82.5 / 4096.0;
-    inverter->dv = ((data[14]<<4) + (data[13] & 0xF0)) * 82.5 / 4096.0;
+    inverter->dvb = ((data[17]<<4) + ((data[16] & 0xF0)>> 4)) * 82.5 / 4096.0;
+    inverter->dv = ((data[14]<<4) + ((data[13] & 0xF0)>> 4)) * 82.5 / 4096.0;
     inverter->dib = ((data[16] & 0x0F) * 256 + data[15]) * 27.5 / 4096.0;
     inverter->di = ((data[13] & 0x0F) * 256 + data[12]) * 27.5 / 4096.0;
     inverter->gv = (data[18]*256+data[19])/1.3277;
@@ -503,8 +503,8 @@ int resolvedata_600_new(char *data, struct inverter_info_t *inverter)
     inverter->curacctime = data[7]*256 + data[8];
 
 
-    inverter->dvb = ((data[17]<<4) + (data[16] & 0xF0)) * 82.5 / 4096.0;
-    inverter->dv = ((data[14]<<4) + (data[13] & 0xF0)) * 82.5 / 4096.0;
+    inverter->dvb = ((data[17]<<4) + ((data[16] & 0xF0)>> 4)) * 82.5 / 4096.0;
+    inverter->dv = ((data[14]<<4) + ((data[13] & 0xF0) >> 4)) * 82.5 / 4096.0;
     inverter->dib = ((data[16] & 0x0F) * 256 + data[15]) * 27.5 / 4096.0;
     inverter->di = ((data[13] & 0x0F) * 256 + data[12]) * 27.5 / 4096.0;
     inverter->gv = (data[18]*256+data[19])/1.33;
@@ -718,10 +718,10 @@ int resolvedata_1200(char *data, struct inverter_info_t *inverter)
     inverter->curacctime = data[20]*256 + data[21];
 
     //µçÑ¹
-    inverter->dvd = ((data[8]<<4) + (data[7] & 0xF0)) * 82.5 / 4096.0;
-    inverter->dvc = ((data[11]<<4) + (data[10] & 0xF0)) * 82.5 / 4096.0;
-    inverter->dvb = ((data[14]<<4) + (data[13] & 0xF0)) * 82.5 / 4096.0;
-    inverter->dv = ((data[17]<<4) + (data[16] & 0xF0)) * 82.5 / 4096.0;
+    inverter->dvd = ((data[8]<<4) + ((data[7] & 0xF0)>> 4)) * 82.5 / 4096.0;
+    inverter->dvc = ((data[11]<<4) + ((data[10] & 0xF0)>> 4)) * 82.5 / 4096.0;
+    inverter->dvb = ((data[14]<<4) + ((data[13] & 0xF0)>> 4)) * 82.5 / 4096.0;
+    inverter->dv = ((data[17]<<4) + ((data[16] & 0xF0)>> 4)) * 82.5 / 4096.0;
     //µçÁ÷
     inverter->did = ((data[7] & 0x0F) * 256 + data[6]) * 27.5 / 4096.0;
     inverter->dic = ((data[10] & 0x0F) * 256 + data[9]) * 27.5 / 4096.0;
