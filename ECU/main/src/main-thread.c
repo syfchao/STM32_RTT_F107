@@ -388,7 +388,7 @@ void main_thread_entry(void* parameter)
                 protocol_APS18(inverter, ecu.broadcast_time);
                 protocol_status(inverter, ecu.broadcast_time);
                 save_alarm_event(inverter, ecu.broadcast_time);	//保存最多两天
-                //saveevent(inverter, ecu.broadcast_time);							//保存当前一轮逆变器事件
+                saveevent(inverter, ecu.broadcast_time);							//保存当前一轮逆变器事件
                 //删除两天前的事件
                 delete_alarm_event_2_day_ago(ecu.broadcast_time);
             }
