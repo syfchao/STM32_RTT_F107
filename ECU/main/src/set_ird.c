@@ -113,107 +113,65 @@ int resolve_ird(char *id, char *readbuff)		//解析并保存IRD设置结果
 	memset(inverter_result,'\0',200);
 	
 	//读取所在ID行
-	if(1 == read_line("/home/data/ird",data,id,12))
-	{	
-		//将所在行分裂
-		splitString(data,splitdata);
-		memset(data,0x00,200);
-		sprintf(data,"%s,%d,,0\n",id,mode);
+    read_line("/home/data/ird",data,id,12);
+    {
+        //½«ËùÔÚÐÐ·ÖÁÑ
+        splitString(data,splitdata);
+        memset(data,0x00,200);
+        sprintf(data,"%s,%d,%s,0\n",id,mode,splitdata[2]);
 
-		//删除id所在行
-		delete_line("/home/data/ird","/home/data/ird.t",id,12);
-		//更新所在行
-		for(i=0; i<3; i++)
-		{
-			if(1 == insert_line("/home/data/ird",data))
-			{
-				print2msg(ECU_DBG_MAIN,id, "Update resolve ird successfully");
-				break;
-			}
-			else
-				print2msg(ECU_DBG_MAIN,id, "Failed to resolve ird power");
-		}
-		sprintf(inverter_result, "%s%01dEND", id, mode);				//这里先注释掉
-		save_inverter_parameters_result2(id, 126, inverter_result);		//把结果保存到数据库，通过远程控制程序上传给EMA
-	}else
-	{
-		memset(data,0x00,200);
-		sprintf(data,"%s,%d,,0\n",id,mode);
-
-		//删除id所在行
-		delete_line("/home/data/ird","/home/data/ird.t",id,12);
-		//更新所在行
-		for(i=0; i<3; i++)
-		{
-			if(1 == insert_line("/home/data/ird",data))
-			{
-				print2msg(ECU_DBG_MAIN,id, "Update resolve ird successfully");
-				break;
-			}
-			else
-				print2msg(ECU_DBG_MAIN,id, "Failed to resolve ird power");
-		}
-		sprintf(inverter_result, "%s%01dEND", id, mode);				//这里先注释掉
-		save_inverter_parameters_result2(id, 126, inverter_result);		//把结果保存到数据库，通过远程控制程序上传给EMA
-	}
-	free(inverter_result);
-	inverter_result = NULL;
+        //É¾³ýidËùÔÚÐÐ
+        delete_line("/home/data/ird","/home/data/ird.t",id,12);
+        //¸üÐÂËùÔÚÐÐ
+        for(i=0; i<3; i++)
+        {
+            if(1 == insert_line("/home/data/ird",data))
+            {
+                print2msg(ECU_DBG_MAIN,id, "Update resolve ird successfully");
+                break;
+            }
+            else
+                print2msg(ECU_DBG_MAIN,id, "Failed to resolve ird power");
+        }
+        sprintf(inverter_result, "%s%01dEND", id, mode);				//ÕâÀïÏÈ×¢ÊÍµô
+        save_inverter_parameters_result2(id, 126, inverter_result);		//°Ñ½á¹û±£´æµ½Êý¾Ý¿â£¬Í¨¹ýÔ¶³Ì¿ØÖÆ³ÌÐòÉÏ´«¸øEMA
+    }
+    free(inverter_result);
+    inverter_result = NULL;
 
 	return 0;
 }
 
 int resolve_ird_DD(char *id, char *readbuff)		//解析并保存IRD设置结果
 {
-	char *inverter_result = NULL;	//[MAXINVERTERCOUNT*RECORDLENGTH+RECORDTAIL]={'\0'};
-	char data[200];
-	char splitdata[4][32];
-	int i, mode;
-	inverter_result = malloc(200);
-	memset(inverter_result,'\0',200);
-	mode = (int)readbuff[3+19];
-//读取所在ID行
-	if(1 == read_line("/home/data/ird",data,id,12))
-	{
-		//将所在行分裂
-		splitString(data,splitdata);
-		memset(data,0x00,200);
-		sprintf(data,"%s,%d,,0\n",id,mode);
+    char *inverter_result = NULL;	//[MAXINVERTERCOUNT*RECORDLENGTH+RECORDTAIL]={'\0'};
+    char data[200];
+    char splitdata[4][32];
+    int i, mode;
+    inverter_result = malloc(200);
+    memset(inverter_result,'\0',200);
+    mode = (int)readbuff[3+19];
+    //¶ÁÈ¡ËùÔÚIDÐÐ
+    read_line("/home/data/ird",data,id,12);
+    {
+        //½«ËùÔÚÐÐ·ÖÁÑ
+        splitString(data,splitdata);
+        memset(data,0x00,200);
+        sprintf(data,"%s,%d,%s,0\n",id,mode,splitdata[2]);
 
-		//删除id所在行
-		delete_line("/home/data/ird","/home/data/ird.t",id,12);
-		//更新所在行
-		for(i=0; i<3; i++)
-		{
-			if(1 == insert_line("/home/data/ird",data))
-			{
-				print2msg(ECU_DBG_MAIN,id, "Update resolve ird DD successfully");
-				break;
-			}
-			else
-				print2msg(ECU_DBG_MAIN,id, "Failed to resolve ird DD power");
-		}
-
-		sprintf(inverter_result, "%s%01dEND", id, mode);				//这里先注释掉
-		save_inverter_parameters_result2(id, 126, inverter_result);		//把结果保存到数据库，通过远程控制程序上传给EMA
-	}
-	else
-	{
-		memset(data,0x00,200);
-		sprintf(data,"%s,%d,,0\n",id,mode);
-
-		//删除id所在行
-		delete_line("/home/data/ird","/home/data/ird.t",id,12);
-		//更新所在行
-		for(i=0; i<3; i++)
-		{
-			if(1 == insert_line("/home/data/ird",data))
-			{
-				print2msg(ECU_DBG_MAIN,id, "Update resolve ird DD successfully");
-				break;
-			}
-			else
-				print2msg(ECU_DBG_MAIN,id, "Failed to resolve ird DD power");
-		}
+        //É¾³ýidËùÔÚÐÐ
+        delete_line("/home/data/ird","/home/data/ird.t",id,12);
+        //¸üÐÂËùÔÚÐÐ
+        for(i=0; i<3; i++)
+        {
+            if(1 == insert_line("/home/data/ird",data))
+            {
+                print2msg(ECU_DBG_MAIN,id, "Update resolve ird DD successfully");
+                break;
+            }
+            else
+                print2msg(ECU_DBG_MAIN,id, "Failed to resolve ird DD power");
+        }
 
 		sprintf(inverter_result, "%s%01dEND", id, mode);				//这里先注释掉
 		save_inverter_parameters_result2(id, 126, inverter_result);		//把结果保存到数据库，通过远程控制程序上传给EMA
@@ -328,13 +286,13 @@ int clear_ird_flag_single(char *id)					//设置后清除数据库中参数的�
 	char splitdata[4][32];
 	int i;
 
-	//读取所在ID行
-	if(1 == read_line("/home/data/ird",data,id,12))
-	{
-		//将所在行分裂
-		splitString(data,splitdata);
-		memset(data,0x00,200);
-		sprintf(data,"%s,%d,,0\n",id,atoi(splitdata[1]));
+    //¶ÁÈ¡ËùÔÚIDÐÐ
+    read_line("/home/data/ird",data,id,12);
+    {
+        //½«ËùÔÚÐÐ·ÖÁÑ
+        splitString(data,splitdata);
+        memset(data,0x00,200);
+        sprintf(data,"%s,%d,%d,0\n",id,atoi(splitdata[1]),atoi(splitdata[2]));
 
 		//删除id所在行
 		delete_line("/home/data/ird","/home/data/ird.t",id,12);

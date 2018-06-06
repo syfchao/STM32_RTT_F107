@@ -190,9 +190,9 @@ int save_gfdi_changed_result(inverter_info *firstinverter)
 	int i, count=0;
 	char *gfdi_changed_result = NULL;
 
-	gfdi_changed_result = malloc(PROCESS_RESULT_HEAD + PROCESS_RESULT_RECORD_LEN * MAXINVERTERCOUNT);
-	
-	strcpy(gfdi_changed_result, "APS13AAAAAA115AAA1");
+    gfdi_changed_result = malloc(PROCESS_RESULT_HEAD + PROCESS_RESULT_RECORD_LEN * MAXINVERTERCOUNT);
+    memset(gfdi_changed_result,0x00,PROCESS_RESULT_HEAD + PROCESS_RESULT_RECORD_LEN * MAXINVERTERCOUNT);
+    strcpy(gfdi_changed_result, "APS13AAAAAA115AAA1");
 
 	strcat(gfdi_changed_result, ecu.id);					//ECU的ID
 	strcat(gfdi_changed_result, "0000");					//逆变器个数

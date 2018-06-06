@@ -64,4 +64,6 @@ int bind_nodata_inverter(inverter_info *firstinverter);		//绑定没有数据的逆变器,
 int zb_change_inverter_channel_one(char *inverter_id, int channel);
 int zb_off_report_id_and_bind(int short_addr);
 int zigbeeRecvMsg(char *data, int timeout_sec);
+int zb_transmission_reply(char *buff);
+int zb_transmission( char *buff, int length);
 #endif /*__ZIGBEE_H__*/

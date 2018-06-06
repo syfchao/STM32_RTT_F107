@@ -43,6 +43,8 @@
 #include "custom_command.h"
 #include "usart5.h"
 #include "power_factor.h"
+#include "ZigBeeTransmission.h"
+#include "ZigBeeChannel.h"
 
 /*****************************************************************************/
 /*  Definitions                                                              */
@@ -69,13 +71,14 @@ typedef struct socket_config
 }Socket_Cfg;
 
 enum CommandID{
-	A100, A101, A102, A103, A104, A105, A106, A107, A108, A109, //0-9
-	A110, A111, A112, A113, A114, A115, A116, A117, A118, A119, //10-19
-	A120, A121, A122, A123, A124, A125, A126, A127, A128, A129, //20-29
-	A130, A131, A132, A133, A134, A135, A136, A137, A138, A139, //30-39
-	A140, A141, A142, A143, A144, A145, A146, A147, A148, A149,
-	A150, A151, A152, A153, A154, A155, A156, A157, A158, A159,
-	A160, A161, A162, A163, A164, A165, A166, A167, A168, A169,
+    A100, A101, A102, A103, A104, A105, A106, A107, A108, A109, //0-9
+    A110, A111, A112, A113, A114, A115, A116, A117, A118, A119, //10-19
+    A120, A121, A122, A123, A124, A125, A126, A127, A128, A129, //20-29
+    A130, A131, A132, A133, A134, A135, A136, A137, A138, A139, //30-39
+    A140, A141, A142, A143, A144, A145, A146, A147, A148, A149,
+    A150, A151, A152, A153, A154, A155, A156, A157, A158, A159,
+    A160, A161, A162, A163, A164, A165, A166, A167, A168, A169,
+    A170, A171, A172, A173, A174, A175, A176, A177, A178, A179,
 };
 int (*pfun[100])(const char *recvbuffer, char *sendbuffer);
 Socket_Cfg sockcfg = {'\0'};
@@ -105,10 +108,12 @@ void add_functions()
 	pfun[A145] = response_inverter_power_factor;//上报逆变器级别功率因数
 	pfun[A146] = set_all_inverter_power_factor; //设置ecu级别功率因数
 
-	pfun[A161] = response_inverter_protection_all;//读取逆变器保护参数
-	pfun[A162] = set_inverter_protection_new;	//设置逆变器保护参数
-	pfun[A168] = query_ecu_ac_protection_all;	//设置电表和防逆流开关
-
+  pfun[A161] = response_inverter_protection_all;//读取逆变器保护参数
+  pfun[A162] = set_inverter_protection_new;	//设置逆变器保护参数
+  pfun[A168] = query_ecu_ac_protection_all;	//设置电表和防逆流开关
+  pfun[A171] = set_ZigBeeChannel;			//设置信道
+  pfun[A172] = response_ZigBeeChannel_Result;	//上报信道设置结果
+  pfun[A173] = transmission_ZigBeeInfo;		//ZigBee报文透传
 
 }
 

@@ -1261,16 +1261,16 @@ int remote_update_single(inverter_info *inverter)
  */
 int remote_update(inverter_info *firstinverter)
 {
-	int i=0, j=0,version_ret = 0,k = 0;
-	int update_result = 0;
-	char data[200];
-	char splitdata[4][32];
-	char Time[15] = {"/0"};
-	char pre_Time[15] = {"/0"};
-	char inverter_result[128];
-	int remoteTypeRet = Remote_UpdateSuccessful; 
-	inverter_info *curinverter = firstinverter;
-	unsigned  updateNum = 0;	//需要尝试升级的次数
+    int i=0, j=0,version_ret = 0,k = 0;
+    int update_result = 0;
+    char data[200];
+    char splitdata[4][32];
+    char Time[15] = {"/0"};
+    char pre_Time[15] = {"/0"};
+    char inverter_result[128] = {'\0'};
+    int remoteTypeRet = Remote_UpdateSuccessful;
+    inverter_info *curinverter = firstinverter;
+    unsigned  updateNum = 0;	//需要尝试升级的次数
 
 	for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++,curinverter++)
 	{

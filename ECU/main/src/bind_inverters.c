@@ -24,6 +24,7 @@
 #include "debug.h"
 #include "file.h"
 #include "rthw.h"
+#include "ZigBeeChannel.h"
 
 /*****************************************************************************/
 /*  Definitions                                                              */
@@ -77,40 +78,41 @@ int getaddrOldOrNew(char *id)
 	print2msg(ECU_DBG_MAIN,"Get each inverter's short address", id);
 	printhexmsg(ECU_DBG_MAIN,"Sent", command, 21);
 
-	//接收
-	ret = zigbeeRecvMsg(recvMsg, 5);
-	snprintf(inverterid, sizeof(inverterid), "%02x%02x%02x%02x%02x%02x",
-			recvMsg[4], recvMsg[5], recvMsg[6], recvMsg[7], recvMsg[8], recvMsg[9]);
-	if ((11 == ret)
-		&& (0xFF == recvMsg[2])
-		&& (0xFF == recvMsg[3])
-		&& (0 == strcmp(id, inverterid))) {
-		//获取短地址成功
-		short_addr = recvMsg[0]*256 + recvMsg[1];
-		curinverter = inverter;
-		for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)			//有效逆变器轮�?
-		{
-			if(!strcmp(curinverter->id,id))
-			{
-				curinverter->shortaddr = short_addr;
-				break;
-			}
-		}
-			
-		return 1;
-	}
-	else if ((11 == ret)
-		&& (0 == strcmp(id, inverterid))) {
-		saveraduistostruct(inverterid,recvMsg[2]);	//保存路由深度到结构体
-		curinverter = inverter;
-		for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)			//有效逆变器轮�?
-		{
-			if(!strcmp(curinverter->id,inverterid))
-			{
-				curinverter->zigbee_version = recvMsg[3];
-				break;
-			}
-		}
+    //接收
+    ret = zigbeeRecvMsg(recvMsg, 5);
+    snprintf(inverterid, sizeof(inverterid), "%02x%02x%02x%02x%02x%02x",
+             recvMsg[4], recvMsg[5], recvMsg[6], recvMsg[7], recvMsg[8], recvMsg[9]);
+    if ((11 == ret)
+            && (0xFF == recvMsg[2])
+            && (0xFF == recvMsg[3])
+            && (0 == strcmp(id, inverterid))) {
+        //获取短地址成功
+        short_addr = recvMsg[0]*256 + recvMsg[1];
+        curinverter = inverter;
+        for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)			//有效逆变器轮�?
+        {
+            if(!strcmp(curinverter->id,id))
+            {
+                curinverter->shortaddr = short_addr;
+                ResponseZigbeeChannel(curinverter->id,ecu.channel,ecu.panid,curinverter->shortaddr);
+                break;
+            }
+        }
+
+        return 1;
+    }
+    else if ((11 == ret)
+             && (0 == strcmp(id, inverterid))) {
+        saveraduistostruct(inverterid,recvMsg[2]);	//保存路由深度到结构体
+        curinverter = inverter;
+        for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)			//有效逆变器轮�?
+        {
+            if(!strcmp(curinverter->id,inverterid))
+            {
+                curinverter->zigbee_version = recvMsg[3];
+                break;
+            }
+        }
 
 		//暂存绑定标志
 			curinverter = inverter;
@@ -175,18 +177,19 @@ void send22order()
 
 void getshortadd(char *recvbuff)
 {
-	int index;
-	inverter_info *curinverter = inverter;
-	char curinverterid[13];
-	sprintf(curinverterid,"%02x%02x%02x%02x%02x%02x",recvbuff[4],recvbuff[5],recvbuff[6],recvbuff[7],recvbuff[8],recvbuff[9]);
-	curinverter = inverter;
-	for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)			//有效逆变器轮�?
-	{
-		if(!strcmp(curinverter->id,curinverterid))
-		{
-			curinverter->shortaddr = (recvbuff[0]*256+recvbuff[1]);
-		}
-	}
+    int index;
+    inverter_info *curinverter = inverter;
+    char curinverterid[13];
+    sprintf(curinverterid,"%02x%02x%02x%02x%02x%02x",recvbuff[4],recvbuff[5],recvbuff[6],recvbuff[7],recvbuff[8],recvbuff[9]);
+    curinverter = inverter;
+    for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)			//有效逆变器轮�?
+    {
+        if(!strcmp(curinverter->id,curinverterid))
+        {
+            curinverter->shortaddr = (recvbuff[0]*256+recvbuff[1]);
+            ResponseZigbeeChannel(curinverter->id,ecu.channel,ecu.panid,curinverter->shortaddr);
+        }
+    }
 }
 
 
@@ -203,19 +206,22 @@ void bind_inverters()
    rateOfProgress = 40;
    zb_change_ecu_panid(); //将ECU的PANID和信道设置成配置文件中的
 
-	//1.绑定已经有短地址的逆变�?如绑定失败，则需要重新获取短地址	
-	//对每个逆变器进行绑�?
-	curinverter = inverter;
-	for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)			//有效逆变器轮�?
-	{
-		if((curinverter->shortaddr != 0)&&(curinverter->inverterstatus.bindflag == 0))
-		{
-			if (!zb_off_report_id_and_bind(curinverter->shortaddr)) {
-				//绑定失败,重置短地址
-				curinverter->shortaddr = 0;
-			}
-		}
-	}	
+    //1.绑定已经有短地址的逆变�?如绑定失败，则需要重新获取短地址
+    //对每个逆变器进行绑�?
+    curinverter = inverter;
+    for(index=0; (index<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); index++, curinverter++)			//有效逆变器轮�?
+    {
+        if((curinverter->shortaddr != 0)&&(curinverter->inverterstatus.bindflag == 0))
+        {
+            if (!zb_off_report_id_and_bind(curinverter->shortaddr)) {
+                //绑定失败,重置短地址
+                curinverter->shortaddr = 0;
+            }else
+            {
+            	ResponseZigbeeChannel(curinverter->id,ecu.channel,ecu.panid,curinverter->shortaddr);
+            }
+        }
+    }
 
 
 	rateOfProgress = 41;

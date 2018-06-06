@@ -265,25 +265,25 @@ int get_protection_from_file(const char pro_name[][32],float *pro_value,int *pro
 //返回1 便是寻找到行   返回-1表示未寻找到
 int read_line(char* filename,char *linedata,char* compareData,int len)
 {
-	FILE *fin;
-  fin=fopen(filename,"r");
-	if(fin == NULL)
-	{
-		print2msg(ECU_DBG_OTHER,"read_line failure2",filename);
+    FILE *fin;
+    fin=fopen(filename,"r");
+    if(fin == NULL)
+    {
+        //print2msg(ECU_DBG_OTHER,"read_line failure2",filename);
+        return -1;
+    }
+
+    while(fgets(linedata,100,fin))//从原文件读取一行
+    {
+        if(!memcmp(linedata,compareData,len))
+        {
+            //存在相同行，关闭文件   然后返回1  表示存在该行
+            fclose(fin);
+            return 1;
+        }
+    }
+    fclose(fin);
     return -1;
-	}
-	
-  while(fgets(linedata,100,fin))//从原文件读取一行
-	{
-		if(!memcmp(linedata,compareData,len))
-		{
-			//存在相同行，关闭文件   然后返回1  表示存在该行
-			fclose(fin);
-			return 1;
-		}
-	}
-  fclose(fin);
-  return -1;
 }
 
 int read_line_end(char* filename,char *linedata,char* compareData,int len)

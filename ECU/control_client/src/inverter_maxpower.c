@@ -74,12 +74,14 @@ int set_maxpower_num(const char *msg, int num)
 /* 设置所有逆变器最大功率 */
 int set_maxpower_all(int maxpower)
 {
-	char inverter_ids[MAXINVERTERCOUNT][13] = {"\0"};
-	int i,num;
-	char msg[2048] = {'\0'};
+    char inverter_ids[MAXINVERTERCOUNT][13] = {"\0"};
+    int i,num,ret;
+    char *msg = NULL;
+    msg = malloc(2048);
+    memset(msg,0x00,2048);
 
-	//查询所有逆变器ID号
-	num = get_num_from_id(inverter_ids);
+    //²éÑ¯ËùÓÐÄæ±äÆ÷IDºÅ
+    num = get_num_from_id(inverter_ids);
 
 
 	//将所有逆变器拼接成设置单台的形式
@@ -88,7 +90,10 @@ int set_maxpower_all(int maxpower)
 		msgcat_d(msg, 3, maxpower);
 		msgcat_s(msg, 3, "END");
 	}
-	return set_maxpower_num( msg, strlen(msg)/18);
+    ret = set_maxpower_num( msg, strlen(msg)/18);
+    free(msg);
+    msg = NULL;
+    return ret ;
 }
 
 /* 【A110】EMA设置逆变器最大功率 */

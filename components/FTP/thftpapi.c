@@ -322,9 +322,11 @@ int ftp_pasv_connect( int c_sock )
     int     send_re;
     ssize_t len;
     int     addr[6];
-    char    buf[512];
-    char    re_buf[512];
-     
+    char    *buf = NULL;
+    char    *re_buf = NULL;
+
+    buf = malloc(512);
+    re_buf = malloc(512);
     //设置PASV被动模式
     memset(buf,0x00, sizeof(buf));
     sprintf( buf, "PASV\r\n");
@@ -339,7 +341,10 @@ int ftp_pasv_connect( int c_sock )
 		print2msg(ECU_DBG_UPDATE,"UPDATE IP",buf);
 		printdecmsg(ECU_DBG_UPDATE,"UPDATE PORT",(addr[4]*256+addr[5]));
     r_sock = socket_connect("",buf,addr[4]*256+addr[5]);
-     
+    free(buf);
+    buf = NULL;
+    free(re_buf);
+    re_buf = NULL;
     return r_sock;
 }
  

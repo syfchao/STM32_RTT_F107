@@ -303,13 +303,13 @@ int resolvedata_600(char *data, struct inverter_info_t *inverter)
 	inverter->curacctime = data[7]*256 + data[8];
 
 
-	inverter->dvb = ((data[17]<<4) + (data[16] & 0xF0)) * 82.5 / 4096.0;
-	inverter->dv = ((data[14]<<4) + (data[13] & 0xF0)) * 82.5 / 4096.0;
-	inverter->dib = ((data[16] & 0x0F) * 256 + data[15]) * 27.5 / 4096.0;
-	inverter->di = ((data[13] & 0x0F) * 256 + data[12]) * 27.5 / 4096.0;
-	inverter->gv = (data[18]*256+data[19])/1.3277;
-	inverter->curaccgenb = ((data[27]*256*10.095)*220+(data[28]*10.095)*220+(data[29]*256*256+data[30]*256+data[31])/1661900.0*220.0)/3600.0/1000.0;
-	//inverter->curaccgen = (data[27]*256*10.095)*220+(data[28]*10.095)+(data[29]/1661900*220*256*256)+(data[30]/1661900*220*256)+(data[31]/1661900*220);
+    inverter->dvb = ((data[17]<<4) + ((data[16] & 0xF0)>> 4)) * 82.5 / 4096.0;
+    inverter->dv = ((data[14]<<4) + ((data[13] & 0xF0)>> 4)) * 82.5 / 4096.0;
+    inverter->dib = ((data[16] & 0x0F) * 256 + data[15]) * 27.5 / 4096.0;
+    inverter->di = ((data[13] & 0x0F) * 256 + data[12]) * 27.5 / 4096.0;
+    inverter->gv = (data[18]*256+data[19])/1.3277;
+    inverter->curaccgenb = ((data[27]*256*10.095)*220+(data[28]*10.095)*220+(data[29]*256*256+data[30]*256+data[31])/1661900.0*220.0)/3600.0/1000.0;
+    //inverter->curaccgen = (data[27]*256*10.095)*220+(data[28]*10.095)+(data[29]/1661900*220*256*256)+(data[30]/1661900*220*256)+(data[31]/1661900*220);
 
 	inverter->curaccgen = ((data[32]*256*10.095)*220+(data[33]*10.095)*220+(data[34]*256*256+data[35]*256+data[36])/1661900.0*220.0)/3600.0/1000.0;
 	inverter->reactive_power = (factor2)*0.94*(inverter->dv*inverter->di+inverter->dvb*inverter->dib);
@@ -503,13 +503,13 @@ int resolvedata_600_new(char *data, struct inverter_info_t *inverter)
 	inverter->curacctime = data[7]*256 + data[8];
 
 
-	inverter->dvb = ((data[17]<<4) + (data[16] & 0xF0)) * 82.5 / 4096.0;
-	inverter->dv = ((data[14]<<4) + (data[13] & 0xF0)) * 82.5 / 4096.0;
-	inverter->dib = ((data[16] & 0x0F) * 256 + data[15]) * 27.5 / 4096.0;
-	inverter->di = ((data[13] & 0x0F) * 256 + data[12]) * 27.5 / 4096.0;
-	inverter->gv = (data[18]*256+data[19])/1.33;
-	inverter->curaccgenb = ((data[27]*256*10.095)*220+(data[28]*10.095)*220+(data[29]*256*256+data[30]*256+data[31])/1661900.0*220.0)/3600.0/1000.0;
-	//inverter->curaccgen = (data[27]*256*10.095)*220+(data[28]*10.095)+(data[29]/1661900*220*256*256)+(data[30]/1661900*220*256)+(data[31]/1661900*220);
+    inverter->dvb = ((data[17]<<4) + ((data[16] & 0xF0)>> 4)) * 82.5 / 4096.0;
+    inverter->dv = ((data[14]<<4) + ((data[13] & 0xF0) >> 4)) * 82.5 / 4096.0;
+    inverter->dib = ((data[16] & 0x0F) * 256 + data[15]) * 27.5 / 4096.0;
+    inverter->di = ((data[13] & 0x0F) * 256 + data[12]) * 27.5 / 4096.0;
+    inverter->gv = (data[18]*256+data[19])/1.33;
+    inverter->curaccgenb = ((data[27]*256*10.095)*220+(data[28]*10.095)*220+(data[29]*256*256+data[30]*256+data[31])/1661900.0*220.0)/3600.0/1000.0;
+    //inverter->curaccgen = (data[27]*256*10.095)*220+(data[28]*10.095)+(data[29]/1661900*220*256*256)+(data[30]/1661900*220*256)+(data[31]/1661900*220);
 
 	inverter->curaccgen = ((data[32]*256*10.095)*220+(data[33]*10.095)*220+(data[34]*256*256+data[35]*256+data[36])/1661900.0*220.0)/3600.0/1000.0;
 	inverter->reactive_power = (factor2)*0.94*(inverter->dv*inverter->di+inverter->dvb*inverter->dib);
@@ -717,30 +717,30 @@ int resolvedata_1200(char *data, struct inverter_info_t *inverter)
 	//累计时间
 	inverter->curacctime = data[20]*256 + data[21];
 
-	//电压
-	inverter->dvd = ((data[8]<<4) + (data[7] & 0xF0)) * 82.5 / 4096.0;
-	inverter->dvc = ((data[11]<<4) + (data[10] & 0xF0)) * 82.5 / 4096.0;
-	inverter->dvb = ((data[14]<<4) + (data[13] & 0xF0)) * 82.5 / 4096.0;
-	inverter->dv = ((data[17]<<4) + (data[16] & 0xF0)) * 82.5 / 4096.0;
-	//电流
-	inverter->did = ((data[7] & 0x0F) * 256 + data[6]) * 27.5 / 4096.0;
-	inverter->dic = ((data[10] & 0x0F) * 256 + data[9]) * 27.5 / 4096.0;
-	inverter->dib = ((data[13] & 0x0F) * 256 + data[12]) * 27.5 / 4096.0;
-	inverter->di = ((data[16] & 0x0F) * 256 + data[15]) * 27.5 / 4096.0;
-	//电网电压
-	inverter->gv = (data[18]*256+data[19])/1.33;
-	//累计电量
-	inverter->curaccgend = ((data[42]*256*10.095)*220+(data[43]*10.095)*220+(data[44]*256*256+data[45]*256+data[46])/1661900.0*220.0)/3600.0/1000.0;
-	inverter->curaccgenc = ((data[37]*256*10.095)*220+(data[38]*10.095)*220+(data[39]*256*256+data[40]*256+data[41])/1661900.0*220.0)/3600.0/1000.0;
-	inverter->curaccgenb = ((data[32]*256*10.095)*220+(data[33]*10.095)*220+(data[34]*256*256+data[35]*256+data[36])/1661900.0*220.0)/3600.0/1000.0;
-	inverter->curaccgen = ((data[27]*256*10.095)*220+(data[28]*10.095)*220+(data[29]*256*256+data[30]*256+data[31])/1661900.0*220.0)/3600.0/1000.0;
-	
-	//无功功率 暂时填0
-	inverter->reactive_power = 0;
-	//有功功率 暂时填0
-	inverter->active_power = 0;
-	//inverter->reactive_power = (factor2)*0.94*(inverter->dv*inverter->di+inverter->dvb*inverter->dib);
-	//inverter->active_power = (factor1)*0.94*(inverter->dv*inverter->di+inverter->dvb*inverter->dib);
+    //电压
+    inverter->dvd = ((data[8]<<4) + ((data[7] & 0xF0)>> 4)) * 82.5 / 4096.0;
+    inverter->dvc = ((data[11]<<4) + ((data[10] & 0xF0)>> 4)) * 82.5 / 4096.0;
+    inverter->dvb = ((data[14]<<4) + ((data[13] & 0xF0)>> 4)) * 82.5 / 4096.0;
+    inverter->dv = ((data[17]<<4) + ((data[16] & 0xF0)>> 4)) * 82.5 / 4096.0;
+    //电流
+    inverter->did = ((data[7] & 0x0F) * 256 + data[6]) * 27.5 / 4096.0;
+    inverter->dic = ((data[10] & 0x0F) * 256 + data[9]) * 27.5 / 4096.0;
+    inverter->dib = ((data[13] & 0x0F) * 256 + data[12]) * 27.5 / 4096.0;
+    inverter->di = ((data[16] & 0x0F) * 256 + data[15]) * 27.5 / 4096.0;
+    //电网电压
+    inverter->gv = (data[18]*256+data[19])/1.33;
+    //累计电量
+    inverter->curaccgend = ((data[42]*256*10.095)*220+(data[43]*10.095)*220+(data[44]*256*256+data[45]*256+data[46])/1661900.0*220.0)/3600.0/1000.0;
+    inverter->curaccgenc = ((data[37]*256*10.095)*220+(data[38]*10.095)*220+(data[39]*256*256+data[40]*256+data[41])/1661900.0*220.0)/3600.0/1000.0;
+    inverter->curaccgenb = ((data[32]*256*10.095)*220+(data[33]*10.095)*220+(data[34]*256*256+data[35]*256+data[36])/1661900.0*220.0)/3600.0/1000.0;
+    inverter->curaccgen = ((data[27]*256*10.095)*220+(data[28]*10.095)*220+(data[29]*256*256+data[30]*256+data[31])/1661900.0*220.0)/3600.0/1000.0;
+
+    //无功功率 暂时填0
+    inverter->reactive_power = 0;
+    //有功功率 暂时填0
+    inverter->active_power = 0;
+    //inverter->reactive_power = (factor2)*0.94*(inverter->dv*inverter->di+inverter->dvb*inverter->dib);
+    //inverter->active_power = (factor1)*0.94*(inverter->dv*inverter->di+inverter->dvb*inverter->dib);
     inverter->cur_output_energy = (inverter->curaccgen+inverter->curaccgenb+inverter->curaccgenc+inverter->curaccgend)*0.94*data[47];
 
 

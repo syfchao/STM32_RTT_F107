@@ -1,41 +1,37 @@
-#ifndef __MYFILE_H__
-#define __MYFILE_H__
 /*****************************************************************************/
-/* File      : myfile.h                                                      */
+/* File      : InternalFlash.h                                               */
 /*****************************************************************************/
 /*  History:                                                                 */
 /*****************************************************************************/
 /*  Date       * Author          * Changes                                   */
 /*****************************************************************************/
-/*  2017-03-29 * Shengfeng Dong  * Creation of the file                      */
+/*  2018-05-24 * Shengfeng Dong  * Creation of the file                      */
 /*             *                 *                                           */
 /*****************************************************************************/
 
 /*****************************************************************************/
 /*  Include Files                                                            */
 /*****************************************************************************/
-#include "variation.h"
+#ifndef __INTERNALFLASH_H__
+#define __INTERNALFLASH_H__
 
-typedef struct name_value
+
+/*****************************************************************************/
+/*  Variable Declarations                                                    */
+/*****************************************************************************/
+typedef enum 
 {
-    char name[32];
-    char value[64];
-}MyArray;
+	INTERNAL_FALSH_Update = 0,
+	INTERNAL_FALSH_ID = 1,
+	INTERNAL_FALSH_MAC = 2,
+
+} eInternalFlashType;
 
 /*****************************************************************************/
 /*  Function Declarations                                                    */
 /*****************************************************************************/
+int ErasePage(eInternalFlashType type);
+int WritePage(eInternalFlashType type,char *Data,int Length);
+int ReadPage(eInternalFlashType type,char *Data,int Length);
+#endif /*__INTERNALFLASH_H__*/
 
-char *file_get_one(char *s, int count, const char *filename);
-int file_set_one(const char *s, const char *filename);
-int file_get_array(MyArray *array, int num, const char *filename);
-int file_set_array(const MyArray *array, int num, const char *filename);
-int clear_file(char *filename);
-int delete_line(char* filename,char* temfilename,char* compareData,int len);
-int get_num_from_id(char inverter_ids[MAXINVERTERCOUNT][13]);
-int insert_line(char * filename,char *str);
-int search_line(char* filename,char* compareData,int len);
-int get_protection_from_file(const char pro_name[][32],float *pro_value,int *pro_flag,int num);
-int read_line(char* filename,char *linedata,char* compareData,int len);
-int read_line_end(char* filename,char *linedata,char* compareData,int len);
-#endif	/*__MYFILE_H__*/

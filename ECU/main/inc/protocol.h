@@ -27,4 +27,5 @@ int protocol_status(struct inverter_info_t *firstinverter, char *datetime);
 
 /*保存本地事件*/
 int saveevent(inverter_info *inverter, char *sendcommanddatatime);
+void save_alarm_event(inverter_info *inverter, char *date_time);
 #endif  /*__PROTOCOL_H__*/

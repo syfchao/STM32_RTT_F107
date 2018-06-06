@@ -42,33 +42,33 @@ extern ecu_info ecu;
 /*****************************************************************************/
 int updatemaxpower(inverter_info *inverter, int limitedresult)//更新逆变器的最大功率结果
 {	
-	char linedata[100] = "\0";
-	char splitdata[6][32];
-	int i;
-	
-	//读取所在ID行
-	if(1 == read_line("/home/data/power",linedata,inverter->id,12))
-	{
-		//将所在行分裂
-		splitString(linedata,splitdata);
-		memset(linedata,0x00,100);
-		sprintf(linedata,"%s,%d,%d,%d,%d,0\n",inverter->id,limitedresult,atoi(splitdata[2]),atoi(splitdata[3]),atoi(splitdata[4]));
-		//删除id所在行
-		delete_line("/home/data/power","/home/data/_power",inverter->id,12);
+    char linedata[100] = "\0";
+    char splitdata[6][32];
+    int i;
 
-		//更新所在行
-		for(i=0; i<3; i++)
-		{
-			if(1 == insert_line("/home/data/power",linedata))
-			{
-				print2msg(ECU_DBG_MAIN,inverter->id, "Update maximun power successfully");
-				break;
-			}
-			else
-				print2msg(ECU_DBG_MAIN,inverter->id, "Failed to update maximun power");
-		}
-	}
-	
+    //读取所在ID行
+    read_line("/home/data/power",linedata,inverter->id,12);
+
+    {
+        //将所在行分裂
+        splitString(linedata,splitdata);
+        memset(linedata,0x00,100);
+        sprintf(linedata,"%s,%d,%d,%d,%d,0\n",inverter->id,atoi(splitdata[1]),limitedresult,atoi(splitdata[3]),atoi(splitdata[4]));
+        //删除id所在行
+        delete_line("/home/data/power","/home/data/_power",inverter->id,12);
+        //更新所在行
+        for(i=0; i<3; i++)
+        {
+            if(1 == insert_line("/home/data/power",linedata))
+            {
+                print2msg(ECU_DBG_MAIN,inverter->id, "Update maximun power successfully");
+                break;
+            }
+            else
+                print2msg(ECU_DBG_MAIN,inverter->id, "Failed to update maximun power");
+        }
+    }
+
 
 
 	return 0;
@@ -240,37 +240,38 @@ int process_max_power(inverter_info *firstinverter)
 {
 	int limitedpower,k, m, res;
 
-	char limitedvalue;
-	int limitedresult;
-	char readpresetdata[128] = {'\0'};
-	char data[200];
-	char splitdata[6][32];
-	int num = 0;
-	inverter_info *curinverter = firstinverter;
-	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
-	memset(data,0x00,200);
-	while(-1 != read_line_end("/home/data/power",data,"1",1))
-	{
-		memset(splitdata,0x00,6*32);
-		splitString(data,splitdata);
-		if((1 == atoi(splitdata[5]))&& (0 != atoi(splitdata[1])))
-		{
-			curinverter = firstinverter;
-			for(k=0; (k<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); k++, curinverter++)
-			{
-				if(!strncmp(splitdata[0], curinverter->id, 12))
-				{
-					updatemaxflag(curinverter);
-					if(curinverter->model==0)		//读不到机型码不去设置
-							continue;
-					limitedpower = atoi(splitdata[1]);
-					limitedvalue = (limitedpower * 7395) >> 14;
-					if((curinverter->model==7)||(curinverter->model==0x17))
-							limitedvalue = limitedvalue/4;
-					for(m=0; m<3; m++)
-					{
-						setlimitedpowerone(curinverter, limitedvalue);
-						memset(readpresetdata, '\0', sizeof(readpresetdata));
+    char limitedvalue;
+    int limitedresult;
+    char readpresetdata[128] = {'\0'};
+    char data[200];
+    char splitdata[6][32];
+    int num = 0;
+    inverter_info *curinverter = firstinverter;
+    rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
+    memset(data,0x00,200);
+    while(-1 != read_line_end("/home/data/power",data,"1",1))
+    {
+        memset(splitdata,0x00,6*32);
+        splitString(data,splitdata);
+        if((1 == atoi(splitdata[5]))&& (0 != atoi(splitdata[1])))
+        {
+            curinverter = firstinverter;
+            for(k=0; (k<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); k++, curinverter++)
+            {
+                if(!strncmp(splitdata[0], curinverter->id, 12))
+                {
+                    updatemaxflag(curinverter);
+                    if(curinverter->model==0)		//读不到机型码不去设置
+                        continue;
+                    limitedpower = atoi(splitdata[1]);
+                    limitedvalue = (limitedpower * 7395) >> 14;
+                    printf("limitedpower:%d limitedvalue:%d\n",limitedpower,limitedvalue);
+                    if((curinverter->model==7)||(curinverter->model==0x17))
+                        limitedvalue = limitedvalue/4;
+                    for(m=0; m<3; m++)
+                    {
+                        setlimitedpowerone(curinverter, limitedvalue);
+                        memset(readpresetdata, '\0', sizeof(readpresetdata));
 
 						res = zb_query_protect_parameter(curinverter, readpresetdata);
 						printdecmsg(ECU_DBG_MAIN,"res", res);

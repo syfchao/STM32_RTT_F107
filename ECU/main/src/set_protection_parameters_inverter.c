@@ -960,284 +960,284 @@ int clear_flag_one(char *id, char *para_name)					//设置后清除数据库中参数的设置
 /*给逆变器设置保护参数，并且读取逆变器设置后的保护参数*/
 int set_protection_paras_one(inverter_info *firstinverter)
 {
-	char inverter_id[16]={'\0'};
-	char para_name[64];
-	char value[16];
-	int shortaddr,model;
-	int data = 0;
-	int bb_or_b1_single;
-	int i = 0,j=0;
-	inverter_info *curinverter = firstinverter;
-	for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++,curinverter++)
-	{
-		curinverter->inverterstatus.response_protection_paras_one = 0;
-	}
-	while(1)
-	{
-		memset(inverter_id,'\0',16);
-		memset(para_name,'\0',64);
-		memset(value,'\0',16);
-		shortaddr = 0;
-		model = 0;
-		bb_or_b1_single = 0;
-		shortaddr = get_value_flag_one(inverter_id, para_name, value);
-		clear_flag_one(inverter_id,para_name);	
-		
-		if(shortaddr == -1)
-		{
-			break;
-		}else if(shortaddr==0){
-			continue;
-		}
-		curinverter = firstinverter;
-		for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++,curinverter++)
-		{
-			if(!memcmp(inverter_id,curinverter->id,12))
-			{
-				shortaddr = curinverter->shortaddr;
-				model = curinverter->model;
-				bb_or_b1_single =curinverter->inverterstatus.deputy_model;
-				curinverter->inverterstatus.response_protection_paras_one = 1;
-				break;
-			}
-		}
-		
-		if((shortaddr>0)&&((model==5)||(model==6)||(model==7)||(model==0x17)))
-		{
-			if(!strcmp("under_voltage_fast", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(atof(value) * 1.3277);
-					if((bb_or_b1_single==0)&&(model==7))
-						continue;
-					else if((bb_or_b1_single==2)||(model==0x17))
-						data = (int)(atof(value) * 1.33);
-					set_protection_yc600_one(shortaddr,0x61,data,2);
-				}
-				else
-					set_undervoltage_fast_yc1000_one(shortaddr, value);
-			}
-			else if(!strcmp("over_voltage_fast", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(atof(value) * 1.3277);
-					if((bb_or_b1_single==0)&&(model==7))
-						continue;
-					else if((bb_or_b1_single==2)||(model==0x17))
-						data = (int)(atof(value) * 1.33);
-					set_protection_yc600_one(shortaddr,0x62,data,2);
-				}
-				else
-					set_overvoltage_fast_yc1000_one(shortaddr, value);
-			}
-			else if(!strcmp("under_voltage_stage_2", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(atof(value) * 1.3277);
-					if((bb_or_b1_single==0)&&(model==7))
-						continue;
-					else if((bb_or_b1_single==2)||(model==0x17))
-						data = (int)(atof(value) * 1.33);
-					set_protection_yc600_one(shortaddr,0x83,data,2);
-				}
-				else{
-					set_undervoltage_slow_yc1000_one(shortaddr, value);
-					set_undervoltage_slow_yc1000_one_5(shortaddr, value, inverter_id);
-					set_under_voltage_stage_3_yc1000_one(shortaddr,value);
-				}
-			}
-			else if(!strcmp("over_voltage_slow", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(atof(value) * 1.3277);
-					if((bb_or_b1_single==0)&&(model==7))
-						continue;
-					else if((bb_or_b1_single==2)||(model==23))
-						data = (int)(atof(value) * 1.33);
-					set_protection_yc600_one(shortaddr,0x64,data,2);
-				}
-				else{
-					set_overvoltage_slow_yc1000_one(shortaddr, value);
-					set_overvoltage_slow_yc1000_one_5(shortaddr, value, inverter_id);
-				}
-			}
-			else if(!strcmp("under_frequency_fast", para_name))
-			{
-				if((model==7)||(model==0x17))
-				{
-					data = (int)(50000000/atof(value));
-					set_protection_yc600_one(shortaddr,0x68,data,3);
-				}
-				else
-					set_underfrequency_fast_yc1000_one(shortaddr, value);
-			}
-			else if(!strcmp("over_frequency_fast", para_name))
-			{
-				if((model==7)||(model==0x17))
-				{
-					data = (int)(50000000/atof(value));
-					set_protection_yc600_one(shortaddr,0x67,data,3);
-				}
-				else
-					set_overfrequency_fast_yc1000_one(shortaddr, value);
-			}
-			else if(!strcmp("under_frequency_slow", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(50000000/atof(value));
-					set_protection_yc600_one(shortaddr,0x6A,data,3);
-				}
-				else{
-					set_underfrequency_slow_yc1000_one(shortaddr, value);
-					set_underfrequency_slow_yc1000_one_5(shortaddr, value, inverter_id);
-				}
-			}
-			else if(!strcmp("over_frequency_slow", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(50000000/atof(value));
-					set_protection_yc600_one(shortaddr,0x69,data,3);
-				}
-				else{
-					set_overfrequency_slow_yc1000_one(shortaddr, value);
-					set_overfrequency_slow_yc1000_one_5(shortaddr, value, inverter_id);
-				}
-			}
-			else if(!strcmp("voltage_triptime_fast", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(atof(value)*100);
-					set_protection_yc600_one(shortaddr,0x65,data,2);
-				}
-				else
-					set_voltage_triptime_fast_yc1000_one(shortaddr, value);
-			}
-			else if(!strcmp("voltage_triptime_slow", para_name))
-			{
-				if((model==7)||(model==0x17))
-				{
-					data = (int)(atof(value)*100);
-					set_protection_yc600_one(shortaddr,0x66,data,2);
-				}
-				else
-					set_voltage_triptime_slow_yc1000_one(shortaddr, value);
-			}
-			else if(!strcmp("frequency_triptime_fast", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(atof(value)*100);
-					set_protection_yc600_one(shortaddr,0x6B,data,2);
-				}
-				else
-					set_frequency_triptime_fast_yc1000_one(shortaddr, value);
-			}
-			else if(!strcmp("frequency_triptime_slow", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(atof(value)*100);
-					set_protection_yc600_one(shortaddr,0x6C,data,2);
-				}
-				else
-					set_frequency_triptime_slow_yc1000_one(shortaddr, value);
-			}
-			else if(!strcmp("grid_recovery_time", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(atof(value)*100);
-					set_protection_yc600_one(shortaddr,0x6D,data,2);
-				}
-				else{
-					set_grid_recovery_time_yc1000_one(shortaddr,value);
-					set_grid_recovery_time_yc1000_one_5(shortaddr, value, inverter_id);
-				}
-			}
-			else if(!strcmp("regulated_dc_working_point", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(atof(value) * 4096/82.5);
-					set_protection_yc600_one(shortaddr,0x60,data,2);
-				}
-				else
-					set_regulated_dc_working_point_yc1000_one(shortaddr,value);
-			}
-			else if(!strcmp("under_voltage_slow", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(atof(value) * 1.3277);
-					if((bb_or_b1_single==0)&&(model==7))
-						continue;
-					else if((bb_or_b1_single==2)||(model==0x17))
-						data = (int)(atof(value) * 1.33);
-					set_protection_yc600_one(shortaddr,0x6E,data,2);
-				}
-				else
-					set_under_voltage_stage_2_yc1000_one(shortaddr,value);
-			}
-			else if(!strcmp("voltage_3_clearance_time", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(atof(value)*100);
-					set_protection_yc600_one(shortaddr,0x6F,data,2);
-				}
-				else
-					set_voltage_3_clearance_time_yc1000_one(shortaddr,value);
-			}
-			else if(!strcmp("start_time", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(atof(value)*100);
-					set_protection_yc600_one(shortaddr,0x4D,data,2);
-				}
-				else
-					set_start_time_yc1000_one(shortaddr, value);
-			}
-			else if(!strcmp("active_antiisland_time", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data = (int)(atof(value)*2.5);
-					set_protection_yc600_one(shortaddr,0x3E,data,1);
-				}
-				else
-					set_active_antiisland_time_yc1000_one(shortaddr, value);
-			}
-			else if(!strcmp("power_factor", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data=(int)(atof(value));
-					set_protection_yc600_one(shortaddr,0x4F,data,1);
-				}
-			}
-			else if(!strcmp("relay_protect", para_name))
-			{
-				if((model==7)||(model==0x17)){
-					data=(int)(atof(value));
-					if(data==0)
-						set_protection_yc600_one(shortaddr,0x4A,0,0);
-					else if(data==1)
-						set_protection_yc600_one(shortaddr,0x4B,0,0);
-					else ;
-						//set_voltage_3_clearance_time_yc1000(value);
-				}
-			}
-			else 
-				;
-		
-		}
-		
-	}
-	curinverter = firstinverter;
-	for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++,curinverter++)
-	{
-		if(curinverter->inverterstatus.response_protection_paras_one == 1)
-		{
-			for(j=0; j<3; j++){
-				if(!get_parameters_from_inverter(curinverter))
-					break;
-				}
-		}
-	}
-	return 0;
-	
+    char inverter_id[16]={'\0'};
+    char para_name[64];
+    char value[16];
+    int shortaddr,model;
+    int data = 0;
+    int bb_or_b1_single;
+    int i = 0,j=0;
+    inverter_info *curinverter = firstinverter;
+    for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++,curinverter++)
+    {
+        curinverter->inverterstatus.response_protection_paras_one = 0;
+    }
+    while(1)
+    {
+        memset(inverter_id,'\0',16);
+        memset(para_name,'\0',64);
+        memset(value,'\0',16);
+        shortaddr = 0;
+        model = 0;
+        bb_or_b1_single = 0;
+        shortaddr = get_value_flag_one(inverter_id, para_name, value);
+        if(shortaddr == -1)
+        {
+            break;
+        }else if(shortaddr==0){
+            clear_flag_one(inverter_id,para_name);
+            continue;
+        }
+        clear_flag_one(inverter_id,para_name);
+        curinverter = firstinverter;
+        for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++,curinverter++)
+        {
+            if(!memcmp(inverter_id,curinverter->id,12))
+            {
+                shortaddr = curinverter->shortaddr;
+                model = curinverter->model;
+                bb_or_b1_single =curinverter->inverterstatus.deputy_model;
+                curinverter->inverterstatus.response_protection_paras_one = 1;
+                break;
+            }
+        }
+
+        if((shortaddr>0)&&((model==5)||(model==6)||(model==7)||(model==0x17)))
+        {
+            if(!strcmp("under_voltage_fast", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(atof(value) * 1.3277);
+                    if((bb_or_b1_single==0)&&(model==7))
+                        continue;
+                    else if((bb_or_b1_single==2)||(model==0x17))
+                        data = (int)(atof(value) * 1.33);
+                    set_protection_yc600_one(shortaddr,0x61,data,2);
+                }
+                else
+                    set_undervoltage_fast_yc1000_one(shortaddr, value);
+            }
+            else if(!strcmp("over_voltage_fast", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(atof(value) * 1.3277);
+                    if((bb_or_b1_single==0)&&(model==7))
+                        continue;
+                    else if((bb_or_b1_single==2)||(model==0x17))
+                        data = (int)(atof(value) * 1.33);
+                    set_protection_yc600_one(shortaddr,0x62,data,2);
+                }
+                else
+                    set_overvoltage_fast_yc1000_one(shortaddr, value);
+            }
+            else if(!strcmp("under_voltage_stage_2", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(atof(value) * 1.3277);
+                    if((bb_or_b1_single==0)&&(model==7))
+                        continue;
+                    else if((bb_or_b1_single==2)||(model==0x17))
+                        data = (int)(atof(value) * 1.33);
+                    set_protection_yc600_one(shortaddr,0x83,data,2);
+                }
+                else{
+                    set_undervoltage_slow_yc1000_one(shortaddr, value);
+                    set_undervoltage_slow_yc1000_one_5(shortaddr, value, inverter_id);
+                    set_under_voltage_stage_3_yc1000_one(shortaddr,value);
+                }
+            }
+            else if(!strcmp("over_voltage_slow", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(atof(value) * 1.3277);
+                    if((bb_or_b1_single==0)&&(model==7))
+                        continue;
+                    else if((bb_or_b1_single==2)||(model==23))
+                        data = (int)(atof(value) * 1.33);
+                    set_protection_yc600_one(shortaddr,0x64,data,2);
+                }
+                else{
+                    set_overvoltage_slow_yc1000_one(shortaddr, value);
+                    set_overvoltage_slow_yc1000_one_5(shortaddr, value, inverter_id);
+                }
+            }
+            else if(!strcmp("under_frequency_fast", para_name))
+            {
+                if((model==7)||(model==0x17))
+                {
+                    data = (int)(50000000/atof(value));
+                    set_protection_yc600_one(shortaddr,0x68,data,3);
+                }
+                else
+                    set_underfrequency_fast_yc1000_one(shortaddr, value);
+            }
+            else if(!strcmp("over_frequency_fast", para_name))
+            {
+                if((model==7)||(model==0x17))
+                {
+                    data = (int)(50000000/atof(value));
+                    set_protection_yc600_one(shortaddr,0x67,data,3);
+                }
+                else
+                    set_overfrequency_fast_yc1000_one(shortaddr, value);
+            }
+            else if(!strcmp("under_frequency_slow", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(50000000/atof(value));
+                    set_protection_yc600_one(shortaddr,0x6A,data,3);
+                }
+                else{
+                    set_underfrequency_slow_yc1000_one(shortaddr, value);
+                    set_underfrequency_slow_yc1000_one_5(shortaddr, value, inverter_id);
+                }
+            }
+            else if(!strcmp("over_frequency_slow", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(50000000/atof(value));
+                    set_protection_yc600_one(shortaddr,0x69,data,3);
+                }
+                else{
+                    set_overfrequency_slow_yc1000_one(shortaddr, value);
+                    set_overfrequency_slow_yc1000_one_5(shortaddr, value, inverter_id);
+                }
+            }
+            else if(!strcmp("voltage_triptime_fast", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(atof(value)*100);
+                    set_protection_yc600_one(shortaddr,0x65,data,2);
+                }
+                else
+                    set_voltage_triptime_fast_yc1000_one(shortaddr, value);
+            }
+            else if(!strcmp("voltage_triptime_slow", para_name))
+            {
+                if((model==7)||(model==0x17))
+                {
+                    data = (int)(atof(value)*100);
+                    set_protection_yc600_one(shortaddr,0x66,data,2);
+                }
+                else
+                    set_voltage_triptime_slow_yc1000_one(shortaddr, value);
+            }
+            else if(!strcmp("frequency_triptime_fast", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(atof(value)*100);
+                    set_protection_yc600_one(shortaddr,0x6B,data,2);
+                }
+                else
+                    set_frequency_triptime_fast_yc1000_one(shortaddr, value);
+            }
+            else if(!strcmp("frequency_triptime_slow", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(atof(value)*100);
+                    set_protection_yc600_one(shortaddr,0x6C,data,2);
+                }
+                else
+                    set_frequency_triptime_slow_yc1000_one(shortaddr, value);
+            }
+            else if(!strcmp("grid_recovery_time", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(atof(value)*100);
+                    set_protection_yc600_one(shortaddr,0x6D,data,2);
+                }
+                else{
+                    set_grid_recovery_time_yc1000_one(shortaddr,value);
+                    set_grid_recovery_time_yc1000_one_5(shortaddr, value, inverter_id);
+                }
+            }
+            else if(!strcmp("regulated_dc_working_point", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(atof(value) * 4096/82.5);
+                    set_protection_yc600_one(shortaddr,0x60,data,2);
+                }
+                else
+                    set_regulated_dc_working_point_yc1000_one(shortaddr,value);
+            }
+            else if(!strcmp("under_voltage_slow", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(atof(value) * 1.3277);
+                    if((bb_or_b1_single==0)&&(model==7))
+                        continue;
+                    else if((bb_or_b1_single==2)||(model==0x17))
+                        data = (int)(atof(value) * 1.33);
+                    set_protection_yc600_one(shortaddr,0x6E,data,2);
+                }
+                else
+                    set_under_voltage_stage_2_yc1000_one(shortaddr,value);
+            }
+            else if(!strcmp("voltage_3_clearance_time", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(atof(value)*100);
+                    set_protection_yc600_one(shortaddr,0x6F,data,2);
+                }
+                else
+                    set_voltage_3_clearance_time_yc1000_one(shortaddr,value);
+            }
+            else if(!strcmp("start_time", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(atof(value)*100);
+                    set_protection_yc600_one(shortaddr,0x4D,data,2);
+                }
+                else
+                    set_start_time_yc1000_one(shortaddr, value);
+            }
+            else if(!strcmp("active_antiisland_time", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data = (int)(atof(value)*2.5);
+                    set_protection_yc600_one(shortaddr,0x3E,data,1);
+                }
+                else
+                    set_active_antiisland_time_yc1000_one(shortaddr, value);
+            }
+            else if(!strcmp("power_factor", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data=(int)(atof(value));
+                    set_protection_yc600_one(shortaddr,0x4F,data,1);
+                }
+            }
+            else if(!strcmp("relay_protect", para_name))
+            {
+                if((model==7)||(model==0x17)){
+                    data=(int)(atof(value));
+                    if(data==0)
+                        set_protection_yc600_one(shortaddr,0x4A,0,0);
+                    else if(data==1)
+                        set_protection_yc600_one(shortaddr,0x4B,0,0);
+                    else ;
+                    //set_voltage_3_clearance_time_yc1000(value);
+                }
+            }
+            else
+                ;
+
+        }
+
+    }
+    curinverter = firstinverter;
+    for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++,curinverter++)
+    {
+        if(curinverter->inverterstatus.response_protection_paras_one == 1)
+        {
+            for(j=0; j<3; j++){
+                if(!get_parameters_from_inverter(curinverter))
+                    break;
+            }
+        }
+    }
+    return 0;
+
 }
 
 /*读取每一台逆变器的保护参数*/

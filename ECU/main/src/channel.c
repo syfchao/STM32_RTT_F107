@@ -159,15 +159,16 @@ int saveECUChannel(int channel)
 
 void changeChannelOfInverters(int oldChannel, int newChannel)
 {
-	int num = 0,i = 0,nChannel;
-	inverter_info *curinverter = inverter;
-	
-	//获取逆变器ID
-	for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++, curinverter++)			//有效逆变器轮训
-	{
-		curinverter->inverterstatus.flag = 1;
-			num++;
-	}
+    int num = 0,i = 0,nChannel;
+    inverter_info *curinverter = inverter;
+
+    //?????ID
+    for(i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++, curinverter++)			//???????
+    {
+        curinverter->inverterstatus.flag = 1;
+        curinverter->inverterstatus.bindflag= 0;
+        num++;
+    }
 
 	//更改信道
 	if (num > 0) {

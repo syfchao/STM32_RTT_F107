@@ -75,13 +75,13 @@ int ecu_msg(char *sendbuffer, int num, const char *recvbuffer)
 }
 
 /* 协议的逆变器部分 */
-int inverter_msg(char *sendbuffer, char* id)
+int inverter_msg(char *sendbuffer, char* id,char* inverter_version)
 {
-	//添加逆变器ID
-	strcat(sendbuffer, id); //逆变器ID
-	strcat(sendbuffer, "00"); 	 //逆变器类型
-	strcat(sendbuffer, "00000"); //逆变器版本号
-	strcat(sendbuffer, "END"); 	 //结束符
+    //添加逆变器ID
+    strcat(sendbuffer, id); //逆变器ID
+    strcat(sendbuffer, "00"); 	 //逆变器类型
+    strcat(sendbuffer, inverter_version); //what guess
+    strcat(sendbuffer, "END"); 	 //结束符
 
 	return 0;
 }
@@ -142,31 +142,31 @@ int clear_id()
 /* 【A102】ECU上报逆变器ID */
 int response_inverter_id(const char *recvbuffer, char *sendbuffer)
 {
-	//记录逆变器数量
-	int num = 0,i;
-	char inverter_ids[MAXINVERTERCOUNT][13];
-	rt_err_t result = rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
-	/* Head */
-	strcpy(sendbuffer, "APS13AAAAAA102AAA0"); //交给协议函数
+    //记录逆变器数量
+    int i = 0;
+    char UID[13];
+    char inverter_version[6] = {'\0'};
 
-	{
-		//逆变器数量
-		num = get_num_from_id(inverter_ids);
-		/* ECU Message */
-		ecu_msg(sendbuffer, num, recvbuffer);
+    /* Head */
+    strcpy(sendbuffer, "APS13AAAAAA102AAA0"); //交给协议函数
 
-		for(i = 0; i < num;i++)
-		{
-			if(12 == strlen(inverter_ids[i]))
-			{
-				/* Inverter Message */
-				inverter_msg(sendbuffer,inverter_ids[i]);		
-			}
-		}
-		
-	}
-	rt_mutex_release(record_data_lock);
-	return 0;
+    {
+
+        /* ECU Message */
+        ecu_msg(sendbuffer, ecu.total, recvbuffer);
+
+        for(i = 0; i < ecu.total;i++)
+        {
+            sprintf(UID,"%s",inverter[i].id);
+            sprintf(inverter_version,"%05d",inverter[i].version);
+            UID[12] = '\0';
+            /* Inverter Message */
+            inverter_msg(sendbuffer,UID,inverter_version);
+
+        }
+
+    }
+    return 0;
 }
 
 /* 【A103】EMA设置逆变器ID */
