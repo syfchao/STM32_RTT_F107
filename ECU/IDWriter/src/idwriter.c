@@ -461,7 +461,7 @@ void idwrite_thread_entry(void* parameter)
             fp=fopen("/yuneng/area.con", "w");
             fputs(area,fp);
             fclose(fp);
-
+	   WritePage(INTERNAL_FALSH_AREA,area,strlen(area));
             memset(area,'\0',sizeof(area));
 
             fp=fopen("/yuneng/area.con","r");
@@ -469,13 +469,7 @@ void idwrite_thread_entry(void* parameter)
                 fgets(area, sizeof(area), fp);
                 fclose(fp);
             }
-            if(!memcmp(area,"SAA",3))
-            {
-                echo("/YUNENG/DRM.CON","1");
-            }else
-            {
-                unlink("/YUNENG/DRM.CON");
-            }
+
             printdecmsg(ECU_DBG_IDWRITE,"Send",send(clientfd,area,strlen(area),0));
         }
 
