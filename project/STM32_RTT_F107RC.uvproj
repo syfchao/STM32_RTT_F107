@@ -726,6 +726,11 @@
               <FileType>1</FileType>
               <FilePath>..\components\DeviceDrivers\usart5.c</FilePath>
             </File>
+            <File>
+              <FileName>InternalFlash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\DeviceDrivers\InternalFlash.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

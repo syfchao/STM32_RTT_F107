@@ -174,8 +174,9 @@ int get_ecu_type()
 {
     int fd;
     char version[13] = {'\0'};
+    char buff[13] = {'\0'};
     ecu_type = 1;
-    fd = open("/YUNENG/AREA.CON", O_RDONLY, 0);
+    fd = open("/yuneng/area.con", O_RDONLY, 0);
     if (fd >= 0)
     {
         read(fd, version, 10);
@@ -189,6 +190,26 @@ int get_ecu_type()
             ecu_type = 1;
         //print2msg(ECU_DBG_MAIN,"version",version);
         close(fd);
+	ReadPage(INTERNAL_FALSH_AREA,buff,13);
+	//如果为第一个字节为FF则写入区域
+	if(buff[0] == 0xff)
+	{
+		WritePage(INTERNAL_FALSH_AREA,version,13);
+	}
+		
+    }else
+    {
+    	ReadPage(INTERNAL_FALSH_AREA,buff,10);
+	if(buff[0] != 0xff)
+	{
+		echo("/yuneng/area.con",buff);
+		if(!strncmp(&buff[0], "MX", 2))
+	            ecu_type = 3;
+	        else if(!strncmp(&buff[0], "NA", 2))
+	            ecu_type = 2;
+	        else
+	            ecu_type = 1;
+	}
     }
     printdecmsg(ECU_DBG_MAIN,"ecu_type",ecu_type);
     return 0;
@@ -223,15 +244,22 @@ void get_ecuid(char *ecuid)
 int DRMFunction(void)
 {
     int fd;
-    char buff[2] = {'\0'};
+    char buff[8] = {'\0'};
 
-    fd = open("/YUNENG/DRM.CON", O_RDONLY, 0);
+    fd = open("/yuneng/area.con", O_RDONLY, 0);
     if(fd >= 0)
     {
         memset(buff, '\0', sizeof(buff));
-        read(fd, buff, 1);
+        read(fd, buff, 8);
         close(fd);
-        if(buff[0] == '1')
+        if(!memcmp(buff,"SAA",3))
+        {
+            return 1;
+        }
+    }else
+    {
+    	ReadPage(INTERNAL_FALSH_AREA,buff,8);
+	if(!memcmp(buff,"SAA",3))
         {
             return 1;
         }
@@ -1450,7 +1478,6 @@ void initPath(void)
 	mkdir("/home/record/inversta",0x777);
 	mkdir("/home/record/power",0x777);
 	mkdir("/home/record/energy",0x777);
-	//echo("/yuneng/area.con","NA");
 	echo("/yuneng/channel.con","0x10");
 	echo("/yuneng/limiteid.con","1");
 	echo("/yuneng/control.con","Timeout=10\nReport_Interval=15\nDomain=ecu.apsema.com\nIP=60.190.131.190\nPort1=8997\nPort2=8997\n");

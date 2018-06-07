@@ -41,6 +41,7 @@
 #include "channel.h"
 #include "key.h"
 #include "timer.h"
+#include "InternalFlash.h"
 
 #define MIN_FUNCTION_ID 0
 #define MAX_FUNCTION_ID 14
@@ -81,6 +82,45 @@ void add_Phone_functions(void)
 	pfun_Phone[P0018] = Phone_GetShortAddrInfo;		//功率电流电压曲线
 }
 
+
+
+//返回0 表示格式正确，返回1表示发送格式错误
+int strToHex(const char *recvbuff,unsigned char *buff,int length)
+{
+	int i =0;
+	for(i = 0;i<length;i++)
+	{
+		if((recvbuff[i*2] >= 'a') && (recvbuff[i*2] <= 'f'))
+		{
+			buff[i] = (recvbuff[i*2] -'a' + 10)*0x10;
+		}else if((recvbuff[i*2] >= 'A') && (recvbuff[i*2] <= 'F'))
+		{
+			buff[i] = (recvbuff[i*2] -'A' + 10)*0x10;
+		}else if((recvbuff[i*2] >= '0') && (recvbuff[i*2] <= '9'))
+		{
+			buff[i] = (recvbuff[i*2] -'0' )*0x10;
+		}else
+		{
+			return -1;
+		}
+
+		if((recvbuff[i*2+1] >= 'a') && (recvbuff[i*2+1] <= 'f'))
+		{
+			buff[i] += (recvbuff[i*2+1] -'a' + 10);
+		}else if((recvbuff[i*2+1] >= 'A') && (recvbuff[i*2+1] <= 'F'))
+		{
+			buff[i] += (recvbuff[i*2+1] -'A' + 10);
+		}else if((recvbuff[i*2+1] >= '0') && (recvbuff[i*2+1] <= '9'))
+		{
+			buff[i] += (recvbuff[i*2+1] -'0');
+		}else
+		{
+			return -1;
+		}
+		
+	}
+	return 0;
+}
 
 int getAddr(MyArray *array, int num,IPConfig_t *IPconfig)
 {
@@ -715,6 +755,8 @@ void phone_server_thread_entry(void* parameter)
 
 	get_ecuid(ecu.id);
 	get_mac((unsigned char*)ecu.MacAddress);			//ECU 有线Mac地址
+	printf("ecu.id:%s   ,ecu.MacAddress: %02x:%02x:%02x:%02x:%02x:%02x\n",ecu.id,ecu.MacAddress[0],ecu.MacAddress[1],ecu.MacAddress[2],ecu.MacAddress[3],ecu.MacAddress[4],ecu.MacAddress[5]);
+	detectionInternalFlash(ecu.id,ecu.MacAddress);
 	readconnecttime();
 	
 	add_Phone_functions();

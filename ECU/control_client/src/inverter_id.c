@@ -49,6 +49,7 @@ int ecu_msg(char *sendbuffer, int num, const char *recvbuffer)
 	sprintf(version,"%s%s.%s",ECU_EMA_VERSION,MAJORVERSION,MINORVERSION);
 	version_number[0] = '3';
 	version_number[1] = '\0';
+	//ªÒ»°«¯”Ú
 	file_get_one(area, sizeof(area),
 			"/yuneng/area.con");
 

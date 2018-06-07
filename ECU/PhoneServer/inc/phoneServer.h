@@ -15,6 +15,8 @@
 /*  Function Declarations                                                    */
 /*****************************************************************************/
 
+int strToHex(const char *recvbuff,unsigned char *buff,int length);
+
 //获取基本信息
 void Phone_GetBaseInfo(unsigned char * ID,int Data_Len,const char *recvbuffer); 				//获取基本信息请求
 //获取发电量数据
