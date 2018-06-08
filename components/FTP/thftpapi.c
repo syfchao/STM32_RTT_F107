@@ -427,6 +427,7 @@ int ftp_retrfile( int c_sock, char *s, char *d ,unsigned long long *stor_size, i
                 sum += len;
 
                 write_len = fileWrite( handle, buf, len );
+				printf("%d\n",write_len);
                 if (write_len != len || (stop != NULL && *stop))
                 {
                     closesocket( d_sock );

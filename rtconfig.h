@@ -104,7 +104,7 @@
 #define RT_DFS_ELM_MAX_SECTOR_SIZE  4096     //这里一定要与实际的spi flash一个扇区所包含的字节数相符,太小了会出现内存非法覆盖的情况  
   
 /* the max number of mounted filesystem */  
-#define DFS_FILESYSTEMS_MAX         2  
+#define DFS_FILESYSTEMS_MAX         1  
 /* the max number of opened files       */  
 #define DFS_FD_MAX                  16  
 
