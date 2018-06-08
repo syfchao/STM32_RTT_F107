@@ -756,7 +756,7 @@ void phone_server_thread_entry(void* parameter)
 	get_ecuid(ecu.id);
 	get_mac((unsigned char*)ecu.MacAddress);			//ECU ”–œﬂMacµÿ÷∑
 	printf("ecu.id:%s   ,ecu.MacAddress: %02x:%02x:%02x:%02x:%02x:%02x\n",ecu.id,ecu.MacAddress[0],ecu.MacAddress[1],ecu.MacAddress[2],ecu.MacAddress[3],ecu.MacAddress[4],ecu.MacAddress[5]);
-	detectionInternalFlash(ecu.id,ecu.MacAddress);
+	detectionInternalFlash(ecu.id,(unsigned char *)ecu.MacAddress);
 	readconnecttime();
 	
 	add_Phone_functions();
