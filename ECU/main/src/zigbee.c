@@ -907,7 +907,7 @@ int zb_query_data(inverter_info *inverter)		//ÇëÇóÄæ±äÆ÷ÊµÊ±Êı¾İ
 			{
 				resolvedata_1200(&data[4], inverter);
 			}
-			else if(7==inverter->model)
+			else if((7==inverter->model) || (8==inverter->model))
 			{
 				if(0xBB == data[3])
 				{
@@ -1586,7 +1586,7 @@ int getalldata(inverter_info *firstinverter,int time_linux)		//»ñÈ¡Ã¿¸öÄæ±äÆ÷µÄÊ
 	curinverter = firstinverter;
 	for(curenergy=0, i=0; (i<MAXINVERTERCOUNT)&&(12==strlen(curinverter->id)); i++, curinverter++){		//¼ÆËãµ±Ç°Ò»ÂÖ·¢µçÁ¿
 		if(1 == curinverter->inverterstatus.dataflag){
-			if((curinverter->model==5) || (curinverter->model==6) || (curinverter->model==7) || (curinverter->model==0x17))
+			if((curinverter->model==5) || (curinverter->model==6) || (curinverter->model==7) ||  (curinverter->model==8) || (curinverter->model==0x17))
 				{
 					curenergy += curinverter->curgeneration;
 					curenergy += curinverter->curgenerationb;

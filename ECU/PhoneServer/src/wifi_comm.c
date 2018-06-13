@@ -217,7 +217,7 @@ void APP_Response_PowerGeneration(char mapping,unsigned char *ID,inverter_info *
 			SendData[packlength++] = curinverter->opd % 256;
 
 			
-		}else if((curinverter->model == 7))
+		}else if((curinverter->model == 7)||(curinverter->model == 8))
 		{
 			//UID
 			SendData[packlength++] = ((curinverter->id[0]-'0') << 4) + (curinverter->id[1]-'0');

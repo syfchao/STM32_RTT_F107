@@ -480,7 +480,7 @@ int protocol_APS18(struct inverter_info_t *firstinverter, char *sendcommanddatet
 				transpower(buff, inverter->opd);
 				strcat(buff, "END");
 			}
-			else if((7 == inverter->model))	//YC600机型
+			else if((7 == inverter->model)||(8 == inverter->model))	//YC600机型
 			{
 				strcat(buff, inverter->id);
 				strcat(buff, "07");
