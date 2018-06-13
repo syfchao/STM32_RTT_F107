@@ -30,6 +30,7 @@
 #include "datetime.h"
 #include "debug.h"
 #include "lan8720rst.h"
+#include "flash_if.h"
 
 /*****************************************************************************/
 /*  Function Implementations                                                 */
@@ -359,7 +360,7 @@ int ftp_type( int c_sock, char mode )
         return 0;
 }
 
-//下载文件
+//下载文件到文件系统
 int ftp_retrfile( int c_sock, char *s, char *d ,unsigned long long *stor_size, int *stop)
 {
     int     d_sock = 0;
@@ -476,6 +477,132 @@ int ftp_retrfile( int c_sock, char *s, char *d ,unsigned long long *stor_size, i
         if ( result >= 300 ) {
             free(buf);
             unlink(d);
+            return result;
+        }
+        free(buf);
+        return 0;
+    }
+
+}
+
+//下载文件到内部Flash
+int ftp_retrfile_InternalFlash( int c_sock, char *s, char *d ,unsigned long long *stor_size, int *stop)
+{
+    int     d_sock = 0;
+    ssize_t len,write_len,sum=0;
+    unsigned int app2addr = 0x08080000;
+    char    *buf;
+    int     result =0;
+    fd_set rd;
+    struct timeval timeout;
+    //char time[20];
+    buf = malloc(1462);
+
+	
+    //设置传输模式
+    ftp_type(c_sock, 'I');
+
+    //连接到PASV接口
+    d_sock = ftp_pasv_connect(c_sock);
+    if (d_sock == -1)
+    {
+        printmsg(ECU_DBG_UPDATE,"ftp_pasv_connect failed");
+        free(buf);
+        return -1;
+    }
+
+    //发送STOR命令
+    memset(buf,0x00, sizeof(buf));
+    sprintf( buf, "RETR %s\r\n", s );
+    result = ftp_sendcmd( c_sock, buf );
+    if (result >= 300 || result == 0)
+    {
+        closesocket( d_sock );
+        printmsg(ECU_DBG_UPDATE,"RETR response error");
+        free(buf);
+        return result;
+    }
+	
+    //解锁内部Flash
+    FLASH_Unlock();
+    if(1 == FLASH_If_Erase_APP2())	//清除APP2区域
+    {
+    	free(buf);
+	 printmsg(ECU_DBG_UPDATE,"FLASH_If_Erase_APP2 failed");	
+	 return -1;
+    }
+	
+    //开始向PASV读取数据
+    memset(buf,0x00, sizeof(buf));
+    FD_ZERO(&rd);
+    FD_SET(d_sock, &rd);
+    timeout.tv_sec = 20;
+    timeout.tv_usec = 0;
+
+    while (1) {
+        len = select(d_sock+1, &rd, NULL, NULL, &timeout);
+        if(len <= 0){
+            printmsg(ECU_DBG_UPDATE,"ftp_retrfile select out");
+            break;
+        }else
+        {
+            if((len = recv( d_sock, buf, 1460, MSG_DONTWAIT )) > 0 )
+            {
+                if(len%2 == 1)
+                {
+                    closesocket( d_sock );
+                    free(buf);
+                    return -1;
+                }
+                sum += len;
+				
+		
+		write_len = FLASH_If_WriteData(app2addr,buf,len);
+		app2addr+=len;
+		printf("len:%d  write_len:%d\n",len,write_len);		
+                if (write_len != len || (stop != NULL && *stop))
+                {
+                    closesocket( d_sock );
+                    free(buf);
+                    return -1;
+                }
+
+                if (stor_size != NULL)
+                {
+                    *stor_size += write_len;
+                }
+                memset(buf,0x00, sizeof(buf));
+                if(len < 1){
+
+                    printdecmsg(ECU_DBG_UPDATE,"transfer",len);
+                    break;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    closesocket( d_sock );
+
+
+    timeout.tv_sec = 3;
+    timeout.tv_usec = 0;
+    //向服务器接收返回值
+    memset(buf,0x00, sizeof(buf));
+    len = recv( c_sock, buf, 512, 0 );
+    if(len <= 0)
+    {
+        free(buf);
+        return -1;
+    }else
+    {
+
+        buf[len] = 0;
+        sscanf( buf, "%d", &result );
+        if ( result >= 300 ) {
+            free(buf);
             return result;
         }
         free(buf);
@@ -614,7 +741,7 @@ int ftp_deletefile( int c_sock, char *s )
 }
 
 
-//下载文件
+//下载文件到文件系统
 int ftpgetfile(char *domain,char *host, int port, char *user, char *pwd,char *remotefile,char *localfile)
 {
     unsigned long long stor_size = 0;
@@ -629,6 +756,28 @@ int ftpgetfile(char *domain,char *host, int port, char *user, char *pwd,char *re
         return -1;
     }
     ret = ftp_retrfile(sockfd, remotefile, localfile ,&stor_size, &stop);
+    printdecmsg(ECU_DBG_UPDATE,"ret",ret);
+    printdecmsg(ECU_DBG_UPDATE,"stor_size",stor_size);
+    printdecmsg(ECU_DBG_UPDATE,"stop",stop);
+    ftp_quit( sockfd);
+    return ret;
+}
+
+//下载文件到文件系统
+int ftpgetfile_InternalFlash(char *domain,char *host, int port, char *user, char *pwd,char *remotefile,char *localfile)
+{
+    unsigned long long stor_size = 0;
+    int stop = 0,ret = 0;
+    int sockfd = ftp_connect(domain,host, port, user, pwd  );
+    if(sockfd != -1)
+    {
+        printdecmsg(ECU_DBG_UPDATE,"ftp connect successful",sockfd);
+    }else
+    {
+        printmsg(ECU_DBG_UPDATE,"ftp connect failed");
+        return -1;
+    }
+    ret = ftp_retrfile_InternalFlash(sockfd, remotefile, localfile ,&stor_size, &stop);
     printdecmsg(ECU_DBG_UPDATE,"ret",ret);
     printdecmsg(ECU_DBG_UPDATE,"stor_size",stor_size);
     printdecmsg(ECU_DBG_UPDATE,"stop",stop);
