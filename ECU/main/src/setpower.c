@@ -266,7 +266,7 @@ int process_max_power(inverter_info *firstinverter)
                     limitedpower = atoi(splitdata[1]);
                     limitedvalue = (limitedpower * 7395) >> 14;
                     printf("limitedpower:%d limitedvalue:%d\n",limitedpower,limitedvalue);
-                    if((curinverter->model==7)||(curinverter->model==0x17))
+                    if((curinverter->model==7)||(curinverter->model==8)||(curinverter->model==0x17))
                         limitedvalue = limitedvalue/4;
                     for(m=0; m<3; m++)
                     {
@@ -278,7 +278,7 @@ int process_max_power(inverter_info *firstinverter)
                         if(1 == res)
                         {
                             limitedresult = (readpresetdata[5] << 14) / 7395;
-                            if((curinverter->model==7)||(curinverter->model==0x17))
+                            if((curinverter->model==7)||(curinverter->model==8)||(curinverter->model==0x17))
                                 limitedresult=limitedresult*4;
                             updatemaxpower(curinverter, limitedresult);
                             save_max_power_result_one(curinverter, limitedresult);
@@ -325,7 +325,7 @@ int read_max_power(inverter_info *firstinverter)
                 if(1 == res)
                 {
                     limitedresult = (readpresetdata[5] << 14) / 7395;					//¶ÁÈ¡³É¹¦
-                    if((curinverter->model==7)||(curinverter->model==0x17))
+                    if((curinverter->model==7)||(curinverter->model==8)||(curinverter->model==0x17))
                         limitedresult = limitedresult*4;
                     updatemaxpower(curinverter, limitedresult);
                     //updatemaxflag(curinverter);

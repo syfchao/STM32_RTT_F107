@@ -433,7 +433,7 @@ int resolvedata_600(char *data, struct inverter_info_t *inverter)
             inverter->gf = 50.0;
         if(4==inverter->model)
             inverter->gf = 60.0;
-        if(7==inverter->model)
+        if((7==inverter->model)||(8==inverter->model))
         {
             if(ecu_type==1)
                 inverter->gf = 50;
@@ -644,7 +644,7 @@ int resolvedata_600_new(char *data, struct inverter_info_t *inverter)
             inverter->gf = 50.0;
         if(4==inverter->model)
             inverter->gf = 60.0;
-        if(7==inverter->model)
+        if((7==inverter->model)||(8==inverter->model))
         {
             if(ecu_type==1)
                 inverter->gf = 50;
@@ -875,7 +875,7 @@ int resolvedata_1200(char *data, struct inverter_info_t *inverter)
             inverter->gf = 50.0;
         if(4==inverter->model)
             inverter->gf = 60.0;
-        if(7==inverter->model)
+        if((7==inverter->model)||(8==inverter->model))
         {
             if(ecu_type==1)
                 inverter->gf = 50;

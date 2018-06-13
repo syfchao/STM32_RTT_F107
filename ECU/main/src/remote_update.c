@@ -169,7 +169,7 @@ int Sendupdatepackage_single(inverter_info *inverter)	//发送单点数据包
 
     if((5 == inverter->model)||(6 == inverter->model))		//YC1000CN机型
         fd=open("/ftp/UPYC1000.BIN", O_RDONLY,0);
-    else if((7 == inverter->model))		//YC600CN机型
+    else if((7 == inverter->model)||(8 == inverter->model))		//YC600CN机型
         fd=open("/ftp/UPYC600.BIN", O_RDONLY,0);
     else if((23 == inverter->model))		//YC600CN机型
         fd=open("/ftp/UPQS1200.BIN", O_RDONLY,0);
@@ -265,7 +265,7 @@ int Complementupdatepackage_single(inverter_info *inverter)	//检查漏掉的数据包并
 
         if((5 == inverter->model)||(6 == inverter->model))		//YC1000CN机型
             fd=open("/ftp/UPYC1000.BIN", O_RDONLY,0);
-        else if((7 == inverter->model))		//YC600CN机型
+        else if((7 == inverter->model)||(8 == inverter->model))		//YC600CN机型
             fd=open("/ftp/UPYC600.BIN", O_RDONLY,0);
         else if((23 == inverter->model))		//YC600CN机型
             fd=open("/ftp/UPQS1200.BIN", O_RDONLY,0);
@@ -474,7 +474,7 @@ int set_update_new(inverter_info *inverter,int *sector_all,unsigned short *crc_u
     }
 
     //根据不同的机型码，打开不同的文件，计算校验值
-    if(inverter->model==7)
+    if((inverter->model==7)||(inverter->model==8))
     {
         remote_update_fd=open("/ftp/UPYC600.BIN",O_RDONLY, 0);
         crc=crc_file(remote_update_fd);
@@ -1063,7 +1063,7 @@ int remote_update_single(inverter_info *inverter)
     unsigned short crc_update_4k=0;
     int cur_crc=0;
     char update_file_name[100]={'\0'};
-    if(inverter->model==7)
+    if((inverter->model==7)||(inverter->model==8))
         sprintf(update_file_name,"/ftp/UPYC600.BIN");
     else if((inverter->model==5)||(inverter->model==6))
         sprintf(update_file_name,"/ftp/UPYC1000.BIN");
@@ -1283,7 +1283,7 @@ int remote_update(inverter_info *firstinverter)
             if(updateNum >= 1)	//需要升级的次数大于1，进行升级。升级成功了改为0 升级失败减1
             {
                 printmsg(ECU_DBG_MAIN,curinverter->id);
-                if(curinverter->model==7)		//YC600需要关闭半小时以上才能进行升级,与下面的开机对应
+                if((curinverter->model==7)||(curinverter->model==8))	//YC600需要关闭半小时以上才能进行升级,与下面的开机对应
                 {
                     if(curinverter->inverterstatus.updating==0)
                     {

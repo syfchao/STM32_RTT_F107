@@ -63,7 +63,7 @@ typedef struct inverter_info_t{
     char id[13];		//逆变器的ID
     unsigned short shortaddr;			//Zigbee的短地址
 
-    unsigned char model;					//机型：1是YC250CN,2是YC250NA，3是YC500CN，4是YC500NA，5是YC900CN，6是YC900NA 7是YC600
+    unsigned char model;					//机型：1是YC250CN,2是YC250NA，3是YC500CN，4是YC500NA，5是YC900CN，6是YC900NA 7是YC600 8是YC600(60项参数)
     status_t inverterstatus;		//位域的各种状态
     int version;				//软件版本号(见zigbee  zb_query_inverter_info函数)
     unsigned char signalstrength;			//逆变器Zigbee信号强度
