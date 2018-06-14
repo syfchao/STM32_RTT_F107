@@ -558,8 +558,7 @@ int ftp_retrfile_InternalFlash( int c_sock, char *s, char *d ,unsigned long long
 				
 		
 		write_len = FLASH_If_WriteData(app2addr,buf,len);
-		app2addr+=len;
-		printf("len:%d  write_len:%d\n",len,write_len);		
+		app2addr+=len;		
                 if (write_len != len || (stop != NULL && *stop))
                 {
                     closesocket( d_sock );
