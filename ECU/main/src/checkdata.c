@@ -42,10 +42,10 @@ int check_yc500(struct inverter_info_t *inverter)		//在解析函数的最后调用
 		inverter->di = 0;
 	if(inverter->dib < 0)
 		inverter->dib = 0;
-	if(inverter->op > 350)
-		inverter->op = 350;
-	if(inverter->opb > 350)
-		inverter->opb = 350;
+	if(inverter->op > 500)
+		inverter->op = 500;
+	if(inverter->opb > 500)
+		inverter->opb = 500;
 	if(inverter->op < 0)
 		inverter->op = 0;
 	if(inverter->opb < 0)
@@ -132,14 +132,14 @@ int check_yc1000(struct inverter_info_t *inverter)		//在解析函数的最后调用
 		inverter->dic = 0;
 	if(inverter->did < 0)
 		inverter->did = 0;
-	if(inverter->op > 350)
-		inverter->op = 350;
-	if(inverter->opb > 350)
-		inverter->opb = 350;
-	if(inverter->opc > 350)
-		inverter->opc = 350;
-	if(inverter->opd > 350)
-		inverter->opd = 350;
+	if(inverter->op > 500)
+		inverter->op = 500;
+	if(inverter->opb > 500)
+		inverter->opb = 500;
+	if(inverter->opc > 500)
+		inverter->opc = 500;
+	if(inverter->opd > 500)
+		inverter->opd = 500;
 	if(inverter->op < 0)
 		inverter->op = 0;
 	if(inverter->opb < 0)
@@ -238,14 +238,14 @@ int check_qs1200(struct inverter_info_t *inverter)		//在解析函数的最后调用
 		inverter->dic = 0;
 	if(inverter->did < 0)
 		inverter->did = 0;
-	if(inverter->op > 350)
-		inverter->op = 350;
-	if(inverter->opb > 350)
-		inverter->opb = 350;
-	if(inverter->opc > 350)
-		inverter->opc = 350;
-	if(inverter->opd > 350)
-		inverter->opd = 350;
+	if(inverter->op > 500)
+		inverter->op = 500;
+	if(inverter->opb > 500)
+		inverter->opb = 500;
+	if(inverter->opc > 500)
+		inverter->opc = 500;
+	if(inverter->opd > 500)
+		inverter->opd = 500;
 	if(inverter->op < 0)
 		inverter->op = 0;
 	if(inverter->opb < 0)
