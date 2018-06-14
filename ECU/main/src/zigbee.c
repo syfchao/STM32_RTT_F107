@@ -907,7 +907,7 @@ int zb_query_data(inverter_info *inverter)		//请求逆变器实时数据
 			{
 				resolvedata_1200(&data[4], inverter);
 			}
-			else if((7==inverter->model) || (8==inverter->model))
+			else if((7==inverter->model))
 			{
 				if(0xBB == data[3])
 				{
@@ -920,7 +920,10 @@ int zb_query_data(inverter_info *inverter)		//请求逆变器实时数据
 					inverter->inverterstatus.deputy_model = 2;
 				}
 				else ;
-			}
+			}else if(8==inverter->model)
+                           {
+                                   resolvedata_600_60(&data[4], inverter);
+                           }
 
 			else if(5==inverter->model)
 				resolvedata_1000(&data[4], inverter);
