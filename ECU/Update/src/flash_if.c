@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include "rtthread.h"
 #include "debug.h"
+#include "mcp1316.h"
 
 /*****************************************************************************/
 /*  Function Implementations                                                 */
@@ -83,11 +84,12 @@ uint32_t FLASH_If_Erase_APP2()
     {
         /* Device voltage range supposed to be [2.7V to 3.6V], the operation will
        be done by word */
-        if (FLASH_ErasePage(i) != FLASH_COMPLETE)
+        while (FLASH_ErasePage(i) != FLASH_COMPLETE)
         {
             /* Error occurred while page erase */
             return (1);
         }
+        MCP1316_kickwatchdog();
     }
 
     return (0);

@@ -3,6 +3,7 @@
 
 #include "variation.h"
 #include "arch/sys_arch.h"
+#include "phoneServer.h"
 
 typedef struct
 {
@@ -55,4 +56,6 @@ void APP_Response_SetChannel(unsigned char *ID,unsigned char mapflag,char SIGNAL
 //18 	获取短地址
 void APP_Response_GetShortAddrInfo(char mapping,unsigned char *ID,inverter_info *inverter);
 
+//24 命令回应
+void APP_Response_ServerInfo(unsigned char *ID,char mapping,ECUServerInfo_t *serverInfo);
 #endif /*__WIFI_COMM_H__*/
