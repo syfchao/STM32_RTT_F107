@@ -157,13 +157,13 @@ int resolvedata_1000(char *data, struct inverter_info_t *inverter)
     }
 
 
-    if(inverter->op>260)
+    if(inverter->op>500)
         inverter->op = (int)(inverter->dv*inverter->di/100.0);
-    if(inverter->opb>260)
+    if(inverter->opb>500)
         inverter->opb = (int)(inverter->dvb*inverter->dib/100.0);
-    if(inverter->opc>260)
+    if(inverter->opc>500)
         inverter->opc = (int)(inverter->dvc*inverter->dic/100.0);
-    if(inverter->opd>260)
+    if(inverter->opd>500)
         inverter->opd = (int)(inverter->dvd*inverter->did/100.0);
 
 
@@ -363,9 +363,9 @@ int resolvedata_600(char *data, struct inverter_info_t *inverter)
     }
 
 
-    if(inverter->op>360)
+    if(inverter->op>500)
         inverter->op = (int)(inverter->dv*inverter->di);
-    if(inverter->opb>360)
+    if(inverter->opb>500)
         inverter->opb = (int)(inverter->dvb*inverter->dib);
 #if ECU_DEBUG
 #if ECU_DEBUG_MAIN
@@ -563,9 +563,9 @@ int resolvedata_600_new(char *data, struct inverter_info_t *inverter)
     }
 
 
-    if(inverter->op>360)
+    if(inverter->op>500)
         inverter->op = (int)(inverter->dv*inverter->di);
-    if(inverter->opb>360)
+    if(inverter->opb>500)
         inverter->opb = (int)(inverter->dvb*inverter->dib);
 
     printf("tm=%d dv=%f  di=%f  op=%d  gv=%d curaccgen=%f reactive_power=%f active_power=%f cur_output_energy=%f\n",inverter->curacctime,inverter->dv,inverter->di,inverter->op,inverter->gv,inverter->curaccgen,inverter->reactive_power,inverter->active_power,inverter->cur_output_energy);
@@ -806,13 +806,13 @@ int resolvedata_1200(char *data, struct inverter_info_t *inverter)
     }
 
 
-    if(inverter->op>360)
+    if(inverter->op>500)
         inverter->op = (int)(inverter->dv*inverter->di);
-    if(inverter->opb>360)
+    if(inverter->opb>500)
         inverter->opb = (int)(inverter->dvb*inverter->dib);
-    if(inverter->opc>360)
+    if(inverter->opc>500)
         inverter->opc = (int)(inverter->dvc*inverter->dic);
-    if(inverter->opd>360)
+    if(inverter->opd>500)
         inverter->opd = (int)(inverter->dvb*inverter->did);
 
     printf("tm=%d dv=%f  di=%f  op=%d  gv=%d curaccgen=%f reactive_power=%f active_power=%f cur_output_energy=%f\n",inverter->curacctime,inverter->dv,inverter->di,inverter->op,inverter->gv,inverter->curaccgen,inverter->reactive_power,inverter->active_power,inverter->cur_output_energy);
