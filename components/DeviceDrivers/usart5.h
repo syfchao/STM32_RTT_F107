@@ -22,7 +22,7 @@ typedef enum
 #define SOCKETA_LEN						2048
 #define SOCKETB_LEN						1460
 #define SOCKETC_LEN						1460
-
+#define WIFIFILE_LEN						1460
 typedef struct socket_config
 {
     char domain[32];	//”Ú√˚
@@ -49,6 +49,10 @@ extern unsigned char WIFI_RecvSocketCData[SOCKETC_LEN];
 extern unsigned char WIFI_Recv_SocketC_Event;
 extern unsigned int WIFI_Recv_SocketC_LEN;
 
+extern unsigned char WIFI_RecvWiFiFileData[WIFIFILE_LEN];
+extern unsigned char WIFI_Recv_WiFiFile_Event;
+extern unsigned int WIFI_Recv_WiFiFile_LEN;
+
 unsigned short packetlen_A(unsigned char *packet);
 unsigned short packetlen_B(unsigned char *packet);
 unsigned short packetlen_C(unsigned char *packet);
@@ -58,7 +62,7 @@ void initSocketArgs(void);
 int randport(Socket_Cfg cfg);
 int WIFI_SendData(char *data, int num);
 void uart5_init(unsigned int bound);
-
+int SendToSocket(char connectID,char *data ,int length);
 int WIFI_Reset(void);
 int WIFI_Test(void);
 int WIFI_Factory_Passwd(void);

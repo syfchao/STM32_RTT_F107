@@ -267,6 +267,10 @@ unsigned char WIFI_RecvSocketCData[SOCKETC_LEN] = {'\0'};
 unsigned char WIFI_Recv_SocketC_Event = 0;
 unsigned int WIFI_Recv_SocketC_LEN =0;
 
+unsigned char WIFI_RecvWiFiFileData[WIFIFILE_LEN] = {'\0'};
+unsigned char WIFI_Recv_WiFiFile_Event = 0;
+unsigned int WIFI_Recv_WiFiFile_LEN =0;
+
 
 //wifi  串口当前收到的数据 
 unsigned char USART_RX_BUF[USART_REC_LEN];     			//接收缓冲,最大USART_REC_LEN个字节.
@@ -403,12 +407,22 @@ int detectionIPD(int size)
                     //printf("B:%s\n",WIFI_RecvSocketBData);
                 }else
                 {
-                    TCPServerConnectID = ConnectID;
-                    memcpy(WIFI_RecvSocketAData,&USART_RX_BUF[i+8+j],len );
-                    WIFI_RecvSocketAData[len] = '\0';
-                    WIFI_Recv_SocketA_Event = 1;
-                    WIFI_Recv_SocketA_LEN =len;
-                    //printf("A:%s\n",WIFI_RecvSocketAData);
+                	   if((!memcmp(&USART_RX_BUF[i+8+j],"ECU",3))&&('2' == ConnectID))
+                	   {
+                	   	  memcpy(WIFI_RecvWiFiFileData,&USART_RX_BUF[i+8+j],len );
+	                    WIFI_RecvWiFiFileData[len] = '\0';
+	                    WIFI_Recv_WiFiFile_Event = 1;
+	                    WIFI_Recv_WiFiFile_LEN =len;
+                	   }else
+                	   {
+                	   	 TCPServerConnectID = ConnectID;
+	                    memcpy(WIFI_RecvSocketAData,&USART_RX_BUF[i+8+j],len );
+	                    WIFI_RecvSocketAData[len] = '\0';
+	                    WIFI_Recv_SocketA_Event = 1;
+	                    WIFI_Recv_SocketA_LEN =len;
+	                    //printf("A:%s\n",WIFI_RecvSocketAData);
+                	   }
+                   
                 }
                 Cur = 0;
                 return 1;
@@ -464,7 +478,10 @@ int SendToSocket(char connectID,char *data ,int length)
         if(length > 1460)
         {
             memcpy(sendbuff,&data[send_length],1460);
-            AT_CIPSEND(connectID,1460);
+            if(-1 == AT_CIPSEND(connectID,1460))
+            {
+            	return -1;
+            }
             ESP07S_sendData(sendbuff,1460);
             //rt_hw_ms_delay(230);
             send_length += 1460;
@@ -472,7 +489,10 @@ int SendToSocket(char connectID,char *data ,int length)
         }else
         {
             memcpy(sendbuff,&data[send_length],length);
-            AT_CIPSEND(connectID,length);
+            if(-1 == AT_CIPSEND(connectID,length))
+            {
+            	return -1;
+            }
             ESP07S_sendData(sendbuff,length);
             length -= length;
 
@@ -1069,6 +1089,7 @@ FINSH_FUNCTION_EXPORT(AT_CIPSTO ,AT_CIPSTO)
 FINSH_FUNCTION_EXPORT(WIFI_Test ,WIFI_Test)
 FINSH_FUNCTION_EXPORT(InitWorkMode ,InitWorkMode)
 
+FINSH_FUNCTION_EXPORT(SendToSocket , Send SOCKET.)
 FINSH_FUNCTION_EXPORT(SendToSocketB , Send SOCKET B.)
 FINSH_FUNCTION_EXPORT(SendToSocketC , Send SOCKET C.)
 
