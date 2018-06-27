@@ -281,7 +281,7 @@ void UART5_IRQHandler(void)                	//串口1中断服务程序
     if(USART_GetITStatus(UART5, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
     {
         USART_RX_BUF[Cur] = USART_ReceiveData(UART5);//(UART5->DR);	//读取接收到的数据
-        //SEGGER_RTT_printf(0, "[%d] : %x %c\n",Cur,USART_RX_BUF[Cur],USART_RX_BUF[Cur]);
+        SEGGER_RTT_printf(0, "[%d] : %x %c\n",Cur,USART_RX_BUF[Cur],USART_RX_BUF[Cur]);
         Cur +=1;
         if(Cur >=USART_REC_LEN)
         {
@@ -379,8 +379,8 @@ int detectionIPD(int size)
         if(!memcmp(&USART_RX_BUF[i],"+IPD",4))
         {
             ConnectID = USART_RX_BUF[i+5];
-            memcpy(messageLen,&USART_RX_BUF[i+7],4);
-            for(j = 0;j<4;j++)
+            memcpy(messageLen,&USART_RX_BUF[i+7],5);
+            for(j = 0;j<5;j++)
             {
                 if(messageLen[j] == ':')
                 {
@@ -409,6 +409,7 @@ int detectionIPD(int size)
                 {
                 	   if((!memcmp(&USART_RX_BUF[i+8+j],"ECU",3))&&('2' == ConnectID))
                 	   {
+                	   	 
                 	   	  memcpy(WIFI_RecvWiFiFileData,&USART_RX_BUF[i+8+j],len );
 	                    WIFI_RecvWiFiFileData[len] = '\0';
 	                    WIFI_Recv_WiFiFile_Event = 1;

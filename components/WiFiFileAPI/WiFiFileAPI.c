@@ -7,6 +7,7 @@
 #include "threadlist.h"
 #include "dfs_posix.h"
 #include "stdlib.h"
+#include "debug.h"
 
 const unsigned short CRC_table_16[256] =
 {
@@ -198,9 +199,11 @@ static int WiFiSocketCreate(char *IP ,int port)
     AT_CIPCLOSE('2');
     if(!AT_CIPSTART('2',"TCP",IP ,port))
     {
+    	printmsg(ECU_DBG_WIFI,"Create File Socket Success\n");
         return 1;
     }else
     {
+    	printmsg(ECU_DBG_WIFI,"Create File Socket Failed\n");
         return -1;
     }
 }
@@ -253,9 +256,10 @@ static int WifiFile_Request(StRequestSendDataSt *SendInfo,StRequestRecvDataSt *R
     Sendbuff[5] = (bufflen/1000) + '0';
     Sendbuff[6] = ((bufflen/100)%10) + '0';
     Sendbuff[7] = ((bufflen/10)%10) + '0';
-    Sendbuff[8] = ((bufflen)%10) + '0';
+    Sendbuff[8] = ((bufflen)%10) + '0'; 
     for( index = 0;index < 3;index++)
     {
+    	printhexmsg(ECU_DBG_WIFI,"WifiFile_Request Send:",(char *)Sendbuff,bufflen);
         WIFI_Recv_WiFiFile_Event = 0;
         if(-1 == SendToSocket('2',(char*)Sendbuff,bufflen))
         {
@@ -271,6 +275,7 @@ static int WifiFile_Request(StRequestSendDataSt *SendInfo,StRequestRecvDataSt *R
             if(WIFI_Recv_WiFiFile_Event == 1)
             {
                 //解析数据到结构体中
+                printhexmsg(ECU_DBG_WIFI,"WifiFile_Request Recv:",(char *)WIFI_RecvWiFiFileData,WIFI_Recv_WiFiFile_LEN);
                 if(0 == analysisRequestData(WIFI_RecvWiFiFileData,RecvInfo))
                 {
                     breakflag = 1;
@@ -325,6 +330,7 @@ static int WifiFile_Download(StDownloadSendDataSt *SendInfo,StDownloadRecvDataSt
     Sendbuff[8] = ((bufflen)%10) + '0';
     for( index = 0;index < 3;index++)
     {
+        printhexmsg(ECU_DBG_WIFI,"WifiFile_Download Send:",(char *)Sendbuff,bufflen);
         WIFI_Recv_WiFiFile_Event = 0;
         if(-1 == SendToSocket('2',(char*)Sendbuff,bufflen))
         {
@@ -339,6 +345,7 @@ static int WifiFile_Download(StDownloadSendDataSt *SendInfo,StDownloadRecvDataSt
         {
             if(WIFI_Recv_WiFiFile_Event == 1)
             {
+                printhexmsg(ECU_DBG_WIFI,"WifiFile_Download Recv:",(char *)WIFI_RecvWiFiFileData,WIFI_Recv_WiFiFile_LEN);
                 //解析数据到结构体中
                 if(0 == analysisDownloadData(WIFI_RecvWiFiFileData,RecvInfo))
                 {
@@ -410,6 +417,7 @@ static int WifiFile_Upload(StUploadSendDataSt *SendInfo,StUploadRecvDataSt *Recv
     Sendbuff[8] = ((bufflen)%10) + '0';
     for( index = 0;index < 3;index++)
     {
+        printhexmsg(ECU_DBG_WIFI,"WifiFile_Upload Send:",(char *)Sendbuff,bufflen);
         WIFI_Recv_WiFiFile_Event = 0;
         if(-1 == SendToSocket('2',(char*)Sendbuff,bufflen))
         {
@@ -424,6 +432,7 @@ static int WifiFile_Upload(StUploadSendDataSt *SendInfo,StUploadRecvDataSt *Recv
         {
             if(WIFI_Recv_WiFiFile_Event == 1)
             {
+                printhexmsg(ECU_DBG_WIFI,"WifiFile_Upload Recv:",(char *)WIFI_RecvWiFiFileData,WIFI_Recv_WiFiFile_LEN);
                 //解析数据到结构体中
                 if(0 == analysisUploadData(WIFI_RecvWiFiFileData,RecvInfo))
                 {
@@ -624,6 +633,175 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
     }
 }
 
+
+/*
+//下载文件
+//返回值:
+//    0:文件下载成功
+//  -1:创建连接失败
+//  -2:发送文件下载请求失败
+//  -3:文件不存在
+//  -4: 擦除内部Flash APP2区域失败
+//  -5:文件下载命令失败
+//  -6:文件下载异常
+//  -7:本地文件写入失败
+//  -8:单条记录校验错误
+//  -9:打开本地文件失败
+//  -10:本地文件大小或校验失败
+int WiFiFile_GetFileInternalFlash(char *remoteFile)
+{
+    unsigned int FileSize = 0;
+    unsigned short Check = 0;
+    StRequestSendDataSt *RequestSendInfo = NULL;
+    StRequestRecvDataSt *RequestRecvInfo = NULL;
+    RequestSendInfo = (StRequestSendDataSt *)malloc(sizeof(StRequestSendDataSt));
+    RequestRecvInfo = (StRequestRecvDataSt *)malloc(sizeof(StRequestRecvDataSt));
+    //问询远程文件是否存在
+    if(-1 == WiFiSocketCreate(WIFI_SERVER_IP ,WIFI_SERVER_PORT1))
+    {
+        free(RequestSendInfo);
+        free(RequestRecvInfo);
+        return -1;
+    }
+    //问询文件是否存在
+    RequestSendInfo->cmd = EN_CMD_DOWNLOAD_FILE;
+    memset(RequestSendInfo->SendData.senddDownloadDeleteInfo.Path,0x00,60);
+    memcpy(RequestSendInfo->SendData.senddDownloadDeleteInfo.Path,remoteFile,strlen(remoteFile));
+    if(-1 == WifiFile_Request(RequestSendInfo,RequestRecvInfo))	//获取请求失败
+    {
+        free(RequestSendInfo);
+        free(RequestRecvInfo);
+        AT_CIPCLOSE('2');
+        return -2;
+    }else	//获取请求成功
+    {
+        if(RequestRecvInfo->RecvData.recvDownloadInfo.downloadStatus == EN_DOWNLOAD_FILE_NOT_EXIST)
+        {	//文件不存在
+            free(RequestSendInfo);
+            free(RequestRecvInfo);
+            AT_CIPCLOSE('2');
+            return -3;
+        }else
+        {	//文件存在
+            StDownloadSendDataSt *DownloadSendInfo = NULL;
+            StDownloadRecvDataSt *DownloadRecvInfo = NULL;
+	   unsigned int app2addr = 0x08080000;
+            DownloadSendInfo = (StDownloadSendDataSt *)malloc(sizeof(StDownloadSendDataSt));
+            DownloadRecvInfo = (StDownloadRecvDataSt *)malloc(sizeof(StDownloadRecvDataSt));
+            memset(DownloadSendInfo->Path,0x00,60);
+            memcpy(DownloadSendInfo->Path,remoteFile,strlen(remoteFile));
+            DownloadSendInfo->Serial_Num = 1;
+            //擦除内部Flash APP2空间
+              //解锁内部Flash
+	    FLASH_Unlock();
+	    if(1 == FLASH_If_Erase_APP2())	//清除APP2区域
+	    {
+	    	 free(DownloadSendInfo);
+                free(DownloadRecvInfo);
+                free(RequestSendInfo);
+                free(RequestRecvInfo);
+                AT_CIPCLOSE('2');
+                return -4;
+	    }
+            
+            //打开文件成功
+            while(1)
+            {
+                //循环要数据，直到没有为止
+                if(-1 == WifiFile_Download(DownloadSendInfo,DownloadRecvInfo))
+                {//要数据失败
+                    free(DownloadSendInfo);
+                    free(DownloadRecvInfo);
+                    free(RequestSendInfo);
+                    free(RequestRecvInfo);
+                    AT_CIPCLOSE('2');
+                    return -5;
+                }else
+                {//要数据成功
+                    //对比校验，成功写入文件
+                    if(DownloadRecvInfo->Flag == 1)	//下载异常
+                    {
+                        free(DownloadSendInfo);
+                        free(DownloadRecvInfo);
+                        free(RequestSendInfo);
+                        free(RequestRecvInfo);
+                        AT_CIPCLOSE('2');
+                        return -6;
+                    }else
+                    {
+                        if(DownloadRecvInfo->Data_Len > 0)
+                        {
+                            if(DownloadRecvInfo->Check == GetCrc_16(DownloadRecvInfo->Data,DownloadRecvInfo->Data_Len,0,CRC_table_16))
+                            {
+                                if(DownloadRecvInfo->Data_Len != FLASH_If_WriteData(app2addr,DownloadRecvInfo->Data,DownloadRecvInfo->Data_Len))
+                                {	//文件写入失败
+                                    free(DownloadSendInfo);
+                                    free(DownloadRecvInfo);
+                                    free(RequestSendInfo);
+                                    free(RequestRecvInfo);
+                                    AT_CIPCLOSE('2');
+                                    return -7;
+                                }
+								
+                            }else
+                            {
+                                free(DownloadSendInfo);
+                                free(DownloadRecvInfo);
+                                free(RequestSendInfo);
+                                free(RequestRecvInfo);
+                                AT_CIPCLOSE('2');
+                                return -8;
+                            }
+                        }
+                    }
+                    //判断是否还有下一帧
+                    if(DownloadRecvInfo->Next_Flag == 1)
+                    {
+                        DownloadSendInfo->Serial_Num++;
+                    }else
+                    {	//不存在下一帧，文件下载完毕
+                        close(handle);
+                        //计算全文检验，与开始的校验对比，正确表示下载成功
+                        if(getFileAttribute(localFile,&FileSize,&Check) == 0)
+                        {
+                            if((FileSize == RequestRecvInfo->RecvData.recvDownloadInfo.File_Size)&&(Check == RequestRecvInfo->RecvData.recvDownloadInfo.Check))
+                            {
+                                free(DownloadSendInfo);
+                                free(DownloadRecvInfo);
+                                free(RequestSendInfo);
+                                free(RequestRecvInfo);
+                                AT_CIPCLOSE('2');
+                                return 0;
+                            }
+                            else
+                            {
+                                unlink(localFile);
+                                free(DownloadSendInfo);
+                                free(DownloadRecvInfo);
+                                free(RequestSendInfo);
+                                free(RequestRecvInfo);
+                                AT_CIPCLOSE('2');
+                                return -10;	//文件或校验失败
+                            }
+
+                        }else
+                        {
+                            unlink(localFile);
+                            free(DownloadSendInfo);
+                            free(DownloadRecvInfo);
+                            free(RequestSendInfo);
+                            free(RequestRecvInfo);
+                            AT_CIPCLOSE('2');
+                            return -9;	//打开本地文件失败
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+}
+*/
 //删除文件
 //返回值:
 //    0:文件删除成功
@@ -833,7 +1011,7 @@ void w_d(void)
     SendInfo = (StDownloadSendDataSt *)malloc(sizeof(StDownloadSendDataSt));
     RecvInfo = (StDownloadRecvDataSt *)malloc(sizeof(StDownloadRecvDataSt));
     memset(SendInfo->Path,0x00,60);
-    memcpy(SendInfo->Path,"/home/data/id",13);
+    memcpy(SendInfo->Path,"/test",13);
     SendInfo->Serial_Num = 1;
     printf("w_d:%d\n",WifiFile_Download(SendInfo,RecvInfo));
     free(SendInfo);

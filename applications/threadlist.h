@@ -66,8 +66,8 @@ typedef struct IPConfig
 #define UPDATE_SERVER_IP					"60.190.131.190"
 #define UPDATE_SERVER_PORT1				9219
 
-#define WIFI_SERVER_IP					"192.168.1.2"
-#define WIFI_SERVER_PORT1				60000
+#define WIFI_SERVER_IP					"192.168.1.25"
+#define WIFI_SERVER_PORT1				9995
 
 #else
 

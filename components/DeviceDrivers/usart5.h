@@ -57,7 +57,7 @@ unsigned short packetlen_A(unsigned char *packet);
 unsigned short packetlen_B(unsigned char *packet);
 unsigned short packetlen_C(unsigned char *packet);
 
-
+void clear_WIFI(void);
 void initSocketArgs(void);
 int randport(Socket_Cfg cfg);
 int WIFI_SendData(char *data, int num);
