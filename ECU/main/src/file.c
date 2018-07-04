@@ -102,33 +102,39 @@ void sysDirDetection(void)
 
 int get_Passwd(char *PassWD)
 {
-    int fd;
-    fd = open("/YUNENG/PASSWD.CON", O_RDONLY, 0);
-    if (fd >= 0)
+    int ret = 0;
+    char lenstr[4] = {'\0'};
+    int len = 0;
+    char *passwd = NULL;
+    passwd = malloc(128);
+	
+    ret = ReadPage(INTERNAL_FLASH_WIFI_PASSWORD,passwd,128);
+    if(0 == ret)
     {
-        read(fd, PassWD, 100);
-        close(fd);
-        return 0;
-    }else
-    {
-        return -1;
+        memcpy(lenstr,passwd,3);
+        len = atoi(lenstr);
+        memcpy(PassWD,&passwd[3],len);
     }
+    
+
+    free(passwd);
+    passwd = NULL;
+    return ret;
 
 }
 
 int set_Passwd(char *PassWD,int length)
 {
-    FILE *file;
-    file = fopen("/YUNENG/PASSWD.CON", "w");
-    if (file != NULL)
-    {
-        fputs(PassWD,file);
-        fclose(file);
-        return 0;
-    }else
-    {
-        return -1;
-    }
+    int ret = 0;
+    char *passwd = NULL;
+    passwd = malloc(128);
+    memset(passwd,0x00,128);
+    sprintf(passwd,"%03x%s",length,PassWD);
+    ret = WritePage(INTERNAL_FLASH_WIFI_PASSWORD,passwd,length+3);
+    free(passwd);
+    passwd = NULL;
+    return ret;
+   
 }
 
 //分割空格
@@ -173,44 +179,18 @@ int get_DHCP_Status(void)
 
 int get_ecu_type()			
 {
-    int fd;
-    char version[13] = {'\0'};
     char buff[13] = {'\0'};
     ecu_type = 1;
-    fd = open("/yuneng/area.con", O_RDONLY, 0);
-    if (fd >= 0)
+
+    ReadPage(INTERNAL_FALSH_AREA,buff,10);
+    if(buff[0] != 0xff)
     {
-        read(fd, version, 10);
-        if('\n' == version[strlen(version)-1])
-            version[strlen(version)-1] = '\0';
-        if(!strncmp(&version[strlen(version)-2], "MX", 2))
+        if(!strncmp(&buff[0], "MX", 2))
             ecu_type = 3;
-        else if(!strncmp(&version[strlen(version)-2], "NA", 2))
+        else if(!strncmp(&buff[0], "NA", 2))
             ecu_type = 2;
         else
             ecu_type = 1;
-        //print2msg(ECU_DBG_MAIN,"version",version);
-        close(fd);
-        ReadPage(INTERNAL_FALSH_AREA,buff,13);
-        //如果为第一个字节为FF则写入区域
-        if(buff[0] == 0xff)
-        {
-            WritePage(INTERNAL_FALSH_AREA,version,13);
-        }
-
-    }else
-    {
-        ReadPage(INTERNAL_FALSH_AREA,buff,10);
-        if(buff[0] != 0xff)
-        {
-            echo("/yuneng/area.con",buff);
-            if(!strncmp(&buff[0], "MX", 2))
-                ecu_type = 3;
-            else if(!strncmp(&buff[0], "NA", 2))
-                ecu_type = 2;
-            else
-                ecu_type = 1;
-        }
     }
     printdecmsg(ECU_DBG_MAIN,"ecu_type",ecu_type);
     return 0;
@@ -218,120 +198,74 @@ int get_ecu_type()
 
 void get_ecuid(char *ecuid)
 {
-    int fd;
     char internalECUID[13] = {'\0'};
-    fd = open("/YUNENG/ECUID.CON", O_RDONLY, 0);
-    if (fd >= 0)
-    {
-        read(fd, ecuid, 13);
-        if('\n' == ecuid[strlen(ecuid)-1])
-            ecuid[strlen(ecuid)-1] = '\0';
 
-        //print2msg(ECU_DBG_OTHER,"get_ecuid",ecuid);
-        close(fd);
-    }
-    //如果读取到第0个字节不为2，读取内部的
-    if(ecuid[0] != '2')
+    ReadPage(INTERNAL_FALSH_ID,internalECUID,12);
+    if(internalECUID[0] == '2')
     {
-        ReadPage(INTERNAL_FALSH_ID,internalECUID,12);
-        if(internalECUID[0] == '2')
-        {
-            memcpy(ecuid,internalECUID,12);
-        }
+        memcpy(ecuid,internalECUID,12);
     }
     return;
 }
 //读取DRM开关函数   返回值为1：表示功能打开   返回值为-1表示功能关闭
 int DRMFunction(void)
 {
-    int fd;
     char buff[8] = {'\0'};
-
-    fd = open("/yuneng/area.con", O_RDONLY, 0);
-    if(fd >= 0)
+    ReadPage(INTERNAL_FALSH_AREA,buff,8);
+    if(!memcmp(buff,"SAA",3))
     {
-        memset(buff, '\0', sizeof(buff));
-        read(fd, buff, 8);
-        close(fd);
-        if(!memcmp(buff,"SAA",3))
-        {
-            return 1;
-        }
-    }else
-    {
-        ReadPage(INTERNAL_FALSH_AREA,buff,8);
-        if(!memcmp(buff,"SAA",3))
-        {
-            return 1;
-        }
+        return 1;
     }
-
     return -1;
 }
 
 unsigned short get_panid(void)
 {
-    int fd;
     unsigned short ret = 0;
     char buff[17] = {'\0'};
-    fd = open("/YUNENG/ECUMAC.CON", O_RDONLY, 0);
-    if (fd >= 0)
-    {
-        memset(buff, '\0', sizeof(buff));
-        read(fd, buff, 17);
-        close(fd);
-        if((buff[12]>='0') && (buff[12]<='9'))
-            buff[12] -= 0x30;
-        if((buff[12]>='A') && (buff[12]<='F'))
-            buff[12] -= 0x37;
-        if((buff[13]>='0') && (buff[13]<='9'))
-            buff[13] -= 0x30;
-        if((buff[13]>='A') && (buff[13]<='F'))
-            buff[13] -= 0x37;
-        if((buff[15]>='0') && (buff[15]<='9'))
-            buff[15] -= 0x30;
-        if((buff[15]>='A') && (buff[15]<='F'))
-            buff[15] -= 0x37;
-        if((buff[16]>='0') && (buff[16]<='9'))
-            buff[16] -= 0x30;
-        if((buff[16]>='A') && (buff[16]<='F'))
-            buff[16] -= 0x37;
-        ret = ((buff[12]) * 16 + (buff[13])) * 256 + (buff[15]) * 16 + (buff[16]);
-    }
+    ReadPage(INTERNAL_FALSH_MAC,buff,17);
+
+    if((buff[12]>='0') && (buff[12]<='9'))
+        buff[12] -= 0x30;
+    if((buff[12]>='A') && (buff[12]<='F'))
+        buff[12] -= 0x37;
+    if((buff[13]>='0') && (buff[13]<='9'))
+        buff[13] -= 0x30;
+    if((buff[13]>='A') && (buff[13]<='F'))
+        buff[13] -= 0x37;
+    if((buff[15]>='0') && (buff[15]<='9'))
+        buff[15] -= 0x30;
+    if((buff[15]>='A') && (buff[15]<='F'))
+        buff[15] -= 0x37;
+    if((buff[16]>='0') && (buff[16]<='9'))
+        buff[16] -= 0x30;
+    if((buff[16]>='A') && (buff[16]<='F'))
+        buff[16] -= 0x37;
+    ret = ((buff[12]) * 16 + (buff[13])) * 256 + (buff[15]) * 16 + (buff[16]);
+
     return ret;
 }
 char get_channel(void)
 {
-    int fd;
     char ret = 0;
     char buff[5] = {'\0'};
-    fd = open("/YUNENG/CHANNEL.CON", O_RDONLY, 0);
-    if (fd >= 0)
-    {
-        memset(buff, '\0', sizeof(buff));
-        read(fd, buff, 5);
-        close(fd);
-        if((buff[2]>='0') && (buff[2]<='9'))
-            buff[2] -= 0x30;
-        if((buff[2]>='A') && (buff[2]<='F'))
-            buff[2] -= 0x37;
-        if((buff[2]>='a') && (buff[2]<='f'))
-            buff[2] -= 0x57;
-        if((buff[3]>='0') && (buff[3]<='9'))
-            buff[3] -= 0x30;
-        if((buff[3]>='A') && (buff[3]<='F'))
-            buff[3] -= 0x37;
-        if((buff[3]>='a') && (buff[3]<='f'))
-            buff[3] -= 0x57;
-        ret = (buff[2]*16+buff[3]);
-    } else {
-        fd = open("/YUNENG/CHANNEL.CON", O_WRONLY | O_CREAT | O_TRUNC, 0);
-        if (fd >= 0) {
-            write(fd, "0x10", 5);
-            close(fd);
-            ret = 0x10;
-        }
-    }
+	
+    ReadPage(INTERNAL_FLASH_CHANNEL,buff,5);
+
+    if((buff[2]>='0') && (buff[2]<='9'))
+        buff[2] -= 0x30;
+    if((buff[2]>='A') && (buff[2]<='F'))
+        buff[2] -= 0x37;
+    if((buff[2]>='a') && (buff[2]<='f'))
+        buff[2] -= 0x57;
+    if((buff[3]>='0') && (buff[3]<='9'))
+        buff[3] -= 0x30;
+    if((buff[3]>='A') && (buff[3]<='F'))
+        buff[3] -= 0x37;
+    if((buff[3]>='a') && (buff[3]<='f'))
+        buff[3] -= 0x57;
+    ret = (buff[2]*16+buff[3]);
+
     return ret;
 }
 
@@ -1486,42 +1420,19 @@ int strtohex(char str[2])
 
 void get_mac(rt_uint8_t  dev_addr[6])
 {
-    FILE *fp;
-    char macstr[18] = {'\0'};
     char InternalMac[18] = {'\0'};
-    fp = fopen("/yuneng/ecumac.con","r");
-    if(fp)
-    {
-        //读取mac地址
-        if(NULL != fgets(macstr,18,fp))
-        {
-            dev_addr[0]=strtohex(&macstr[0]);
-            dev_addr[1]=strtohex(&macstr[3]);
-            dev_addr[2]=strtohex(&macstr[6]);
-            dev_addr[3]=strtohex(&macstr[9]);
-            dev_addr[4]=strtohex(&macstr[12]);
-            dev_addr[5]=strtohex(&macstr[15]);
-        }
-        fclose(fp);
-    }
-    //查看前3个字节是否是80971B
-    if((dev_addr[0] == 0x80) &&(dev_addr[1] == 0x97) &&(dev_addr[2] == 0x1B))
-        return;
-    else
-    {
-        ReadPage(INTERNAL_FALSH_MAC,InternalMac,17);
-        if(!memcmp(InternalMac,"80:97:1B",8))
-        {
-            dev_addr[0]=strtohex(&InternalMac[0]);
-            dev_addr[1]=strtohex(&InternalMac[3]);
-            dev_addr[2]=strtohex(&InternalMac[6]);
-            dev_addr[3]=strtohex(&InternalMac[9]);
-            dev_addr[4]=strtohex(&InternalMac[12]);
-            dev_addr[5]=strtohex(&InternalMac[15]);
-            return;
-        }
-    }
 
+    ReadPage(INTERNAL_FALSH_MAC,InternalMac,17);
+    if(!memcmp(InternalMac,"80:97:1B",8))
+    {
+        dev_addr[0]=strtohex(&InternalMac[0]);
+        dev_addr[1]=strtohex(&InternalMac[3]);
+        dev_addr[2]=strtohex(&InternalMac[6]);
+        dev_addr[3]=strtohex(&InternalMac[9]);
+        dev_addr[4]=strtohex(&InternalMac[12]);
+        dev_addr[5]=strtohex(&InternalMac[15]);
+        return;
+    }
 }
 
 void addInverter(char *inverter_id)
@@ -1538,20 +1449,103 @@ void addInverter(char *inverter_id)
     echo("/yuneng/limiteid.con","1");
 }
 
-void key_init(void)
+//初始化服务器信息
+void InitServerInfo(void)
 {
-    echo("/yuneng/control.con","Timeout=10\nReport_Interval=15\nDomain=ecu.apsema.com\nIP=60.190.131.190\nPort1=8997\nPort2=8997\n");
-    rt_hw_ms_delay(20);
-    echo("/yuneng/ftpadd.con", "Domain=ecu.apsema.com\nIP=60.190.131.190\nPort=9219\nuser=zhyf\npassword=yuneng\n");
-    rt_hw_ms_delay(20);
-    echo("/yuneng/datacent.con","Domain=ecu.apsema.com\nIP=60.190.131.190\nPort1=8995\nPort2=8996\n");
-    rt_hw_ms_delay(20);
+    char *serverinfo = NULL;
+    serverinfo = malloc(512);
+    memset(serverinfo,0x00,512);
+    //100字节远程控制服务器     域名:48 IP :16 端口1:2  端口2:2  超时时间:2 循环周期:2
+    memcpy(serverinfo,"ecu.apsema.com",14);
+    memcpy(&serverinfo[48],"60.190.131.190",14);
+    serverinfo[64] = 8997/256;
+    serverinfo[65] = 8997%256;
+    serverinfo[66] = 8997/256;
+    serverinfo[67] = 8997%256;
+    serverinfo[68] = 0;
+    serverinfo[69] = 10;
+    serverinfo[70] = 0;
+    serverinfo[71] = 15;
+    //100字节 数据上传服务器     域名:48 IP :16 端口1:2  端口2:2
+    memcpy(&serverinfo[100],"ecu.apsema.com",14);
+    memcpy(&serverinfo[148],"60.190.131.190",14);
+    serverinfo[164] = 8995/256;
+    serverinfo[165] = 8995%256;
+    serverinfo[166] = 8996/256;
+    serverinfo[167] = 8996%256;
+    //200字节 FTP服务器       域名:48 IP :16   端口1:2  用户:40    密码:40
+    memcpy(&serverinfo[200],"ecu.apsema.com",14);
+    memcpy(&serverinfo[248],"60.190.131.190",14);
+    serverinfo[264] = 9219/256;
+    serverinfo[265] = 9219%256;
+    memcpy(&serverinfo[266],"zhyf",4);
+    memcpy(&serverinfo[306],"yuneng",6);
+    //100 字节WiFi文件系统服务器 IP :16 端口1:2  端口2:2
+    memcpy(&serverinfo[400],"192.168.1.19",14);
+    serverinfo[416] = 9220/256;
+    serverinfo[417] = 9220%256;
+    serverinfo[418] = 9220/256;
+    serverinfo[419] = 9220%256;
+    //2字节
+    serverinfo[500] = 1;
 
-    unlink("/yuneng/staticIP.con");
-    dhcp_reset();
-
+    WritePage(INTERNAL_FLASH_CONFIG_INFO,serverinfo,512);	
+    free(serverinfo);
+    serverinfo = NULL;
 }
 
+//更新服务器信息
+void UpdateServerInfo(void)
+{
+    char *serverinfo = NULL;
+    serverinfo = malloc(512);
+    memset(serverinfo,0x00,512);
+    //100字节远程控制服务器     域名:48 IP :16 端口1:2  端口2:2  超时时间:2 循环周期:2
+    memcpy(serverinfo,control_client_arg.domain,32);
+    memcpy(&serverinfo[48],control_client_arg.ip,16);
+    serverinfo[64] = control_client_arg.port1/256;
+    serverinfo[65] = control_client_arg.port1%256;
+    serverinfo[66] = control_client_arg.port2/256;
+    serverinfo[67] = control_client_arg.port2%256;
+    serverinfo[68] = control_client_arg.timeout/256;
+    serverinfo[69] = control_client_arg.timeout%256;
+    serverinfo[70] = control_client_arg.report_interval/256;
+    serverinfo[71] = control_client_arg.report_interval%256;
+    //100字节 数据上传服务器     域名:48 IP :16 端口1:2  端口2:2
+    memcpy(&serverinfo[100],client_arg.domain,32);
+    memcpy(&serverinfo[148],client_arg.ip,16);
+    serverinfo[164] = client_arg.port1/256;
+    serverinfo[165] = client_arg.port1%256;
+    serverinfo[166] = client_arg.port2/256;
+    serverinfo[167] = client_arg.port2%256;
+    //200字节 FTP服务器       域名:48 IP :16   端口1:2  用户:40    密码:40
+    memcpy(&serverinfo[200],ftp_arg.domain,32);
+    memcpy(&serverinfo[248],ftp_arg.ip,16);
+    serverinfo[264] = ftp_arg.port1/256;
+    serverinfo[265] = ftp_arg.port1%256;
+    memcpy(&serverinfo[266],ftp_arg.user,4);
+    memcpy(&serverinfo[306],ftp_arg.passwd,6);
+    //100 字节WiFi文件系统服务器 IP :16 端口1:2  端口2:2
+    memcpy(&serverinfo[400],wifiserver_arg.ip,16);
+    serverinfo[416] = wifiserver_arg.port1/256;
+    serverinfo[417] = wifiserver_arg.port1%256;
+    serverinfo[418] = wifiserver_arg.port2/256;
+    serverinfo[419] = wifiserver_arg.port2%256;
+    //2字节
+    serverinfo[500] = 1;
+
+    WritePage(INTERNAL_FLASH_CONFIG_INFO,serverinfo,512);	
+    free(serverinfo);
+    serverinfo = NULL;
+}
+
+
+void key_init(void)
+{
+    InitServerInfo();
+    unlink("/yuneng/staticIP.con");
+    dhcp_reset();
+}
 
 void initPath(void)
 {
@@ -1562,25 +1556,23 @@ void initPath(void)
     mkdir("/home/record",0x777);
     mkdir("/home/data/proc_res",0x777);
     mkdir("/home/data/iprocres",0x777);
-    echo("/home/data/ltpower","0.000000");
     mkdir("/home/record/data",0x777);
     mkdir("/home/record/inversta",0x777);
     mkdir("/home/record/power",0x777);
     mkdir("/home/record/eventdir",0x777);
     mkdir("/home/record/energy",0x777);
-    echo("/yuneng/channel.con","0x10");
-    echo("/yuneng/limiteid.con","1");
-    echo("/yuneng/control.con","Timeout=10\nReport_Interval=15\nDomain=ecu.apsema.com\nIP=60.190.131.190\nPort1=8997\nPort2=8997\n");
-    //echo("/yuneng/control.con","Timeout=15\nReport_Interval=15\nDomain=eee.apsema.com\nIP=60.190.131.190\nPort1=8997\nPort2=8997\n");
-    //echo("/yuneng/vernum.con","3\n");
-    echo("/yuneng/ftpadd.con", "Domain=ecu.apsema.com\nIP=60.190.131.190\nPort=9219\nuser=zhyf\npassword=yuneng\n");
-    //echo("/yuneng/ftpadd.con", "IP=192.168.1.103\nPort=21\nuser=admin\npassword=admin\n");
-    echo("/yuneng/datacent.con","Domain=ecu.apsema.com\nIP=60.190.131.190\nPort1=8995\nPort2=8996\n");
-    //echo("/yuneng/datacent.con","Domain=eee.apsema.com\nIP=139.168.200.158\nPort1=8093\nPort2=8093\n");
-    echo("/home/data/power","");
-    echo("/yuneng/timezone.con","Etc/GMT-8\n");
     mkdir("/ftp",0x777);
+
+    echo("/home/data/ltpower","0.000000");
+    echo("/yuneng/limiteid.con","1");
     echo("/yuneng/A118.con","1");
+}
+
+void initFileSystem(void)
+{
+	WritePage(INTERNAL_FLASH_CHANNEL,"0x10",4);
+	InitServerInfo();
+	initPath();
 }
 
 int getTimeZone()
@@ -1720,11 +1712,9 @@ int setECUID(char *ECUID)
 {
     int ret = 0;
     char ecuid[13] = {'\0'};
-    FILE *fp = fopen("/yuneng/ecuid.con","w");
     memcpy(ecuid,ECUID,12);
     ecuid[12] = '\0';
-    fputs(ecuid,fp);
-    fclose(fp);
+
     WritePage(INTERNAL_FALSH_ID,ecuid,12);
     ret = WIFI_Factory(ecuid);
     if(ret == -1)
@@ -1813,44 +1803,13 @@ FINSH_FUNCTION_EXPORT(cal, eg:cal("20170721"));
 int initsystem(char *mac)
 {
 
-    initPath();
+    initFileSystem();
     rt_hw_ms_delay(20);
 
-    echo("/yuneng/ecumac.con",mac);
     WritePage(INTERNAL_FALSH_MAC,mac,17);
     return 0;
 }
 FINSH_FUNCTION_EXPORT(initsystem, eg:initsystem("123456789012","80:97:1B:00:72:1C"));
-
-void changecontrol(char * IP,char *Domain,int nReport_Interval,int port1,int port2)
-{
-    char str[300]={'\0'};
-
-    sprintf(str,"Timeout=10\nReport_Interval=%d\nDomain=%s\nIP=%s\nPort1=%d\nPort2=%d\n",nReport_Interval,Domain,IP,port1,port2);
-
-    echo("/yuneng/control.con",str);
-}	
-FINSH_FUNCTION_EXPORT(changecontrol, eg:changecontrol("60.190.131.190","eee.apsema.com",15,8997,8997));
-
-void changFTPadd(char * IP,int Port,char *user,char *password)
-{
-    char str[300]={'\0'};
-
-    sprintf(str,"IP=%s\nPort=%d\nuser=%s\npassword=%d\n",IP,Port,user,password);
-
-    echo("/yuneng/FTPadd.con",str);
-}	
-FINSH_FUNCTION_EXPORT(changFTPadd, eg:changFTPadd("60.190.131.190",9219,"zhyf",yuneng));
-
-void changdatacent(char * IP,char *Domain,int port1,int port2)
-{
-    char str[300]={'\0'};
-
-    sprintf(str,"Domain=%s\nIP=%s\nPort1=%d\nPort2=%d\n",Domain,IP,port1,port2);
-
-    echo("/yuneng/datacent.con",str);
-}	
-FINSH_FUNCTION_EXPORT(changdatacent, eg:changdatacent("139.168.200.158","111.apsema.com",8093,8093));
 
 FINSH_FUNCTION_EXPORT(addInverter, eg:addInverter("201703150001"));
 

@@ -20,6 +20,7 @@
 #include "channel.h"
 #include "zigbee.h"
 #include "file.h"
+#include "InternalFlash.h"
 
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
@@ -141,19 +142,15 @@ int saveNewChannel(unsigned char newChannel)
 
 int saveECUChannel(int channel)
 {
-    FILE *fp;
     char buffer[5] = {'\0'};
 
     snprintf(buffer, sizeof(buffer), "0x%02X", channel);
-    fp = fopen("/yuneng/channel.con", "w");
-    if (fp) {
-        echo("/yuneng/limiteid.con","1");
-        fputs(buffer, fp);
-        fclose(fp);
-        ecu.channel = channel;
-        return 1;
-    }
-    return 0;
+    WritePage(INTERNAL_FLASH_CHANNEL,buffer,5);
+    echo("/yuneng/limiteid.con","1");
+
+    ecu.channel = channel;
+    return 1;
+
 }
 
 

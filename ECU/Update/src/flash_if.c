@@ -78,7 +78,7 @@ uint32_t FLASH_IF_FILE_COPY_TO_APP2(char * updateFileName)
 
 uint32_t FLASH_If_Erase_APP2()
 {
-    uint32_t UserStartPage = 0x08080000,PageCount = 256, i = 0;
+    uint32_t UserStartPage = 0x08080000,PageCount = 176, i = 0;
 
     for(i = 0x08080000; i < (UserStartPage+PageCount*0x800); i += 0x800)
     {
@@ -204,6 +204,7 @@ FINSH_FUNCTION_EXPORT(flashwrite, eg:flashwrite("/filename"));
 FINSH_FUNCTION_EXPORT(flasherase, eg:flasherase());
 FINSH_FUNCTION_EXPORT(flashunlock, eg:flashunlock());
 FINSH_FUNCTION_EXPORT(flashlock, eg:flashlock());
+FINSH_FUNCTION_EXPORT(UpdateFlag, eg:UpdateFlag());
 FINSH_FUNCTION_EXPORT(copytoapp2, eg:copytoapp2("/filename"));
 #endif
 #endif

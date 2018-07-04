@@ -280,24 +280,28 @@ static void led_thread_entry(void* parameter)
         index++;
         if(index >= ESP07S_AT_TEST_CYCLE)
         {
-            if(-1 == WIFI_Test())
+            if(WiFiFileNoConnect == WiFiFileDownload_Status)
             {
-                ATFaliedNum++;
-                printf("WIFI_Test failed NUM:%d\n",ATFaliedNum);
-                if(ATFaliedNum >= ESP07S_AT_TEST_FAILED_NUM)	//连续失败2次
+                if(-1 == WIFI_Test())
                 {
-                    WIFI_RST_Event = 1;
+                    ATFaliedNum++;
+                    printf("WIFI_Test failed NUM:%d\n",ATFaliedNum);
+                    if(ATFaliedNum >= ESP07S_AT_TEST_FAILED_NUM)	//连续失败2次
+                    {
+                        WIFI_RST_Event = 1;
+                        ATFaliedNum = 0;
+                    }
+
+                }else
+                {
                     ATFaliedNum = 0;
                 }
-
-            }else
-            {
-                ATFaliedNum = 0;
             }
             index = 0;
         }
         kickwatchdog();
         MCP1316_kickwatchdog();
+        rt_thread_delay( RT_TICK_PER_SECOND/2);
         cpu_usage_get(&major, &minor);
         //printf("CPU : %d.%d%\n", major, minor);
     }
@@ -312,24 +316,24 @@ static struct rt_thread WiFi_thread;
 static void WiFi_thread_entry(void* parameter)
 {
     char info[100] = {'\0'};
-    int ret = 0,sum=0,successnum=0,failednum=0;	
-	rt_thread_delay(RT_TICK_PER_SECOND*10);
+    int ret = 0,sum=0,successnum=0,failednum=0;
+    rt_thread_delay(RT_TICK_PER_SECOND*10);
     rt_hw_powerIO_init();
     rt_hw_powerIO_on();
     while(1)
     {
-    	WIFI_Reset();
-	rt_thread_delay(RT_TICK_PER_SECOND*10);
-	memset(info,0x00,100);
+        WIFI_Reset();
+        rt_thread_delay(RT_TICK_PER_SECOND*10);
+        memset(info,0x00,100);
         ret = AT_CWJAPStatus(info);
-	sum++;
+        sum++;
         if(ret == 1)
         {
             successnum++;
         }else
-        	{
-        	    failednum++;
-        	}
+        {
+            failednum++;
+        }
         printf("sum:%d,success:%d,failed:%d Link:%s\n",sum,successnum,failednum,info);
     }
 

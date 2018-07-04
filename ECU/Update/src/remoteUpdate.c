@@ -24,6 +24,8 @@
 #include "debug.h"
 #include "file.h"
 #include "datetime.h"
+#include "WiFiFileAPI.h"
+#include "usart5.h"
 
 /*****************************************************************************/
 /*  Definitions                                                              */
@@ -43,17 +45,23 @@
 #define UPDATE_PATH_QS1200_TEMP "/FTP/QS1200.BIN"
 #define UPDATE_PATH_QS1200 "/ftp/UPQS1200.BIN"
 
+#define UPDATE_PATH_UPDATE_TXT_SUFFIX "update.txt"
+#define UPDATE_PATH_UPDATE_TXT_TEMP "/FTP/update.1"
+#define UPDATE_PATH_UPDATE_TXT "/ftp/update.txt"
+
+
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
 /*****************************************************************************/
 extern ecu_info ecu;
+extern Socket_Cfg ftp_arg;
 
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
-//IDWrite 本地升级ECU  (通过版本号)
+//IDWrite 本地升级ECU  
 //返回0表示成功
-int updateECUByVersion_Local(char *Domain,char *IP,int port,char *User,char *passwd)
+int updateECU_Local(eUpdateRequest updateRequest,char *Domain,char *IP,int port,char *User,char *passwd)
 {
     int ret = 0;
     char remote_path[100] = {'\0'};
@@ -64,207 +72,155 @@ int updateECUByVersion_Local(char *Domain,char *IP,int port,char *User,char *pas
     print2msg(ECU_DBG_UPDATE,"user",User);
     print2msg(ECU_DBG_UPDATE,"password",passwd);
 
-    //获取服务器IP地址
-    sprintf(remote_path,"/ECU_R_M3/V%s.%s/%s",MAJORVERSION,MINORVERSION,UPDATE_PATH_SUFFIX);
-    print2msg(ECU_DBG_UPDATE,"VER Path",remote_path);
-    ret=ftpgetfile_InternalFlash(Domain,IP, port, User, passwd,remote_path,UPDATE_PATH);
+    if(updateRequest == EN_UPDATE_VERSION)
+    {
+        sprintf(remote_path,"/ECU_R_M3/V%s.%s/%s",MAJORVERSION,MINORVERSION,UPDATE_PATH_SUFFIX);
+        print2msg(ECU_DBG_UPDATE,"VER Path",remote_path);
+    }else if(updateRequest == EN_UPDATE_ID)
+    {
+        sprintf(remote_path,"/ECU_R_M3/%s/%s",ecu.id,UPDATE_PATH_SUFFIX);
+        print2msg(ECU_DBG_UPDATE,"ID Path",remote_path);
+    }else
+    {
+	return ret;
+    }
+    
+    ret=ftpgetfile_InternalFlash(Domain,IP,port,User, passwd,remote_path,UPDATE_PATH);
     if(!ret)
     {
         //获取到文件，进行更新
+        if(updateRequest == EN_UPDATE_ID)
+        {
+        	    deletefile(remote_path);
+        	}
         UpdateFlag();
     }
     return ret;
 }
 
-//IDWrite 本地升级ECU  (通过ID号)
-//返回0表示成功
-int updateECUByID_Local(char *Domain,char *IP,int port,char *User,char *passwd)
+int updateECU(eNetworkType networkType,eUpdateRequest updateRequest)
 {
     int ret = 0;
     char remote_path[100] = {'\0'};
 
-    print2msg(ECU_DBG_UPDATE,"Domain",Domain);
-    print2msg(ECU_DBG_UPDATE,"FTPIP",IP);
-    printdecmsg(ECU_DBG_UPDATE,"port",port);
-    print2msg(ECU_DBG_UPDATE,"user",User);
-    print2msg(ECU_DBG_UPDATE,"password",passwd);
     //获取服务器IP地址
-    sprintf(remote_path,"/ECU_R_M3/%s/%s",ecu.id,UPDATE_PATH_SUFFIX);
-    print2msg(ECU_DBG_UPDATE,"ID Path",remote_path);
-    ret=ftpgetfile_InternalFlash(Domain,IP, port, User, passwd,remote_path,UPDATE_PATH);
-    if(!ret)
+    if(updateRequest == EN_UPDATE_VERSION)
     {
-        //获取到文件，进行更新
-        UpdateFlag();
-        deletefile(remote_path);
+        sprintf(remote_path,"/ECU_R_M3/V%s.%s/%s",MAJORVERSION,MINORVERSION,UPDATE_PATH_SUFFIX);
+        print2msg(ECU_DBG_UPDATE,"VER Path",remote_path);
+    }else if(updateRequest == EN_UPDATE_ID)
+    {
+        sprintf(remote_path,"/ECU_R_M3/%s/%s",ecu.id,UPDATE_PATH_SUFFIX);
+        print2msg(ECU_DBG_UPDATE,"ID Path",remote_path);
+    }else
+    {
+        return ret;
     }
-    return ret;
-}
 
-
-int updateECUByVersion(void)
-{
-    int ret = 0;
-    char domain[100]={'\0'};
-    char IPFTPadd[50] = {'\0'};
-    char remote_path[100] = {'\0'};
-    int port=0;
-    char user[20]={'\0'};
-    char password[20]={'\0'};
-    getFTPConf(domain,IPFTPadd,&port,user,password);
-
-    print2msg(ECU_DBG_UPDATE,"Domain",domain);
-    print2msg(ECU_DBG_UPDATE,"FTPIP",IPFTPadd);
-    printdecmsg(ECU_DBG_UPDATE,"port",port);
-    print2msg(ECU_DBG_UPDATE,"user",user);
-    print2msg(ECU_DBG_UPDATE,"password",password);
-
-    //获取服务器IP地址
-    sprintf(remote_path,"/ECU_R_M3/V%s.%s/%s",MAJORVERSION,MINORVERSION,UPDATE_PATH_SUFFIX);
-    print2msg(ECU_DBG_UPDATE,"VER Path",remote_path);
-    ret=ftpgetfile_InternalFlash(domain,IPFTPadd, port, user, password,remote_path,UPDATE_PATH);
+    if(networkType == EN_WIRED)
+    {
+        ret=ftpgetfile_InternalFlash(ftp_arg.domain,ftp_arg.ip, ftp_arg.port1, ftp_arg.user, ftp_arg.passwd,remote_path,UPDATE_PATH);
+    }else if(networkType == EN_WIFI)
+    {
+       ret=WiFiFile_GetFileInternalFlash(remote_path);
+       printdecmsg(ECU_DBG_UPDATE,"ret",ret);
+    }else
+    {
+    	return ret;
+    }
+    
     if(!ret)
     {
         //获取到文件，进行更新
         UpdateFlag();
-        echo("/TMP/ECUUPVER.CON","1");
+        if(updateRequest == EN_UPDATE_ID)
+        	{
+        	    if(networkType == EN_WIRED)
+        	    {
+        	        deletefile(remote_path);
+        	    }else
+        	    {
+        	        WiFiFile_DeleteFile(remote_path);
+        	    }
+        	}
+        echo("/TMP/ECUUPVER.CON","1");	
         reboot();
     }
     return ret;
 }
 
-int updateECUByID(void)
+int DownloadInverterFile(eNetworkType networkType,eUpdateRequest updateRequest,eDownloadType downloadType)	//获取逆变器升级包
 {
     int ret = 0;
-    char domain[100]={'\0'};
-    char IPFTPadd[50] = {'\0'};
     char remote_path[100] = {'\0'};
-    int port = 0;
-    char user[20]={'\0'};
-    char password[20]={'\0'};
-
-    getFTPConf(domain,IPFTPadd,&port,user,password);
-
-    print2msg(ECU_DBG_UPDATE,"Domain",domain);
-    print2msg(ECU_DBG_UPDATE,"FTPIP",IPFTPadd);
-    printdecmsg(ECU_DBG_UPDATE,"port",port);
-    print2msg(ECU_DBG_UPDATE,"user",user);
-    print2msg(ECU_DBG_UPDATE,"password",password);
-    //获取服务器IP地址
-    sprintf(remote_path,"/ECU_R_M3/%s/%s",ecu.id,UPDATE_PATH_SUFFIX);
-    print2msg(ECU_DBG_UPDATE,"ID Path",remote_path);
-    ret=ftpgetfile_InternalFlash(domain,IPFTPadd, port, user, password,remote_path,UPDATE_PATH);
-    if(!ret)
-    {
-        //获取到文件，进行更新
-        UpdateFlag();
-        deletefile(remote_path);
-        echo("/TMP/ECUUPVER.CON","1");
-        reboot();
-    }
-    return ret;
-}
-
-
-
-int updateYC600ByID(void)	//获取YC600升级包
-{
-    int ret = 0;
-    char domain[100]={'\0'};		//服务器域名
-    char IPFTPadd[50] = {'\0'};
-    char remote_path[100] = {'\0'};
-    int port = 0;
-    char user[20]={'\0'};
-    char password[20]={'\0'};
-
-
-    getFTPConf(domain,IPFTPadd,&port,user,password);
-    print2msg(ECU_DBG_UPDATE,"Domain",domain);
-    print2msg(ECU_DBG_UPDATE,"FTPIP",IPFTPadd);
-    printdecmsg(ECU_DBG_UPDATE,"port",port);
-    print2msg(ECU_DBG_UPDATE,"user",user);
-    print2msg(ECU_DBG_UPDATE,"password",password);
+    char savePath_temp[60] = {"\0"};
+    char savePath[60] = {"\0"};
 
     //获取服务器IP地址
-    sprintf(remote_path,"/ECU_R_M3/%s/%s",ecu.id,UPDATE_PATH_YC600_SUFFIX);
-    print2msg(ECU_DBG_UPDATE,"ID Path",remote_path);
-    ret=ftpgetfile(domain,IPFTPadd, port, user, password,remote_path,UPDATE_PATH_YC600_TEMP);
-    if(!ret)
+    if(updateRequest == EN_UPDATE_VERSION)
     {
-        unlink(UPDATE_PATH_YC600);
-        rename(UPDATE_PATH_YC600_TEMP,UPDATE_PATH_YC600);
-        deletefile(remote_path);
+        sprintf(remote_path,"/ECU_R_M3/V%s.%s/",MAJORVERSION,MINORVERSION);
+    }else if(updateRequest == EN_UPDATE_ID)
+    {
+        sprintf(remote_path,"/ECU_R_M3/%s/",ecu.id);
     }else
     {
-
+    	return ret;
     }
-    return ret;
-}
 
-int updateYC1000ByID(void)	//获取YC1000升级包
-{
-    int ret = 0;
-    char domain[100]={'\0'};		//服务器域名
-    char IPFTPadd[50] = {'\0'};
-    char remote_path[100] = {'\0'};
-    int port = 0;
-    char user[20]={'\0'};
-    char password[20]={'\0'};
-
-
-    getFTPConf(domain,IPFTPadd,&port,user,password);
-    print2msg(ECU_DBG_UPDATE,"Domain",domain);
-    print2msg(ECU_DBG_UPDATE,"FTPIP",IPFTPadd);
-    printdecmsg(ECU_DBG_UPDATE,"port",port);
-    print2msg(ECU_DBG_UPDATE,"user",user);
-    print2msg(ECU_DBG_UPDATE,"password",password);
-
-    //获取服务器IP地址
-    sprintf(remote_path,"/ECU_R_M3/%s/%s",ecu.id,UPDATE_PATH_YC1000_SUFFIX);
-    print2msg(ECU_DBG_UPDATE,"ID Path",remote_path);
-    ret=ftpgetfile(domain,IPFTPadd, port, user, password,remote_path,UPDATE_PATH_YC1000_TEMP);
-    if(!ret)
+    if(downloadType == EN_INVERTER_YC600)
     {
-        unlink(UPDATE_PATH_YC1000);
-        rename(UPDATE_PATH_YC1000_TEMP,UPDATE_PATH_YC1000);
-        deletefile(remote_path);
+        sprintf(remote_path,"%s%s",remote_path,UPDATE_PATH_YC600_SUFFIX);
+        sprintf(savePath_temp,"%s",UPDATE_PATH_YC600_TEMP);
+        sprintf(savePath,"%s",UPDATE_PATH_YC600);
+    }else if(downloadType == EN_INVERTER_YC1000)
+    {
+        sprintf(remote_path,"%s%s",remote_path,UPDATE_PATH_YC1000_SUFFIX);
+        sprintf(savePath_temp,"%s",UPDATE_PATH_YC1000_TEMP);
+        sprintf(savePath,"%s",UPDATE_PATH_YC1000);
+    }else if(downloadType == EN_INVERTER_QS1200)
+    {
+        sprintf(remote_path,"%s%s",remote_path,UPDATE_PATH_QS1200_SUFFIX);
+        sprintf(savePath_temp,"%s",UPDATE_PATH_QS1200_TEMP);
+        sprintf(savePath,"%s",UPDATE_PATH_QS1200);
+    }else if(downloadType == EN_UPDATE_TXT)
+    {
+        sprintf(remote_path,"%s%s",remote_path,UPDATE_PATH_UPDATE_TXT_SUFFIX);
+        sprintf(savePath_temp,"%s",UPDATE_PATH_UPDATE_TXT_TEMP);
+        sprintf(savePath,"%s",UPDATE_PATH_UPDATE_TXT);
     }else
     {
-
+    	return ret;
     }
-    return ret;
-}
-
-int updateQS1200ByID(void)	//获取QS1200升级包
-{
-    int ret = 0;
-    char domain[100]={'\0'};		//服务器域名
-    char IPFTPadd[50] = {'\0'};
-    char remote_path[100] = {'\0'};
-    int port = 0;
-    char user[20]={'\0'};
-    char password[20]={'\0'};
-
-
-    getFTPConf(domain,IPFTPadd,&port,user,password);
-    print2msg(ECU_DBG_UPDATE,"Domain",domain);
-    print2msg(ECU_DBG_UPDATE,"FTPIP",IPFTPadd);
-    printdecmsg(ECU_DBG_UPDATE,"port",port);
-    print2msg(ECU_DBG_UPDATE,"user",user);
-    print2msg(ECU_DBG_UPDATE,"password",password);
-
-    //获取服务器IP地址
-    sprintf(remote_path,"/ECU_R_M3/%s/%s",ecu.id,UPDATE_PATH_QS1200_SUFFIX);
-    print2msg(ECU_DBG_UPDATE,"ID Path",remote_path);
-    ret=ftpgetfile(domain,IPFTPadd, port, user, password,remote_path,UPDATE_PATH_QS1200_TEMP);
-    if(!ret)
+	
+    print2msg(ECU_DBG_UPDATE,"Path",remote_path);
+    if(networkType == EN_WIRED)	//有线
     {
-        unlink(UPDATE_PATH_QS1200);
-        rename(UPDATE_PATH_QS1200_TEMP,UPDATE_PATH_QS1200);
-        deletefile(remote_path);
+    	ret=ftpgetfile(ftp_arg.domain,ftp_arg.ip, ftp_arg.port1, ftp_arg.user, ftp_arg.passwd,remote_path,savePath_temp);
+    }else if(networkType == EN_WIFI)	//无线
+    {
+    	ret=WiFiFile_GetFile(remote_path,savePath_temp);
+	printdecmsg(ECU_DBG_UPDATE,"ret",ret);
     }else
     {
-
+    	return ret;
+    }
+    
+    if(!ret)
+    {
+        unlink(savePath);
+        rename(savePath_temp,savePath);
+	if(updateRequest == EN_UPDATE_ID)
+	{
+	    if(networkType == EN_WIRED)
+        	    {
+        	        deletefile(remote_path);
+        	    }else
+        	    {
+        	        WiFiFile_DeleteFile(remote_path);
+        	    }
+	}
+        
     }
     return ret;
 }
@@ -275,33 +231,57 @@ void remote_update_thread_entry(void* parameter)
 
     while(1)
     {
+    	//有线下载
         for(i = 0;i<5;i++)
         {
-            if(-1 != updateECUByVersion())
+            if(-1 != updateECU(EN_WIRED,EN_UPDATE_VERSION))
                 break;
         }
         for(i = 0;i<5;i++)
         {
-            if(-1 != updateECUByID())
+            if(-1 != updateECU(EN_WIRED,EN_UPDATE_ID))
+                break;
+        }
+        //根据当前的逆变器版本，下载对应逆变器升级包
+       /* 
+        for(i = 0;i<2;i++)
+        {
+            if(-1 != DownloadInverterFile())
                 break;
         }
         for(i = 0;i<2;i++)
         {
-            if(-1 != updateYC600ByID())
+            if(-1 != DownloadInverterFile())
                 break;
         }
         for(i = 0;i<2;i++)
         {
-            if(-1 != updateYC1000ByID())
+            if(-1 != DownloadInverterFile())
                 break;
         }
-        for(i = 0;i<2;i++)
+	*/
+	rt_thread_delay(RT_TICK_PER_SECOND*20);
+	//无线下载
+	//无线按照版本升级
+	for(i = 0;i<2;i++)
         {
-            if(-1 != updateQS1200ByID())
+            if(-1 != updateECU(EN_WIFI,EN_UPDATE_VERSION))
                 break;
+	    rt_thread_delay(RT_TICK_PER_SECOND*10);
+        }
+	//无线按照ID升级
+	for(i = 0;i<2;i++)
+        {
+            if(-1 != updateECU(EN_WIFI,EN_UPDATE_ID))
+                break;
+	   rt_thread_delay(RT_TICK_PER_SECOND*10);
         }
 
-        //rt_thread_delay(RT_TICK_PER_SECOND*10);
+	//无线下载600程序
+	//无线下载1000程序
+	//无线下载1200程序
+
+	
         rt_thread_delay(RT_TICK_PER_SECOND*86400);
     }
 

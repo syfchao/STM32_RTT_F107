@@ -58,18 +58,8 @@ void reboot_timer(int timeout)			//zigbee串口数据检测 返回0 表示串口没有数据  返
 
 void Factory(void)
 {
-	char InternalECUID[13] = {'0'};
-	char InternalMAC[18] = {'\0'};
-
-	ReadPage(INTERNAL_FALSH_ID,InternalECUID,12);
-	ReadPage(INTERNAL_FALSH_MAC,InternalMAC,17);
 	dfs_mkfs("elm","flash");
 	initPath();
-
-	//写入ID 
-	setECUID(InternalECUID);
-	//写入MAC
-	echo("/yuneng/ecumac.con",InternalMAC);
 }
 
 unsigned char factory_flag = 0;

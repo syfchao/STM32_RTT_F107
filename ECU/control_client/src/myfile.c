@@ -309,10 +309,3 @@ int read_line_end(char* filename,char *linedata,char* compareData,int len)
     return -1;
 }
 
-
-#ifdef RT_USING_FINSH
-#include <finsh.h>
-FINSH_FUNCTION_EXPORT(delete_line, eg:delete_line("/home/data/id","/home/data/id_tmp","201703150001",12));
-#endif
-
-

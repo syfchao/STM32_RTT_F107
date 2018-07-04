@@ -16,10 +16,14 @@
 /*****************************************************************************/
 #include "variation.h"
 #include <rtthread.h>
-
+#include "usart5.h"
 /*****************************************************************************/
 /*  Function Declarations                                                    */
 /*****************************************************************************/
+extern Socket_Cfg client_arg;
+extern Socket_Cfg control_client_arg;
+extern Socket_Cfg ftp_arg;
+extern Socket_Cfg wifiserver_arg;
 
 //计算是否是瑞年  是返回1    不是返回0  
 int leap(int year);
@@ -46,6 +50,7 @@ unsigned short get_panid(void);
 char get_channel(void);
 int strtohex(char str[2]);
 float get_lifetime_power(void);	
+void UpdateServerInfo(void);
 void update_life_energy(float lifetime_power);
 void updateID(void);
 int splitString(char *data,char splitdata[][32]);
@@ -67,7 +72,7 @@ int save_status(char *result, char *date_time);	//设置保护参数，功率等完成后，把
 void get_mac(rt_uint8_t  dev_addr[6]);
 void echo(const char* filename,const char* string);
 void addInverter(char *inverter_id);
-void initPath(void);
+void initFileSystem(void);
 int getTimeZone(void);
 int optimizeFileSystem(int capsize);
 #endif /*__FILE_H__*/

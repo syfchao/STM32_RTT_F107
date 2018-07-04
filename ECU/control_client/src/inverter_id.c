@@ -24,6 +24,7 @@
 #include "version.h"
 #include "main-thread.h"
 #include "dfs_posix.h"
+#include "InternalFlash.h"
 
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
@@ -49,8 +50,7 @@ int ecu_msg(char *sendbuffer, int num, const char *recvbuffer)
     sprintf(version,"%s%s.%s",ECU_EMA_VERSION,MAJORVERSION,MINORVERSION);
     version_number[0] = '3';
     version_number[1] = '\0';
-    file_get_one(area, sizeof(area),
-                 "/yuneng/area.con");
+    ReadPage(INTERNAL_FALSH_AREA,area,8);
 
     if(strlen(version_number)){
         sprintf(version_msg, "%02d%s%s--%s",

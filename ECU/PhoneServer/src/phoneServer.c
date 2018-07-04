@@ -814,7 +814,6 @@ void Phone_ServerInfo(int Data_Len,const char *recvbuffer)
         if(ret == 0)
         {
             APP_Response_ServerInfo(0x00,&serverInfo);
-            initSocketArgs();
         }else
         {
             return;
@@ -1109,6 +1108,7 @@ void process_switchSTAMode(void)
 void process_APKEYEvent(void)
 {
     //ÇÐ»»µ½AP+STAÄ£Ê½
+    rt_thread_delay(RT_TICK_PER_SECOND*2);
     AT_CWMODE3(3);
     AT_CIPMUX1();
     AT_CIPSERVER();
@@ -1170,7 +1170,7 @@ void phone_server_thread_entry(void* parameter)
         getAddr(array, 5,&IPconfig);
         StaticIP(IPconfig.IPAddr,IPconfig.MSKAddr,IPconfig.GWAddr,IPconfig.DNS1Addr,IPconfig.DNS2Addr);
     }
-#if 1
+#if 0
     AT_CWMODE3(1);
     AT_CIPMUX1();
 #else 

@@ -18,6 +18,12 @@ typedef enum
     SOCKET_C = 3,
 } eSocketType;
 
+typedef enum 
+{
+    WiFiFileNoConnect = 0,
+    WiFiFileConnect = 1,
+} eWiFiFileType;
+
 #define USART_REC_LEN  				4096  	//定义最大接收字节数 2048
 #define SOCKETA_LEN						2048
 #define SOCKETB_LEN						1460
@@ -31,11 +37,15 @@ typedef struct socket_config
     int port2;			//端口2
     int timeout;
     int report_interval;
-
+    char user[40];
+    char passwd[40];	
 }Socket_Cfg;
+
+extern unsigned short Cur;
 
 extern Socket_Cfg client_arg;
 extern Socket_Cfg control_client_arg;
+extern eWiFiFileType WiFiFileDownload_Status;
 
 extern unsigned char WIFI_RecvSocketAData[SOCKETA_LEN];
 extern unsigned char WIFI_Recv_SocketA_Event;
@@ -57,6 +67,7 @@ unsigned short packetlen_A(unsigned char *packet);
 unsigned short packetlen_B(unsigned char *packet);
 unsigned short packetlen_C(unsigned char *packet);
 
+int detectionIPD(int size);
 void clear_WIFI(void);
 void initSocketArgs(void);
 int randport(Socket_Cfg cfg);

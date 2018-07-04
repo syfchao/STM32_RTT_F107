@@ -65,10 +65,12 @@ typedef struct IPConfig
 #define UPDATE_SERVER_DOMAIN				"ecu.apsema.com"
 #define UPDATE_SERVER_IP					"60.190.131.190"
 #define UPDATE_SERVER_PORT1				9219
+#define UPDATE_USER 						"zhyf"
+#define UPDATE_PASSWORD					"yuneng"
 
-#define WIFI_SERVER_IP					"192.168.1.25"
-#define WIFI_SERVER_PORT1				9995
-
+#define WIFI_SERVER_IP						"192.168.1.19"
+#define WIFI_SERVER_PORT1					9220
+#define WIFI_SERVER_PORT2					9220
 #else
 
 #define CLIENT_SERVER_DOMAIN		""
@@ -116,7 +118,7 @@ typedef struct IPConfig
 
 
 //thread start time
-#define START_TIME_UPDATE									4
+#define START_TIME_UPDATE									8
 #define START_TIME_NTP										10
 #define START_TIME_IDWRITE									5
 #define START_TIME_MAIN										5			//90

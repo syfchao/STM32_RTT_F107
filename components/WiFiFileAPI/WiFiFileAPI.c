@@ -8,6 +8,10 @@
 #include "dfs_posix.h"
 #include "stdlib.h"
 #include "debug.h"
+#include "flash_if.h"
+
+#define WIFISERVER_CREATESOCKET2_TIMES		3		//WIFI服务器Socket2尝试重连次数
+#define WIFISERVER_COMMAND_TIMES			3		//WIFI服务器尝试命令次数
 
 const unsigned short CRC_table_16[256] =
 {
@@ -55,7 +59,6 @@ int getFileAttribute(char *Path,unsigned int *FileSize,unsigned short *Check)
     fileStat = (struct stat *)malloc(sizeof(struct stat));
     memset(fileStat,0x00,sizeof(struct stat));
     stat(Path, fileStat);
-    printf("FileSize:%d\n",fileStat->st_size);
     *FileSize = fileStat->st_size;
     free(fileStat);
     fileStat = NULL;
@@ -73,15 +76,48 @@ int getFileAttribute(char *Path,unsigned int *FileSize,unsigned short *Check)
             if(readsize < 1024)
                 break;
         }
-        printf("Check:%x\n",*Check);
         close(fd);
         free(buff);
         buff = NULL;
         return 0;
     }
+
     //文件打开失败，直接返回-1
     return -1;
 }
+
+int getFileAttributeInternalFlash(unsigned int FileSize,unsigned short *Check)
+{
+    //获取文件大小
+    unsigned char *buff = NULL;
+    unsigned int app2addr = 0x08080000;
+    int i = 0;
+    buff = malloc(1024);
+    memset (buff,0x00,1024);
+    *Check = 0;
+    while(1)
+    {
+        for(i = 0;i<1024;i++)
+        {
+            buff[i] = (*(unsigned char *)(app2addr));
+            app2addr++;
+        }
+        if(FileSize > 1024)
+        {
+            *Check = GetCrc_16(buff, 1024, *Check, CRC_table_16);
+        }else
+        {
+            *Check = GetCrc_16(buff, FileSize, *Check, CRC_table_16);
+            break;
+        }
+        FileSize -=1024;
+    }
+
+    free(buff);
+    buff = NULL;
+    return 0;
+}
+
 unsigned short GetCrc_16(unsigned char * pData, unsigned short nLength, unsigned short init, const unsigned short *ptable)
 {
     unsigned short cRc_16 = init;
@@ -117,6 +153,7 @@ static int analysisRequestData(unsigned char *WIFI_RecvWiFiFileData,StRequestRec
         RecvInfo->RecvData.recvDownloadInfo.File_Size = WIFI_RecvWiFiFileData[21]*16777216 + WIFI_RecvWiFiFileData[22]*65536 + WIFI_RecvWiFiFileData[23]*256+ WIFI_RecvWiFiFileData[24];
         //文件整体校验
         RecvInfo->RecvData.recvDownloadInfo.Check = WIFI_RecvWiFiFileData[25]*256+ WIFI_RecvWiFiFileData[26];
+        printf("Download File Attribute File  Flag:%d FileSize:%d File Check:%02x\n",RecvInfo->RecvData.recvDownloadInfo.downloadStatus,RecvInfo->RecvData.recvDownloadInfo.File_Size,RecvInfo->RecvData.recvDownloadInfo.Check);
     }else if(cmd == EN_CMD_DELETE_FILE)
     {
         //文件删除标志
@@ -131,6 +168,7 @@ static int analysisRequestData(unsigned char *WIFI_RecvWiFiFileData,StRequestRec
         {
             RecvInfo->RecvData.recvDeleteInfo = EN_DELETE_FILE_NOT_EXIST;
         }
+        printf("Delete File Attribute File Flag:%d\n",RecvInfo->RecvData.recvDeleteInfo);
     }else if(cmd == EN_CMD_UPLOAD_FILE)
     {
         //文件上传标志
@@ -142,6 +180,7 @@ static int analysisRequestData(unsigned char *WIFI_RecvWiFiFileData,StRequestRec
         {
             RecvInfo->RecvData.recvUploadInfo = EN_UPLOAD_FILE_PATH_NOT_EXIST;
         }
+        printf("Upload File Attribute File Flag:%d\n",RecvInfo->RecvData.recvUploadInfo);
     }else
     {
         return -1;
@@ -199,11 +238,11 @@ static int WiFiSocketCreate(char *IP ,int port)
     AT_CIPCLOSE('2');
     if(!AT_CIPSTART('2',"TCP",IP ,port))
     {
-    	printmsg(ECU_DBG_WIFI,"Create File Socket Success\n");
+        printmsg(ECU_DBG_WIFI,"Create File Socket Success");
         return 1;
     }else
     {
-    	printmsg(ECU_DBG_WIFI,"Create File Socket Failed\n");
+        printmsg(ECU_DBG_WIFI,"Create File Socket Failed");
         return -1;
     }
 }
@@ -213,7 +252,7 @@ static int WifiFile_Request(StRequestSendDataSt *SendInfo,StRequestRecvDataSt *R
 {
     unsigned char *Sendbuff = NULL;
     unsigned char *Recvbuff = NULL;
-    int bufflen = 0,index = 0,timeindex = 0,breakflag = 0;
+    int bufflen = 0,index = 0,index_create = 0,timeindex = 0;
     if((SendInfo->cmd != EN_CMD_DOWNLOAD_FILE)&&(SendInfo->cmd != EN_CMD_DELETE_FILE)&&(SendInfo->cmd != EN_CMD_UPLOAD_FILE))
     {
         printf("WifiFile_Request Input Arg Failed\n");
@@ -256,45 +295,49 @@ static int WifiFile_Request(StRequestSendDataSt *SendInfo,StRequestRecvDataSt *R
     Sendbuff[5] = (bufflen/1000) + '0';
     Sendbuff[6] = ((bufflen/100)%10) + '0';
     Sendbuff[7] = ((bufflen/10)%10) + '0';
-    Sendbuff[8] = ((bufflen)%10) + '0'; 
-    for( index = 0;index < 3;index++)
+    Sendbuff[8] = ((bufflen)%10) + '0';
+    for(index_create = 0;index_create < WIFISERVER_CREATESOCKET2_TIMES;index_create++)
     {
-    	printhexmsg(ECU_DBG_WIFI,"WifiFile_Request Send:",(char *)Sendbuff,bufflen);
-        WIFI_Recv_WiFiFile_Event = 0;
-        if(-1 == SendToSocket('2',(char*)Sendbuff,bufflen))
+        for( index = 0;index < WIFISERVER_COMMAND_TIMES;index++)
         {
-            free(Sendbuff);
-            free(Recvbuff);
-            Sendbuff = NULL;
-            Recvbuff = NULL;
-            return -1;
-        }
-
-        for(timeindex = 0;timeindex < 300;timeindex++)
-        {
-            if(WIFI_Recv_WiFiFile_Event == 1)
+            //printhexmsg(ECU_DBG_WIFI,"WifiFile_Request Send:",(char *)Sendbuff,bufflen);
+            WIFI_Recv_WiFiFile_Event = 0;
+            if(-1 == SendToSocket('2',(char*)Sendbuff,bufflen))
             {
-                //解析数据到结构体中
-                printhexmsg(ECU_DBG_WIFI,"WifiFile_Request Recv:",(char *)WIFI_RecvWiFiFileData,WIFI_Recv_WiFiFile_LEN);
-                if(0 == analysisRequestData(WIFI_RecvWiFiFileData,RecvInfo))
-                {
-                    breakflag = 1;
-                    break;
-                }
+                break;
             }
-            rt_thread_delay(1);
-        }
-        if(1 == breakflag)
-        {
-            free(Sendbuff);
-            free(Recvbuff);
-            Sendbuff = NULL;
-            Recvbuff = NULL;
-            return 0;
-        }
 
+            for(timeindex = 0;timeindex < 300;timeindex++)
+            {
+                if(WIFI_Recv_WiFiFile_Event == 1)
+                {
+                    //解析数据到结构体中
+                    printf("File Name:%s\n",SendInfo->SendData.senddDownloadDeleteInfo.Path);
+                    //printhexmsg(ECU_DBG_WIFI,"WifiFile_Request Recv:",(char *)WIFI_RecvWiFiFileData,WIFI_Recv_WiFiFile_LEN);
+                    if(0 == analysisRequestData(WIFI_RecvWiFiFileData,RecvInfo))
+                    {
+                        free(Sendbuff);
+                        free(Recvbuff);
+                        Sendbuff = NULL;
+                        Recvbuff = NULL;
+                        return 0;
+                    }else
+                    {
+                        free(Sendbuff);
+                        free(Recvbuff);
+                        Sendbuff = NULL;
+                        Recvbuff = NULL;
+                        return -1;
+                    }
+                }
+                rt_thread_delay(1);
+            }
+            rt_thread_delay(RT_TICK_PER_SECOND*1);
+        }
+        rt_thread_delay(RT_TICK_PER_SECOND*30);
+        //失败重连
+        WiFiSocketCreate(WIFI_SERVER_IP ,WIFI_SERVER_PORT1);
     }
-
     free(Sendbuff);
     free(Recvbuff);
     Sendbuff = NULL;
@@ -306,7 +349,7 @@ static int WifiFile_Download(StDownloadSendDataSt *SendInfo,StDownloadRecvDataSt
 {
     unsigned char *Sendbuff = NULL;
     unsigned char *Recvbuff = NULL;
-    int bufflen = 0,index = 0,timeindex = 0,breakflag = 0;
+    int bufflen = 0,index = 0,timeindex = 0;
 
     Sendbuff = malloc(1460);
     Recvbuff = malloc(1460);
@@ -328,44 +371,50 @@ static int WifiFile_Download(StDownloadSendDataSt *SendInfo,StDownloadRecvDataSt
     Sendbuff[6] = ((bufflen/100)%10) + '0';
     Sendbuff[7] = ((bufflen/10)%10) + '0';
     Sendbuff[8] = ((bufflen)%10) + '0';
-    for( index = 0;index < 3;index++)
+
+    for( index = 0;index < WIFISERVER_COMMAND_TIMES+2;index++)
     {
-        printhexmsg(ECU_DBG_WIFI,"WifiFile_Download Send:",(char *)Sendbuff,bufflen);
-        WIFI_Recv_WiFiFile_Event = 0;
-        if(-1 == SendToSocket('2',(char*)Sendbuff,bufflen))
+        for( index = 0;index < WIFISERVER_COMMAND_TIMES;index++)
         {
-            free(Sendbuff);
-            free(Recvbuff);
-            Sendbuff = NULL;
-            Recvbuff = NULL;
-            return -1;
-        }
-
-        for(timeindex = 0;timeindex < 300;timeindex++)
-        {
-            if(WIFI_Recv_WiFiFile_Event == 1)
+            //printhexmsg(ECU_DBG_WIFI,"WifiFile_Download Send:",(char *)Sendbuff,bufflen);
+            WIFI_Recv_WiFiFile_Event = 0;
+            if(-1 == SendToSocket('2',(char*)Sendbuff,bufflen))
             {
-                printhexmsg(ECU_DBG_WIFI,"WifiFile_Download Recv:",(char *)WIFI_RecvWiFiFileData,WIFI_Recv_WiFiFile_LEN);
-                //解析数据到结构体中
-                if(0 == analysisDownloadData(WIFI_RecvWiFiFileData,RecvInfo))
-                {
-                    breakflag = 1;
-                    break;
-                }
+                  printf("SendToSocket 2 failed\n");
+		break;
             }
-            rt_thread_delay(1);
-        }
-        if(1 == breakflag)
-        {
-            free(Sendbuff);
-            free(Recvbuff);
-            Sendbuff = NULL;
-            Recvbuff = NULL;
-            return -1;
-        }
 
+            for(timeindex = 0;timeindex < 300;timeindex++)
+            {
+                if(WIFI_Recv_WiFiFile_Event == 1)
+                {
+                    //printhexmsg(ECU_DBG_WIFI,"WifiFile_Download Recv:",(char *)WIFI_RecvWiFiFileData,WIFI_Recv_WiFiFile_LEN);
+                    //解析数据到结构体中
+                    if(0 == analysisDownloadData(WIFI_RecvWiFiFileData,RecvInfo))
+                    {
+                        free(Sendbuff);
+                        free(Recvbuff);
+                        Sendbuff = NULL;
+                        Recvbuff = NULL;
+                        return 0;
+                    }else
+                    {
+                        free(Sendbuff);
+                        free(Recvbuff);
+                        Sendbuff = NULL;
+                        Recvbuff = NULL;
+                        return -1;
+                    }
+
+                }
+                rt_thread_delay(1);
+            }
+            rt_thread_delay(RT_TICK_PER_SECOND*1);
+        }
+        rt_thread_delay(RT_TICK_PER_SECOND*30);
+        //失败重连
+        WiFiSocketCreate(WIFI_SERVER_IP ,WIFI_SERVER_PORT1);
     }
-
     free(Sendbuff);
     free(Recvbuff);
     Sendbuff = NULL;
@@ -377,7 +426,7 @@ static int WifiFile_Upload(StUploadSendDataSt *SendInfo,StUploadRecvDataSt *Recv
 {
     unsigned char *Sendbuff = NULL;
     unsigned char *Recvbuff = NULL;
-    int bufflen = 0,index = 0,timeindex = 0,breakflag = 0;
+    int bufflen = 0,index = 0,timeindex = 0;
 
     Sendbuff = malloc(1460);
     Recvbuff = malloc(1460);
@@ -415,44 +464,49 @@ static int WifiFile_Upload(StUploadSendDataSt *SendInfo,StUploadRecvDataSt *Recv
     Sendbuff[6] = ((bufflen/100)%10) + '0';
     Sendbuff[7] = ((bufflen/10)%10) + '0';
     Sendbuff[8] = ((bufflen)%10) + '0';
-    for( index = 0;index < 3;index++)
+    for( index = 0;index < WIFISERVER_COMMAND_TIMES;index++)
     {
-        printhexmsg(ECU_DBG_WIFI,"WifiFile_Upload Send:",(char *)Sendbuff,bufflen);
-        WIFI_Recv_WiFiFile_Event = 0;
-        if(-1 == SendToSocket('2',(char*)Sendbuff,bufflen))
-        {
-            free(Sendbuff);
-            free(Recvbuff);
-            Sendbuff = NULL;
-            Recvbuff = NULL;
-            return -1;
-        }
 
-        for(timeindex = 0;timeindex < 300;timeindex++)
+
+        for( index = 0;index < WIFISERVER_COMMAND_TIMES;index++)
         {
-            if(WIFI_Recv_WiFiFile_Event == 1)
+            //printhexmsg(ECU_DBG_WIFI,"WifiFile_Upload Send:",(char *)Sendbuff,bufflen);
+            WIFI_Recv_WiFiFile_Event = 0;
+            if(-1 == SendToSocket('2',(char*)Sendbuff,bufflen))
             {
-                printhexmsg(ECU_DBG_WIFI,"WifiFile_Upload Recv:",(char *)WIFI_RecvWiFiFileData,WIFI_Recv_WiFiFile_LEN);
-                //解析数据到结构体中
-                if(0 == analysisUploadData(WIFI_RecvWiFiFileData,RecvInfo))
-                {
-                    breakflag = 1;
-                    break;
-                }
+                break;
             }
-            rt_thread_delay(1);
-        }
-        if(1 == breakflag)
-        {
-            free(Sendbuff);
-            free(Recvbuff);
-            Sendbuff = NULL;
-            Recvbuff = NULL;
-            return -1;
-        }
 
+            for(timeindex = 0;timeindex < 300;timeindex++)
+            {
+                if(WIFI_Recv_WiFiFile_Event == 1)
+                {
+                    //printhexmsg(ECU_DBG_WIFI,"WifiFile_Upload Recv:",(char *)WIFI_RecvWiFiFileData,WIFI_Recv_WiFiFile_LEN);
+                    //解析数据到结构体中
+                    if(0 == analysisUploadData(WIFI_RecvWiFiFileData,RecvInfo))
+                    {
+                        free(Sendbuff);
+                        free(Recvbuff);
+                        Sendbuff = NULL;
+                        Recvbuff = NULL;
+                        return 0;
+                    }else
+                    {
+                        free(Sendbuff);
+                        free(Recvbuff);
+                        Sendbuff = NULL;
+                        Recvbuff = NULL;
+                        return -1;
+                    }
+                }
+                rt_thread_delay(1);
+            }
+            rt_thread_delay(RT_TICK_PER_SECOND*1);
+        }
+        rt_thread_delay(RT_TICK_PER_SECOND*20);
+        //失败重连
+        WiFiSocketCreate(WIFI_SERVER_IP ,WIFI_SERVER_PORT1);
     }
-
     free(Sendbuff);
     free(Recvbuff);
     Sendbuff = NULL;
@@ -486,6 +540,7 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
     {
         free(RequestSendInfo);
         free(RequestRecvInfo);
+        WiFiFileDownload_Status = WiFiFileNoConnect;
         return -1;
     }
     //问询文件是否存在
@@ -497,6 +552,7 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
         free(RequestSendInfo);
         free(RequestRecvInfo);
         AT_CIPCLOSE('2');
+        WiFiFileDownload_Status = WiFiFileNoConnect;
         return -2;
     }else	//获取请求成功
     {
@@ -505,6 +561,7 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
             free(RequestSendInfo);
             free(RequestRecvInfo);
             AT_CIPCLOSE('2');
+            WiFiFileDownload_Status = WiFiFileNoConnect;
             return -3;
         }else
         {	//文件存在
@@ -526,8 +583,10 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
                 free(RequestSendInfo);
                 free(RequestRecvInfo);
                 AT_CIPCLOSE('2');
+                WiFiFileDownload_Status = WiFiFileNoConnect;
                 return -4;
             }
+            WiFiFileDownload_Status = WiFiFileConnect;
             //打开文件成功
             while(1)
             {
@@ -541,6 +600,7 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
                     free(RequestSendInfo);
                     free(RequestRecvInfo);
                     AT_CIPCLOSE('2');
+                    WiFiFileDownload_Status = WiFiFileNoConnect;
                     return -5;
                 }else
                 {//要数据成功
@@ -554,6 +614,7 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
                         free(RequestSendInfo);
                         free(RequestRecvInfo);
                         AT_CIPCLOSE('2');
+                        WiFiFileDownload_Status = WiFiFileNoConnect;
                         return -6;
                     }else
                     {
@@ -570,6 +631,7 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
                                     free(RequestSendInfo);
                                     free(RequestRecvInfo);
                                     AT_CIPCLOSE('2');
+                                    WiFiFileDownload_Status = WiFiFileNoConnect;
                                     return -7;
                                 }
                             }else
@@ -581,6 +643,7 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
                                 free(RequestSendInfo);
                                 free(RequestRecvInfo);
                                 AT_CIPCLOSE('2');
+                                WiFiFileDownload_Status = WiFiFileNoConnect;
                                 return -8;
                             }
                         }
@@ -595,6 +658,7 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
                         //计算全文检验，与开始的校验对比，正确表示下载成功
                         if(getFileAttribute(localFile,&FileSize,&Check) == 0)
                         {
+                            printf("%d:FileSize:%d %d Check:%x %x\n",DownloadSendInfo->Serial_Num,FileSize,RequestRecvInfo->RecvData.recvDownloadInfo.File_Size,Check,RequestRecvInfo->RecvData.recvDownloadInfo.Check);
                             if((FileSize == RequestRecvInfo->RecvData.recvDownloadInfo.File_Size)&&(Check == RequestRecvInfo->RecvData.recvDownloadInfo.Check))
                             {
                                 free(DownloadSendInfo);
@@ -602,6 +666,7 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
                                 free(RequestSendInfo);
                                 free(RequestRecvInfo);
                                 AT_CIPCLOSE('2');
+                                WiFiFileDownload_Status = WiFiFileNoConnect;
                                 return 0;
                             }
                             else
@@ -612,6 +677,7 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
                                 free(RequestSendInfo);
                                 free(RequestRecvInfo);
                                 AT_CIPCLOSE('2');
+                                WiFiFileDownload_Status = WiFiFileNoConnect;
                                 return -10;	//文件或校验失败
                             }
 
@@ -623,6 +689,7 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
                             free(RequestSendInfo);
                             free(RequestRecvInfo);
                             AT_CIPCLOSE('2');
+                            WiFiFileDownload_Status = WiFiFileNoConnect;
                             return -9;	//打开本地文件失败
                         }
 
@@ -634,7 +701,7 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
 }
 
 
-/*
+
 //下载文件
 //返回值:
 //    0:文件下载成功
@@ -650,7 +717,6 @@ int WiFiFile_GetFile(char *remoteFile,char *localFile)
 //  -10:本地文件大小或校验失败
 int WiFiFile_GetFileInternalFlash(char *remoteFile)
 {
-    unsigned int FileSize = 0;
     unsigned short Check = 0;
     StRequestSendDataSt *RequestSendInfo = NULL;
     StRequestRecvDataSt *RequestRecvInfo = NULL;
@@ -661,6 +727,7 @@ int WiFiFile_GetFileInternalFlash(char *remoteFile)
     {
         free(RequestSendInfo);
         free(RequestRecvInfo);
+        WiFiFileDownload_Status = WiFiFileNoConnect;
         return -1;
     }
     //问询文件是否存在
@@ -672,6 +739,7 @@ int WiFiFile_GetFileInternalFlash(char *remoteFile)
         free(RequestSendInfo);
         free(RequestRecvInfo);
         AT_CIPCLOSE('2');
+        WiFiFileDownload_Status = WiFiFileNoConnect;
         return -2;
     }else	//获取请求成功
     {
@@ -680,30 +748,32 @@ int WiFiFile_GetFileInternalFlash(char *remoteFile)
             free(RequestSendInfo);
             free(RequestRecvInfo);
             AT_CIPCLOSE('2');
+            WiFiFileDownload_Status = WiFiFileNoConnect;
             return -3;
         }else
         {	//文件存在
             StDownloadSendDataSt *DownloadSendInfo = NULL;
             StDownloadRecvDataSt *DownloadRecvInfo = NULL;
-	   unsigned int app2addr = 0x08080000;
+            unsigned int app2addr = 0x08080000;
             DownloadSendInfo = (StDownloadSendDataSt *)malloc(sizeof(StDownloadSendDataSt));
             DownloadRecvInfo = (StDownloadRecvDataSt *)malloc(sizeof(StDownloadRecvDataSt));
             memset(DownloadSendInfo->Path,0x00,60);
             memcpy(DownloadSendInfo->Path,remoteFile,strlen(remoteFile));
             DownloadSendInfo->Serial_Num = 1;
             //擦除内部Flash APP2空间
-              //解锁内部Flash
-	    FLASH_Unlock();
-	    if(1 == FLASH_If_Erase_APP2())	//清除APP2区域
-	    {
-	    	 free(DownloadSendInfo);
+            //解锁内部Flash
+            FLASH_Unlock();
+            if(1 == FLASH_If_Erase_APP2())	//清除APP2区域
+            {
+                free(DownloadSendInfo);
                 free(DownloadRecvInfo);
                 free(RequestSendInfo);
                 free(RequestRecvInfo);
                 AT_CIPCLOSE('2');
+                WiFiFileDownload_Status = WiFiFileNoConnect;
                 return -4;
-	    }
-            
+            }
+            WiFiFileDownload_Status = WiFiFileConnect;
             //打开文件成功
             while(1)
             {
@@ -715,6 +785,7 @@ int WiFiFile_GetFileInternalFlash(char *remoteFile)
                     free(RequestSendInfo);
                     free(RequestRecvInfo);
                     AT_CIPCLOSE('2');
+                    WiFiFileDownload_Status = WiFiFileNoConnect;
                     return -5;
                 }else
                 {//要数据成功
@@ -726,6 +797,7 @@ int WiFiFile_GetFileInternalFlash(char *remoteFile)
                         free(RequestSendInfo);
                         free(RequestRecvInfo);
                         AT_CIPCLOSE('2');
+                        WiFiFileDownload_Status = WiFiFileNoConnect;
                         return -6;
                     }else
                     {
@@ -733,16 +805,18 @@ int WiFiFile_GetFileInternalFlash(char *remoteFile)
                         {
                             if(DownloadRecvInfo->Check == GetCrc_16(DownloadRecvInfo->Data,DownloadRecvInfo->Data_Len,0,CRC_table_16))
                             {
-                                if(DownloadRecvInfo->Data_Len != FLASH_If_WriteData(app2addr,DownloadRecvInfo->Data,DownloadRecvInfo->Data_Len))
+                                if(DownloadRecvInfo->Data_Len != FLASH_If_WriteData(app2addr,(char *)DownloadRecvInfo->Data,DownloadRecvInfo->Data_Len))
                                 {	//文件写入失败
                                     free(DownloadSendInfo);
                                     free(DownloadRecvInfo);
                                     free(RequestSendInfo);
                                     free(RequestRecvInfo);
                                     AT_CIPCLOSE('2');
+                                    WiFiFileDownload_Status = WiFiFileNoConnect;
                                     return -7;
                                 }
-								
+                                app2addr+=DownloadRecvInfo->Data_Len;
+
                             }else
                             {
                                 free(DownloadSendInfo);
@@ -750,6 +824,7 @@ int WiFiFile_GetFileInternalFlash(char *remoteFile)
                                 free(RequestSendInfo);
                                 free(RequestRecvInfo);
                                 AT_CIPCLOSE('2');
+                                WiFiFileDownload_Status = WiFiFileNoConnect;
                                 return -8;
                             }
                         }
@@ -760,38 +835,40 @@ int WiFiFile_GetFileInternalFlash(char *remoteFile)
                         DownloadSendInfo->Serial_Num++;
                     }else
                     {	//不存在下一帧，文件下载完毕
-                        close(handle);
+                        
                         //计算全文检验，与开始的校验对比，正确表示下载成功
-                        if(getFileAttribute(localFile,&FileSize,&Check) == 0)
+                        if(getFileAttributeInternalFlash(RequestRecvInfo->RecvData.recvDownloadInfo.File_Size,&Check) == 0)
                         {
-                            if((FileSize == RequestRecvInfo->RecvData.recvDownloadInfo.File_Size)&&(Check == RequestRecvInfo->RecvData.recvDownloadInfo.Check))
+                            printf("Check:%x %x\n",Check,RequestRecvInfo->RecvData.recvDownloadInfo.Check);
+                            if((Check == RequestRecvInfo->RecvData.recvDownloadInfo.Check))
                             {
                                 free(DownloadSendInfo);
                                 free(DownloadRecvInfo);
                                 free(RequestSendInfo);
                                 free(RequestRecvInfo);
                                 AT_CIPCLOSE('2');
+                                WiFiFileDownload_Status = WiFiFileNoConnect;
                                 return 0;
                             }
                             else
                             {
-                                unlink(localFile);
                                 free(DownloadSendInfo);
                                 free(DownloadRecvInfo);
                                 free(RequestSendInfo);
                                 free(RequestRecvInfo);
                                 AT_CIPCLOSE('2');
+                                WiFiFileDownload_Status = WiFiFileNoConnect;
                                 return -10;	//文件或校验失败
                             }
 
                         }else
                         {
-                            unlink(localFile);
                             free(DownloadSendInfo);
                             free(DownloadRecvInfo);
                             free(RequestSendInfo);
                             free(RequestRecvInfo);
                             AT_CIPCLOSE('2');
+                            WiFiFileDownload_Status = WiFiFileNoConnect;
                             return -9;	//打开本地文件失败
                         }
 
@@ -801,7 +878,7 @@ int WiFiFile_GetFileInternalFlash(char *remoteFile)
         }
     }
 }
-*/
+
 //删除文件
 //返回值:
 //    0:文件删除成功
@@ -998,7 +1075,7 @@ void w_r(void)
     RecvInfo = (StRequestRecvDataSt *)malloc(sizeof(StRequestRecvDataSt));
     SendInfo->cmd = EN_CMD_DOWNLOAD_FILE;
     memset(SendInfo->SendData.senddDownloadDeleteInfo.Path,0x00,60);
-    memcpy(SendInfo->SendData.senddDownloadDeleteInfo.Path,"/home/data/id",13);
+    memcpy(SendInfo->SendData.senddDownloadDeleteInfo.Path,"/home/data/1",13);
     printf("w_r:%d\n",WifiFile_Request(SendInfo,RecvInfo));
     free(SendInfo);
     free(RecvInfo);
@@ -1018,6 +1095,7 @@ void w_d(void)
     free(RecvInfo);
 }
 
+
 void w_u(void)
 {
     StUploadSendDataSt *SendInfo = NULL;
@@ -1025,7 +1103,7 @@ void w_u(void)
     SendInfo = (StUploadSendDataSt *)malloc(sizeof(StUploadSendDataSt));
     RecvInfo = (StUploadRecvDataSt *)malloc(sizeof(StUploadRecvDataSt));
     memset(SendInfo->Path,0x00,60);
-    memcpy(SendInfo->Path,"/home/data/id",13);
+    memcpy(SendInfo->Path,"/home/data/1",13);
     SendInfo->Serial_Num = 1;
     SendInfo->Next_Flag = 1;
     SendInfo->Data_Len = 1024;
@@ -1048,6 +1126,11 @@ void w_get(char *remoteFile,char *localFile)
 {
     WiFiFile_GetFile(remoteFile,localFile);
 }
+void w_getI(char *remoteFile)
+{
+    WiFiFile_GetFileInternalFlash(remoteFile);
+}
+
 
 void w_delete(char *remoteFile)
 {
@@ -1067,6 +1150,7 @@ FINSH_FUNCTION_EXPORT(w_u , w_u.)
 FINSH_FUNCTION_EXPORT(Attribute , Attribute.)
 
 FINSH_FUNCTION_EXPORT(w_get , w_get.)
+FINSH_FUNCTION_EXPORT(w_getI , w_getI.)
 FINSH_FUNCTION_EXPORT(w_delete , w_delete.)
 FINSH_FUNCTION_EXPORT(w_put , w_put.)
 #endif

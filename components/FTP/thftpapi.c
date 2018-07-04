@@ -31,61 +31,11 @@
 #include "debug.h"
 #include "lan8720rst.h"
 #include "flash_if.h"
-
+#include "usart5.h"
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
-void getFTPConf(char *domain,char *FTPIP,int *port,char* user,char *password)
-{
-    FILE *fp;
-    char buff[50];
-    fp = fopen("/yuneng/ftpadd.con", "r");
-    if(fp)
-    {
-        while(1)
-        {
-            memset(buff, '\0', sizeof(buff));
-            fgets(buff, sizeof(buff), fp);
-            if(!strlen(buff))
-                break;
-            if(!strncmp(buff, "Domain", 6))
-            {
-                strcpy(domain, &buff[7]);
-                if('\n' == domain[strlen(domain)-1])
-                    domain[strlen(domain)-1] = '\0';
-            }
-            if(!strncmp(buff, "IP", 2))
-            {
-                strcpy(FTPIP, &buff[3]);
-                if('\n' == FTPIP[strlen(FTPIP)-1])
-                    FTPIP[strlen(FTPIP)-1] = '\0';
-            }
-            if(!strncmp(buff, "Port", 4))
-                *port = atoi(&buff[5]);
-            if(!strncmp(buff, "user", 4))
-            {
-                strcpy(user, &buff[5]);
-                if('\n' == user[strlen(user)-1])
-                    user[strlen(user)-1] = '\0';
-            }
-            if(!strncmp(buff, "password", 8))
-            {
-                strcpy(password, &buff[9]);
-                if('\n' == password[strlen(password)-1])
-                    password[strlen(password)-1] = '\0';
-            }
-        }
-        fclose(fp);
-    }else
-    {
-        strcpy(FTPIP,"60.190.131.190");
-        *port = 9219;
-        strcpy(user,"zhyf");
-        strcpy(password,"yuneng");
-    }
-
-}
-
+extern Socket_Cfg ftp_arg;
 
 //创建一个socket并返回
 int socket_connect(char *domain,char *host,int port)
@@ -706,9 +656,9 @@ int ftp_connect(char *domain, char *host, int port, char *user, char *pwd )
 {
     int     c_sock;
     if(rt_hw_GetWiredNetConnect() == 0)
-    {
+    {	
         return -1;
-    }
+    }	
     c_sock = connect_server(domain,host, port );
     if ( c_sock == -1 ) return -1;
     if ( login_server( c_sock, user, pwd ) == -1 ) {
@@ -834,54 +784,17 @@ int ftpdeletefile(char *domain,char *host, int port, char *user, char *pwd,char 
 
 int getfile(char *remoteFile, char *localFile)
 {
-    char domain[100]={'\0'};
-    char FTPIP[50];
-    int port=0;
-    char user[20]={'\0'};
-    char password[20]={'\0'};
-    getFTPConf(domain,FTPIP,&port,user,password);
-
-    print2msg(ECU_DBG_UPDATE,"FTPIP",FTPIP);
-    printdecmsg(ECU_DBG_UPDATE,"port",port);
-    print2msg(ECU_DBG_UPDATE,"user",user);
-    print2msg(ECU_DBG_UPDATE,"password",password);
-
-    return ftpgetfile(domain,FTPIP,port, user, password,remoteFile,localFile);
+    return ftpgetfile(ftp_arg.domain,ftp_arg.ip, ftp_arg.port1, ftp_arg.user, ftp_arg.passwd,remoteFile,localFile);
 }
 
 int putfile(char *remoteFile, char *localFile)
 {
-    char domain[100]={'\0'};
-    char FTPIP[50];
-    int port=0;
-    char user[20]={'\0'};
-    char password[20]={'\0'};
-    getFTPConf(domain,FTPIP,&port,user,password);
-
-    print2msg(ECU_DBG_UPDATE,"FTPIP",FTPIP);
-    printdecmsg(ECU_DBG_UPDATE,"port",port);
-    print2msg(ECU_DBG_UPDATE,"user",user);
-    print2msg(ECU_DBG_UPDATE,"password",password);
-
-    return ftpputfile(domain,FTPIP,port, user, password,remoteFile,localFile);
+    return ftpputfile(ftp_arg.domain,ftp_arg.ip, ftp_arg.port1, ftp_arg.user, ftp_arg.passwd,remoteFile,localFile);
 }
 
 int deletefile(char *remoteFile)
 {
-    char domain[100]={'\0'};
-    char FTPIP[50];
-    int port=0;
-    char user[20]={'\0'};
-    char password[20]={'\0'};
-    getFTPConf(domain,FTPIP,&port,user,password);
-
-    print2msg(ECU_DBG_UPDATE,"Domain",domain);
-    print2msg(ECU_DBG_UPDATE,"FTPIP",FTPIP);
-    printdecmsg(ECU_DBG_UPDATE,"port",port);
-    print2msg(ECU_DBG_UPDATE,"user",user);
-    print2msg(ECU_DBG_UPDATE,"password",password);
-
-    return ftpdeletefile(domain,FTPIP,port, user, password,remoteFile);
+    return ftpdeletefile(ftp_arg.domain,ftp_arg.ip, ftp_arg.port1, ftp_arg.user, ftp_arg.passwd,remoteFile);
 }
 
 

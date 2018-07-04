@@ -112,6 +112,7 @@ typedef struct
 
 unsigned short GetCrc_16(unsigned char * pData, unsigned short nLength, unsigned short init, const unsigned short *ptable);
 int WiFiFile_GetFile(char *remoteFile,char *localFile);
+int WiFiFile_GetFileInternalFlash(char *remoteFile);
 int WiFiFile_DeleteFile(char *remoteFile);
 int WiFiFile_PutFile(char *remoteFile,char *localFile);
 

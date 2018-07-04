@@ -29,6 +29,7 @@
 #include "datetime.h"
 #include "mcp1316.h"
 #include "powerIO.h"
+#include "InternalFlash.h"
 
 
 /*****************************************************************************/
@@ -36,115 +37,101 @@
 /*****************************************************************************/
 rt_mutex_t wifi_uart_lock = RT_NULL;
 extern unsigned char APSTA_Status;
-
+eWiFiFileType WiFiFileDownload_Status = WiFiFileNoConnect;
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
 Socket_Cfg client_arg;
 Socket_Cfg control_client_arg;
+Socket_Cfg ftp_arg;
+Socket_Cfg wifiserver_arg;
 
 void initSocketArgs(void)
 {
-    FILE *fp;
     char *buff = NULL;
-    client_arg.port1 = CLIENT_SERVER_PORT1;
-    client_arg.port2 = CLIENT_SERVER_PORT2;
-    strcpy(client_arg.domain, CLIENT_SERVER_DOMAIN);
-    strcpy(client_arg.ip, CLIENT_SERVER_IP);
-
     buff = malloc(512);
     memset(buff,'\0',512);
-    //³õÊ¼»¯µçÁ¿ÉÏ´«²ÎÊý
-    fp = fopen("/yuneng/datacent.con", "r");
-    if(fp)
+    ReadPage(INTERNAL_FLASH_CONFIG_INFO,buff,512);
+
+    if(1 == buff[500])	//·þÎñÆ÷²ÎÊýÅäÖÃ³É¹¦
     {
-        while(1)
-        {
-            memset(buff, '\0', 512);
-            fgets(buff, 512, fp);
+    	//³õÊ¼»¯µçÁ¿ÉÏ´«²ÎÊý
+        client_arg.port1 = buff[164]*256 + buff[165];
+        client_arg.port2 = buff[166]*256 + buff[167];
+        memcpy(client_arg.domain, &buff[100],32);
+        memcpy(client_arg.ip,&buff[148],16);
+	//³õÊ¼»¯Ô¶³Ì¿ØÖÆ²ÎÊý
+         control_client_arg.port1 = buff[64]*256 + buff[65];
+        control_client_arg.port2 = buff[66]*256 + buff[67];
+        memcpy(control_client_arg.domain, &buff[0],32);
+        memcpy(control_client_arg.ip,&buff[48],16);
+        control_client_arg.timeout = buff[68]*256 + buff[69];
+        control_client_arg.report_interval = buff[70]*256 + buff[71];
+	//³õÊ¼»¯FTP·þÎñÆ÷²ÎÊý
+        ftp_arg.port1 = buff[264]*256 + buff[265];
+        memcpy(ftp_arg.domain, &buff[200],32);
+        memcpy(ftp_arg.ip,&buff[248],16);
+        memcpy(ftp_arg.user, &buff[266],40);
+        memcpy(ftp_arg.passwd,&buff[306],40);
 
-            if(!strlen(buff))
-                break;
-            if(!strncmp(buff, "Domain", 6))
-            {
-                strcpy(client_arg.domain, &buff[7]);
-                if('\n' == client_arg.domain[strlen(client_arg.domain)-1])
-                    client_arg.domain[strlen(client_arg.domain)-1] = '\0';
-            }
-            if(!strncmp(buff, "IP", 2))
-            {
-                strcpy(client_arg.ip, &buff[3]);
-                if('\n' == client_arg.ip[strlen(client_arg.ip)-1])
-                    client_arg.ip[strlen(client_arg.ip)-1] = '\0';
-            }
-            if(!strncmp(buff, "Port1", 5))
-                client_arg.port1=atoi(&buff[6]);
-            if(!strncmp(buff, "Port2", 5))
-                client_arg.port2=atoi(&buff[6]);
-        }
-        fclose(fp);
-    }
-
-    //³õÊ¼»¯Ô¶³Ì¿ØÖÆ²ÎÊý
-    control_client_arg.port1 = CONTROL_SERVER_PORT1;
-    control_client_arg.port2 = CONTROL_SERVER_PORT2;
-    ;	strcpy(control_client_arg.domain, CONTROL_SERVER_DOMAIN);
-    strcpy(control_client_arg.ip, CONTROL_SERVER_IP);
-    control_client_arg.timeout = 10;
-    control_client_arg.report_interval = 15;
-    fp = fopen("/yuneng/control.con", "r");
-    if(fp)
+	//³õÊ¼»¯ÎÞÏßÎÄ¼þ·þÎñÆ÷²ÎÊý
+        wifiserver_arg.port1 = buff[416]*256 + buff[417];
+        wifiserver_arg.port2 = buff[418]*256 + buff[419];
+        memcpy(wifiserver_arg.ip,&buff[400],16);
+    }else
     {
-        while(1)
-        {
-            memset(buff, '\0',512);
-            fgets(buff, 512, fp);
-            if(!strlen(buff))
-                break;
-            if(!strncmp(buff, "Domain", 6))
-            {
-                strcpy(control_client_arg.domain, &buff[7]);
-                if('\n' == control_client_arg.domain[strlen(control_client_arg.domain)-1])
-                    control_client_arg.domain[strlen(control_client_arg.domain)-1] = '\0';
-            }
-            if(!strncmp(buff, "IP", 2))
-            {
-                strcpy(control_client_arg.ip, &buff[3]);
-                if('\n' == control_client_arg.ip[strlen(control_client_arg.ip)-1])
-                    control_client_arg.ip[strlen(control_client_arg.ip)-1] = '\0';
-            }
-            if(!strncmp(buff, "Port1", 5))
-                control_client_arg.port1=atoi(&buff[6]);
-            if(!strncmp(buff, "Port2", 5))
-                control_client_arg.port2=atoi(&buff[6]);
-
-            if(!strncmp(buff, "Timeout", 7))
-            {
-                control_client_arg.timeout = atoi(&buff[8]);
-            }
-
-            if(!strncmp(buff, "Report_Interval", 15))
-            {
-                control_client_arg.report_interval = atoi(&buff[16]);
-            }
-        }
-        fclose(fp);
+        //³õÊ¼»¯µçÁ¿ÉÏ´«²ÎÊý
+        client_arg.port1 = CLIENT_SERVER_PORT1;
+        client_arg.port2 = CLIENT_SERVER_PORT2;
+        strcpy(client_arg.domain, CLIENT_SERVER_DOMAIN);
+        strcpy(client_arg.ip, CLIENT_SERVER_IP);
+        //³õÊ¼»¯Ô¶³Ì¿ØÖÆ²ÎÊý
+        control_client_arg.port1 = CONTROL_SERVER_PORT1;
+        control_client_arg.port2 = CONTROL_SERVER_PORT2;
+        strcpy(control_client_arg.domain, CONTROL_SERVER_DOMAIN);
+        strcpy(control_client_arg.ip, CONTROL_SERVER_IP);
+        control_client_arg.timeout = 10;
+        control_client_arg.report_interval = 15;
+        //³õÊ¼»¯FTP·þÎñÆ÷²ÎÊý
+        ftp_arg.port1 = UPDATE_SERVER_PORT1;
+        strcpy(ftp_arg.domain, UPDATE_SERVER_DOMAIN);
+        strcpy(ftp_arg.ip, UPDATE_SERVER_IP);
+        strcpy(ftp_arg.user, UPDATE_USER);
+        strcpy(ftp_arg.passwd, UPDATE_PASSWORD);
+        //³õÊ¼»¯ÎÞÏßÎÄ¼þ·þÎñÆ÷²ÎÊý
+        wifiserver_arg.port1 = WIFI_SERVER_PORT1;
+        wifiserver_arg.port2 = WIFI_SERVER_PORT2;
+        strcpy(wifiserver_arg.ip, WIFI_SERVER_IP);
     }
-
-    printf("client_arg.domain:%s\n",client_arg.domain);
-    printf("client_arg.ip:%s\n",client_arg.ip);
-    printf("client_arg.port1:%d\n",client_arg.port1);
-    printf("client_arg.port2:%d\n",client_arg.port2);
-
-    printf("client_arg.domain:%s\n",control_client_arg.domain);
-    printf("client_arg.ip:%s\n",control_client_arg.ip);
-    printf("client_arg.port1:%d\n",control_client_arg.port1);
-    printf("client_arg.port2:%d\n",control_client_arg.port2);
-    printf("client_arg.timeout:%d\n",control_client_arg.timeout);
-    printf("client_arg.report_interval:%d\n",control_client_arg.report_interval);
-
+    
     free(buff);
     buff = NULL;
+
+    //´òÓ¡·þÎñÆ÷
+    printf("-----------------------------------------------\n");
+    printf("client.domain:%s\n",client_arg.domain);
+    printf("client.ip:%s\n",client_arg.ip);
+    printf("client.port1:%d\n",client_arg.port1);
+    printf("client.port2:%d\n",client_arg.port2);
+
+    printf("control.domain:%s\n",control_client_arg.domain);
+    printf("control.ip:%s\n",control_client_arg.ip);
+    printf("control.port1:%d\n",control_client_arg.port1);
+    printf("control.port2:%d\n",control_client_arg.port2);
+    printf("control.timeout:%d\n",control_client_arg.timeout);
+    printf("control.report_interval:%d\n",control_client_arg.report_interval);
+
+    printf("ftp.domain:%s\n",ftp_arg.domain);
+    printf("ftp.ip:%s\n",ftp_arg.ip);
+    printf("ftp.port1:%d\n",ftp_arg.port1);
+    printf("ftp.user:%s\n",ftp_arg.user);
+    printf("ftp.password:%s\n",ftp_arg.passwd);
+
+    printf("wifiserver.ip:%s\n",wifiserver_arg.ip);
+    printf("wifiserver.port1:%d\n",wifiserver_arg.port1);
+    printf("wifiserver.port2:%d\n",wifiserver_arg.port2);
+	
+    printf("-----------------------------------------------\n");
 }
 
 
@@ -312,6 +299,19 @@ int detectionOK(int size)		//¼ì²âµ½OK  ·µ»Ø1   Î´¼ì³öµ½·µ»Ø0
     return 0;
 }
 
+int detectionclose(int size)		//¼ì²âµ½OK  ·µ»Ø1   Î´¼ì³öµ½·µ»Ø0
+{
+    int i=0;
+    for(i = 0;i<(size-2);i++)
+    {
+        if(!memcmp(&USART_RX_BUF[i],",CLOSED",7))
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int detectionUNLINK(int size)		//¼ì²âµ½OK  ·µ»Ø1   Î´¼ì³öµ½·µ»Ø0
 {
     int i=0;
@@ -439,7 +439,11 @@ void WIFI_GetEvent_ESP07S(void)
 {
     //ÅÐ¶ÏECU_RÊý¾Ý´óÓÚ38¸ö×Ö½Ú
     detectionIPD(Cur);
-    detectionResetStatus(Cur);
+    if(WiFiFileNoConnect == WiFiFileDownload_Status)
+    {
+    	detectionResetStatus(Cur);
+    }
+    
 }
 
 int WIFI_Reset(void)
@@ -515,6 +519,10 @@ int SendToSocketA(char *data ,int length)
 //SOCKET B ·¢ËÍÊý¾Ý
 int SendToSocketB(char *IP ,int port,char *data ,int length)
 {
+    if(WiFiFileDownload_Status == WiFiFileConnect)
+    {
+    	return -1;
+    }
     AT_CIPCLOSE('3');
     WIFI_Recv_SocketB_Event = 0;
     if(!AT_CIPSTART('3',"TCP",IP ,port))
@@ -530,6 +538,11 @@ int SendToSocketC(char *IP ,int port,char *data ,int length)
 {
     char msg_length[6] = {'\0'};
 
+    if(WiFiFileDownload_Status == WiFiFileConnect)
+    {
+    	return -1;
+    }
+		
     if(data[strlen(data)-1] == '\n'){
         sprintf(msg_length, "%05d", strlen(data)-1);
     }
@@ -852,6 +865,11 @@ int AT_CIPSTART(char ConnectID,char *connectType,char *IP,int port)			//ÅäÖÃECUÁ
             clear_WIFI();
             return 0;
         }
+	if(1 == detectionclose(Cur))
+	{
+	    clear_WIFI();
+            return -1;
+	}
         rt_thread_delay(1);
     }
     clear_WIFI();

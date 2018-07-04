@@ -18,6 +18,8 @@
 #include <core_cm3.h>
 #include <rthw.h>
 
+extern rt_mutex_t record_data_lock;
+
 void rt_hw_us_delay(rt_uint32_t us)
 {
     rt_uint32_t delta;
@@ -60,6 +62,11 @@ void rt_hw_s_delay(rt_uint32_t s)
 
 void reboot()
 {
+	if(record_data_lock != RT_NULL)
+	{
+            rt_mutex_take(record_data_lock, RT_WAITING_FOREVER);
+            rt_mutex_release(record_data_lock);
+	}
 	__set_FAULTMASK(1);     // 关闭所有中断
 	NVIC_SystemReset();			// 复位
 }

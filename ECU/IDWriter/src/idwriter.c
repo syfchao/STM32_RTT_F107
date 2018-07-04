@@ -284,7 +284,6 @@ void idwrite_thread_entry(void* parameter)
 {
     char recvbuff[200] = {'\0'};
     int sockfd,clientfd;
-    FILE *fp;
     char mac[32] = {'\0'};
     char version[50] = {'\0'};
     char area[8] = {'\0'};
@@ -312,7 +311,7 @@ void idwrite_thread_entry(void* parameter)
         if(!strncmp(recvbuff, "mkfs", 4))
         {
             dfs_mkfs("elm","flash");
-            initPath();
+            initFileSystem();
             printdecmsg(ECU_DBG_IDWRITE,"Send",send(clientfd,"mkfs OK\n",8,0));
         }
 
@@ -335,14 +334,11 @@ void idwrite_thread_entry(void* parameter)
                 ret = -2;
             }
 
-            fp=fopen("/yuneng/ecuid.con","r");
-            fgets(ecu.id,13,fp);
-            fclose(fp);
-            
+            ReadPage(INTERNAL_FALSH_ID,ecu.id,12);
             restartThread(TYPE_MAIN);
             if(ret == 0)
             {
-                printdecmsg(ECU_DBG_IDWRITE,"Send",send(clientfd,ecu.id,strlen(ecu.id),0));
+                printdecmsg(ECU_DBG_IDWRITE,"Send",send(clientfd,ecu.id,12,0));
             }else if (ret == -1)
             {
                 printdecmsg(ECU_DBG_IDWRITE,"Send",send(clientfd,"error code: -1",14,0));
@@ -354,10 +350,8 @@ void idwrite_thread_entry(void* parameter)
         }
         if(!strncmp(recvbuff, "get_ecu_id", 10)){
             memset(ecu.id,'\0',sizeof(ecu.id));
-            fp=fopen("/yuneng/ecuid.con","r");
-            fgets(ecu.id,13,fp);
-            fclose(fp);
-            printdecmsg(ECU_DBG_IDWRITE,"Send",send(clientfd,ecu.id,strlen(ecu.id),0));
+            ReadPage(INTERNAL_FALSH_ID,ecu.id,12);
+            printdecmsg(ECU_DBG_IDWRITE,"Send",send(clientfd,ecu.id,12,0));
         }
 
         //烧写和读取ECU有线网络的MAC
@@ -381,22 +375,16 @@ void idwrite_thread_entry(void* parameter)
             mac[16] = recvbuff[24];
             print2msg(ECU_DBG_IDWRITE,"ECU eth0 MAC address",mac);
             printdecmsg(ECU_DBG_IDWRITE,"length",strlen(mac));
-            fp=fopen("/yuneng/ecumac.con","w");
-            fputs(mac,fp);
-            fclose(fp);
+			
             WritePage(INTERNAL_FALSH_MAC,mac,17);
             memset(mac,'\0',sizeof(mac));
-
-            fp=fopen("/yuneng/ecumac.con","r");
-            fgets(mac,18,fp);
-            fclose(fp);
+			
+            ReadPage(INTERNAL_FALSH_MAC,mac,17);
             printdecmsg(ECU_DBG_IDWRITE,"Send",send(clientfd,mac,strlen(mac),0));
         }
         if(!strncmp(recvbuff, "get_eth0_mac", 12)){
             memset(mac,'\0',sizeof(mac));
-            fp=fopen("/yuneng/ecumac.con","r");
-            fgets(mac,18,fp);
-            fclose(fp);
+            ReadPage(INTERNAL_FALSH_MAC,mac,17);
             printdecmsg(ECU_DBG_IDWRITE,"Send",send(clientfd,mac,strlen(mac),0));
         }
 
@@ -453,33 +441,21 @@ void idwrite_thread_entry(void* parameter)
             //system("rm /home/record.db");
             send(clientfd, "clearok", 7, 0);
         }
-
-
+		
         //烧写和读取ECU的地区
         if(!strncmp(recvbuff, "set_area", 8)){
             strncpy(area, &recvbuff[9], sizeof(area));
-            fp=fopen("/yuneng/area.con", "w");
-            fputs(area,fp);
-            fclose(fp);
-	   WritePage(INTERNAL_FALSH_AREA,area,strlen(area));
+	   area[strlen(recvbuff) - 9] = '\0';
+	   WritePage(INTERNAL_FALSH_AREA,area,strlen(area)+1);
             memset(area,'\0',sizeof(area));
-
-            fp=fopen("/yuneng/area.con","r");
-            if(fp){
-                fgets(area, sizeof(area), fp);
-                fclose(fp);
-            }
+            ReadPage(INTERNAL_FALSH_AREA,area,8);
 
             printdecmsg(ECU_DBG_IDWRITE,"Send",send(clientfd,area,strlen(area),0));
         }
 
         if(!strncmp(recvbuff, "get_area", 8)){
             memset(area,'\0',sizeof(area));
-            fp=fopen("/yuneng/area.con","r");
-            if(fp){
-                fgets(area, sizeof(area), fp);
-                fclose(fp);
-            }
+            ReadPage(INTERNAL_FALSH_AREA,area,8);
             printdecmsg(ECU_DBG_IDWRITE,"Send",send(clientfd,area,strlen(area),0));
         }
 
@@ -488,11 +464,8 @@ void idwrite_thread_entry(void* parameter)
             memset(version, 0, sizeof(version));
             sprintf(version,"%s_%s.%s", ECU_VERSION,MAJORVERSION,MINORVERSION);
             memset(area, 0, sizeof(area));
-            fp = fopen("/yuneng/area.con", "r");
-            if(fp){
-                fgets(area, sizeof(area), fp);
-                fclose(fp);
-            }
+
+	   ReadPage(INTERNAL_FALSH_AREA,area,8);
             strcat(version, area);
             printdecmsg(ECU_DBG_IDWRITE,"Send",send(clientfd, version, strlen(version), 0));
         }
@@ -522,11 +495,11 @@ void idwrite_thread_entry(void* parameter)
 
             if(UPDATE_VER == type)
             {
-                ret =updateECUByVersion_Local("",ip,port,user,password);
+                ret =updateECU_Local(EN_UPDATE_VERSION,"",ip,port,user,password);
 
             }else
             {
-                ret =updateECUByID_Local("",ip,port,user,password);
+                ret =updateECU_Local(EN_UPDATE_ID,"",ip,port,user,password);
             }
 
             if(ret == 0)
@@ -601,7 +574,7 @@ void idwrite()
     printf("Port:%d\n",port);
     printf("user:%s\n",user);
     printf("password:%s\n",password);
-    updateECUByVersion_Local("",ip,port,user,password);
+    updateECU_Local(EN_UPDATE_VERSION,"",ip,port,user,password);
 }
 FINSH_FUNCTION_EXPORT(idwrite, eg:idwrite());
 #endif

@@ -8,7 +8,7 @@
 #include "threadlist.h"
 #include "stdlib.h"
 #include "dfs_posix.h"
-
+#include "InternalFlash.h"
 extern ecu_info ecu;
 extern inverter_info inverter[MAXINVERTERCOUNT];
 
@@ -36,7 +36,7 @@ void ResponseECUZigbeeChannel(char channel,unsigned short panid,unsigned short s
 	if(ZigbeeChannel_need_report())
 	{
 		inverter_result = malloc(200);
-    		memset(inverter_result,'\0',200);
+    memset(inverter_result,'\0',200);
 		sprintf(inverter_result, "000000000000%02x%04x%05dEND", channel,panid,shortadd);
 		save_inverter_parameters_result2("000000000000",172,inverter_result);
 		free(inverter_result);
@@ -132,7 +132,7 @@ int SetChannel_ECU(const char *recvbuffer)
 	{
 		sprintf(temp,"0x%02x",newChannel);
 		temp[4] = '\0';
-		echo("/yuneng/channel.con",temp);
+		WritePage(INTERNAL_FLASH_CHANNEL,temp,5);
 		echo ("/tmp/repChan.flg","1");	//上报当前信道标志更改为1
 		//重启main线程
                   threadRestartTimer(10,TYPE_MAIN);

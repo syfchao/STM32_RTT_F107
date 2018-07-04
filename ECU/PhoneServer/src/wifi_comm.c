@@ -68,194 +68,73 @@ int Resolve_Server(ECUServerInfo_t *serverInfo)
     unsigned char IP_Str_site = 0;
     unsigned char site = 0;
     int i = 0;
-    FILE *fp;
-    char *buff = NULL;
-    buff = malloc(512);
-    memset(buff,'\0',512);
+
     if(serverInfo->serverCmdType == SERVER_UPDATE_GET)
     {
-        //初始化电量上传参数
-        fp = fopen("/yuneng/FTPADD.CON", "r");
-        if(fp)
+        memset(serverInfo->domain,'\0',sizeof(serverInfo->domain)/sizeof(serverInfo->domain[0]));
+        memcpy(serverInfo->domain,ftp_arg.domain,32);
+        strcpy(IP_Str, ftp_arg.ip);
+        if('\n' == IP_Str[strlen(IP_Str)-1])
+            IP_Str[strlen(IP_Str)-1] = '\0';
+        //解析到serverInfo中去
+        for(i = 0;i<(strlen(IP_Str)+1);i++)
         {
-            while(1)
+            if((IP_Str[i] =='.') ||(IP_Str[i] =='\0'))
             {
-                memset(buff, '\0', 512);
-                fgets(buff, 512, fp);
-                if(!strlen(buff))
-                    break;
-                if(!strncmp(buff, "Domain", 6))
-                {
-                    memset(serverInfo->domain,'\0',sizeof(serverInfo->domain)/sizeof(serverInfo->domain[0]));
-                    strcpy(serverInfo->domain, &buff[7]);
-                    if('\n' == serverInfo->domain[strlen(serverInfo->domain)-1])
-                    {
-                        serverInfo->domain[strlen(serverInfo->domain)-1] = '\0';
-                    }
-
-                }
-                if(!strncmp(buff, "IP", 2))
-                {
-                    strcpy(IP_Str, &buff[3]);
-                    if('\n' == IP_Str[strlen(IP_Str)-1])
-                        IP_Str[strlen(IP_Str)-1] = '\0';
-                    //解析到serverInfo中去
-                    for(i = 0;i<(strlen(IP_Str)+1);i++)
-                    {
-                        if((IP_Str[i] =='.') ||(IP_Str[i] =='\0'))
-                        {
-                            memset(temp,'\0',4);
-                            memcpy(temp,&IP_Str[IP_Str_site],i-IP_Str_site);
-                            serverInfo->IP[site] = atoi(temp);
-                            IP_Str_site = i+1;
-                            site++;
-                        }
-                    }
-
-                }
-                if(!strncmp(buff, "Port", 4))
-                    serverInfo->Port1=atoi(&buff[5]);
-
-                serverInfo->Port2=0;
-
+                memset(temp,'\0',4);
+                memcpy(temp,&IP_Str[IP_Str_site],i-IP_Str_site);
+                serverInfo->IP[site] = atoi(temp);
+                IP_Str_site = i+1;
+                site++;
             }
-            fclose(fp);
         }
-        else
-        {
-            memset(serverInfo->domain,'\0',sizeof(serverInfo->domain)/sizeof(serverInfo->domain[0]));
-            memcpy(serverInfo->domain,UPDATE_SERVER_DOMAIN,strlen(UPDATE_SERVER_DOMAIN));
-            serverInfo->IP[0] = 60;
-            serverInfo->IP[1] = 190;
-            serverInfo->IP[2] = 131;
-            serverInfo->IP[3] = 190;
-            serverInfo->Port1 = UPDATE_SERVER_PORT1;
-            serverInfo->Port2 = 0;
-        }
+        serverInfo->Port1 = ftp_arg.port1;
+        serverInfo->Port2 = 0;
     }else if(serverInfo->serverCmdType == SERVER_CLIENT_GET)
     {
-        //初始化电量上传参数
-        fp = fopen("/yuneng/datacent.con", "r");
-        if(fp)
+        memset(serverInfo->domain,'\0',sizeof(serverInfo->domain)/sizeof(serverInfo->domain[0]));
+        memcpy(serverInfo->domain,client_arg.domain,32);
+        strcpy(IP_Str, client_arg.ip);
+        if('\n' == IP_Str[strlen(IP_Str)-1])
+            IP_Str[strlen(IP_Str)-1] = '\0';
+        //解析到serverInfo中去
+        for(i = 0;i<(strlen(IP_Str)+1);i++)
         {
-            while(1)
+            if((IP_Str[i] =='.') ||(IP_Str[i] =='\0'))
             {
-                memset(buff, '\0', 512);
-                fgets(buff, 512, fp);
-                if(!strlen(buff))
-                    break;
-                if(!strncmp(buff, "Domain", 6))
-                {
-                    memset(serverInfo->domain,'\0',sizeof(serverInfo->domain)/sizeof(serverInfo->domain[0]));
-                    strcpy(serverInfo->domain, &buff[7]);
-                    if('\n' == serverInfo->domain[strlen(serverInfo->domain)-1])
-                    {
-                        serverInfo->domain[strlen(serverInfo->domain)-1] = '\0';
-                    }
-
-                }
-                if(!strncmp(buff, "IP", 2))
-                {
-                    strcpy(IP_Str, &buff[3]);
-                    if('\n' == IP_Str[strlen(IP_Str)-1])
-                        IP_Str[strlen(IP_Str)-1] = '\0';
-                    //解析到serverInfo中去
-                    for(i = 0;i<(strlen(IP_Str)+1);i++)
-                    {
-                        if((IP_Str[i] =='.') ||(IP_Str[i] =='\0'))
-                        {
-                            memset(temp,'\0',4);
-                            memcpy(temp,&IP_Str[IP_Str_site],i-IP_Str_site);
-                            serverInfo->IP[site] = atoi(temp);
-                            IP_Str_site = i+1;
-                            site++;
-                        }
-                    }
-
-                }
-                if(!strncmp(buff, "Port1", 5))
-                    serverInfo->Port1=atoi(&buff[6]);
-                if(!strncmp(buff, "Port2", 5))
-                    serverInfo->Port2=atoi(&buff[6]);
+                memset(temp,'\0',4);
+                memcpy(temp,&IP_Str[IP_Str_site],i-IP_Str_site);
+                serverInfo->IP[site] = atoi(temp);
+                IP_Str_site = i+1;
+                site++;
             }
-            fclose(fp);
         }
-        else
-        {
-            memset(serverInfo->domain,'\0',sizeof(serverInfo->domain)/sizeof(serverInfo->domain[0]));
-            memcpy(serverInfo->domain,CLIENT_SERVER_DOMAIN,strlen(CLIENT_SERVER_DOMAIN));
-            serverInfo->IP[0] = 60;
-            serverInfo->IP[1] = 190;
-            serverInfo->IP[2] = 131;
-            serverInfo->IP[3] = 190;
-            serverInfo->Port1 = CLIENT_SERVER_PORT1;
-            serverInfo->Port2 = CLIENT_SERVER_PORT2;
-        }
+        serverInfo->Port1 = client_arg.port1;
+        serverInfo->Port2 = client_arg.port2;
 
     }else if(serverInfo->serverCmdType == SERVER_CONTROL_GET)
     {
-        //初始化电量上传参数
-        fp = fopen("/yuneng/CONTROL.CON", "r");
-        if(fp)
+
+        memset(serverInfo->domain,'\0',sizeof(serverInfo->domain)/sizeof(serverInfo->domain[0]));
+        memcpy(serverInfo->domain,control_client_arg.domain,32);
+        strcpy(IP_Str, control_client_arg.ip);
+        if('\n' == IP_Str[strlen(IP_Str)-1])
+            IP_Str[strlen(IP_Str)-1] = '\0';
+        //解析到serverInfo中去
+        for(i = 0;i<(strlen(IP_Str)+1);i++)
         {
-            while(1)
+            if((IP_Str[i] =='.') ||(IP_Str[i] =='\0'))
             {
-                memset(buff, '\0', 512);
-                fgets(buff, 512, fp);
-                if(!strlen(buff))
-                    break;
-                if(!strncmp(buff, "Domain", 6))
-                {
-                    memset(serverInfo->domain,'\0',sizeof(serverInfo->domain)/sizeof(serverInfo->domain[0]));
-                    strcpy(serverInfo->domain, &buff[7]);
-                    if('\n' == serverInfo->domain[strlen(serverInfo->domain)-1])
-                    {
-                        serverInfo->domain[strlen(serverInfo->domain)-1] = '\0';
-                    }
-
-                }
-                if(!strncmp(buff, "IP", 2))
-                {
-                    strcpy(IP_Str, &buff[3]);
-                    if('\n' == IP_Str[strlen(IP_Str)-1])
-                        IP_Str[strlen(IP_Str)-1] = '\0';
-                    //解析到serverInfo中去
-                    for(i = 0;i<(strlen(IP_Str)+1);i++)
-                    {
-                        if((IP_Str[i] =='.') ||(IP_Str[i] =='\0'))
-                        {
-                            memset(temp,'\0',4);
-                            memcpy(temp,&IP_Str[IP_Str_site],i-IP_Str_site);
-                            serverInfo->IP[site] = atoi(temp);
-                            IP_Str_site = i+1;
-                            site++;
-                        }
-                    }
-
-                }
-                if(!strncmp(buff, "Port1", 5))
-                    serverInfo->Port1=atoi(&buff[6]);
-                if(!strncmp(buff, "Port2", 5))
-                    serverInfo->Port2=atoi(&buff[6]);
-
+                memset(temp,'\0',4);
+                memcpy(temp,&IP_Str[IP_Str_site],i-IP_Str_site);
+                serverInfo->IP[site] = atoi(temp);
+                IP_Str_site = i+1;
+                site++;
             }
-            fclose(fp);
         }
-        else
-        {
-            memset(serverInfo->domain,'\0',sizeof(serverInfo->domain)/sizeof(serverInfo->domain[0]));
-            memcpy(serverInfo->domain,CONTROL_SERVER_DOMAIN,strlen(CONTROL_SERVER_DOMAIN));
-            serverInfo->IP[0] = 60;
-            serverInfo->IP[1] = 190;
-            serverInfo->IP[2] = 131;
-            serverInfo->IP[3] = 190;
-            serverInfo->Port1 = CONTROL_SERVER_PORT1;
-            serverInfo->Port2 = CONTROL_SERVER_PORT2;
-        }
+        serverInfo->Port1 = control_client_arg.port1;
+        serverInfo->Port2 = control_client_arg.port2;
     }
-
-    free(buff);
-    buff = NULL;
 
     return 0;
 
@@ -273,16 +152,26 @@ int Save_Server(ECUServerInfo_t *serverInfo)
     printf("%d\n",serverInfo->Port2);
     if(serverInfo->serverCmdType == SERVER_UPDATE_SET)
     {
-        sprintf(buff,"Domain=%s\nIP=%d.%d.%d.%d\nPort=%d\nuser=zhyf\npassword=yuneng\n",serverInfo->domain,serverInfo->IP[0],serverInfo->IP[1],serverInfo->IP[2],serverInfo->IP[3],serverInfo->Port1);
-        echo("/yuneng/ftpadd.con", buff);
+        memcpy(ftp_arg.domain,serverInfo->domain,32);
+        sprintf(ftp_arg.ip,"%d.%d.%d.%d",serverInfo->IP[0],serverInfo->IP[1],serverInfo->IP[2],serverInfo->IP[3]);
+        ftp_arg.port1 = serverInfo->Port1;
+        memcpy(ftp_arg.user,"zhyf",4);
+        memcpy(ftp_arg.passwd,"yuneng",6);
+        UpdateServerInfo();
     }else if(serverInfo->serverCmdType == SERVER_CLIENT_SET)
     {
-        sprintf(buff,"Domain=%s\nIP=%d.%d.%d.%d\nPort1=%d\nPort2=%d\n",serverInfo->domain,serverInfo->IP[0],serverInfo->IP[1],serverInfo->IP[2],serverInfo->IP[3],serverInfo->Port1,serverInfo->Port2);
-        echo("/yuneng/datacent.con",buff);
+        memcpy(client_arg.domain,serverInfo->domain,32);
+        sprintf(client_arg.ip,"%d.%d.%d.%d",serverInfo->IP[0],serverInfo->IP[1],serverInfo->IP[2],serverInfo->IP[3]);
+        client_arg.port1 = serverInfo->Port1;
+        client_arg.port2 = serverInfo->Port2;
+        UpdateServerInfo();
     }else if(serverInfo->serverCmdType == SERVER_CONTROL_SET)
     {
-        sprintf(buff,"Timeout=10\nReport_Interval=15\nDomain=%s\nIP=%d.%d.%d.%d\nPort1=%d\nPort2=%d\n",serverInfo->domain,serverInfo->IP[0],serverInfo->IP[1],serverInfo->IP[2],serverInfo->IP[3],serverInfo->Port1,serverInfo->Port2);
-        echo("/yuneng/control.con",buff);
+        memcpy(control_client_arg.domain,serverInfo->domain,32);
+        sprintf(control_client_arg.ip,"%d.%d.%d.%d",serverInfo->IP[0],serverInfo->IP[1],serverInfo->IP[2],serverInfo->IP[3]);
+        control_client_arg.port1 = serverInfo->Port1;
+        control_client_arg.port2 = serverInfo->Port2;
+        UpdateServerInfo();
     }
     free(buff);
     buff = NULL;
