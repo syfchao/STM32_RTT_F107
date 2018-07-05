@@ -42,23 +42,6 @@ extern ecu_info ecu;
 /*****************************************************************************/
 /*  Function Implementations                                                 */
 /*****************************************************************************/
-int readconnecttime(void)			//保存最后一次连接上服务器的时间
-{
-    char connecttime[20]={'\0'};
-    FILE *fp;
-    memset(ecu.last_ema_time,'0',15);
-    ecu.last_ema_time[14] = '\0';
-    fp=fopen("/yuneng/con_time.con","r");
-    if(fp != NULL)
-    {
-        fgets(connecttime,20,fp);
-        memcpy(ecu.last_ema_time,connecttime,15);
-        fclose(fp);
-    }
-    print2msg(ECU_DBG_CLIENT,"ecu.last_ema_time:",ecu.last_ema_time);
-    return 0;
-}
-
 int clear_send_flag(char *readbuff)
 {
     int i, j, count;		//EMA返回多少个时间(有几个时间,就说明EMA保存了多少条记录)

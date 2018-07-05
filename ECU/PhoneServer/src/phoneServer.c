@@ -42,6 +42,7 @@
 #include "key.h"
 #include "timer.h"
 #include "usart5.h"
+#include "InternalFlash.h"
 
 #define MIN_FUNCTION_ID 0
 #define MAX_FUNCTION_ID 14
@@ -143,54 +144,33 @@ int strToHex(const char *recvbuff,unsigned char *buff,int length)
 	return 0;
 }
 
-int getAddr(MyArray *array, int num,IPConfig_t *IPconfig)
+int getAddr(char *buff,IPConfig_t *IPconfig)
 {
-    int i;
-    ip_addr_t addr;
-    for(i=0; i<num; i++){
-        memset(&addr,0x00,sizeof(addr));
-        if(!strlen(array[i].name))break;
-        //IP地址
-        if(!strcmp(array[i].name, "IPAddr")){
-            ipaddr_aton(array[i].value,&addr);
-            IPconfig->IPAddr.IP1 = (addr.addr&(0x000000ff))>>0;
-            IPconfig->IPAddr.IP2 = (addr.addr&(0x0000ff00))>>8;
-            IPconfig->IPAddr.IP3 = (addr.addr&(0x00ff0000))>>16;
-            IPconfig->IPAddr.IP4 = (addr.addr&(0xff000000))>>24;
-        }
-        //掩码地址
-        else if(!strcmp(array[i].name, "MSKAddr")){
-            ipaddr_aton(array[i].value,&addr);
-            IPconfig->MSKAddr.IP1 = (addr.addr&(0x000000ff))>>0;
-            IPconfig->MSKAddr.IP2 = (addr.addr&(0x0000ff00))>>8;
-            IPconfig->MSKAddr.IP3 = (addr.addr&(0x00ff0000))>>16;
-            IPconfig->MSKAddr.IP4 = (addr.addr&(0xff000000))>>24;
-        }
-        //网关地址
-        else if(!strcmp(array[i].name, "GWAddr")){
-            ipaddr_aton(array[i].value,&addr);
-            IPconfig->GWAddr.IP1 = (addr.addr&(0x000000ff))>>0;
-            IPconfig->GWAddr.IP2 = (addr.addr&(0x0000ff00))>>8;
-            IPconfig->GWAddr.IP3 = (addr.addr&(0x00ff0000))>>16;
-            IPconfig->GWAddr.IP4 = (addr.addr&(0xff000000))>>24;
-        }
-        //DNS1地址
-        else if(!strcmp(array[i].name, "DNS1Addr")){
-            ipaddr_aton(array[i].value,&addr);
-            IPconfig->DNS1Addr.IP1 = (addr.addr&(0x000000ff))>>0;
-            IPconfig->DNS1Addr.IP2 = (addr.addr&(0x0000ff00))>>8;
-            IPconfig->DNS1Addr.IP3 = (addr.addr&(0x00ff0000))>>16;
-            IPconfig->DNS1Addr.IP4 = (addr.addr&(0xff000000))>>24;
-        }
-        //DNS2地址
-        else if(!strcmp(array[i].name, "DNS2Addr")){
-            ipaddr_aton(array[i].value,&addr);
-            IPconfig->DNS2Addr.IP1 = (addr.addr&(0x000000ff))>>0;
-            IPconfig->DNS2Addr.IP2 = (addr.addr&(0x0000ff00))>>8;
-            IPconfig->DNS2Addr.IP3 = (addr.addr&(0x00ff0000))>>16;
-            IPconfig->DNS2Addr.IP4 = (addr.addr&(0xff000000))>>24;
-        }
-    }
+    IPconfig->IPAddr.IP1 = buff[0];
+    IPconfig->IPAddr.IP2 = buff[1];
+    IPconfig->IPAddr.IP3 = buff[2];
+    IPconfig->IPAddr.IP4 = buff[3];
+    
+    IPconfig->MSKAddr.IP1 = buff[4];
+    IPconfig->MSKAddr.IP2 = buff[5];
+    IPconfig->MSKAddr.IP3 = buff[6];
+    IPconfig->MSKAddr.IP4 = buff[7];
+   
+    IPconfig->GWAddr.IP1 = buff[8];
+    IPconfig->GWAddr.IP2 = buff[9];
+    IPconfig->GWAddr.IP3 = buff[10];
+    IPconfig->GWAddr.IP4 = buff[11];
+       
+    IPconfig->DNS1Addr.IP1 = buff[12];
+    IPconfig->DNS1Addr.IP2 = buff[13];
+    IPconfig->DNS1Addr.IP3 = buff[14];
+    IPconfig->DNS1Addr.IP4 = buff[15];
+       
+    IPconfig->DNS2Addr.IP1 = buff[16];
+    IPconfig->DNS2Addr.IP2 = buff[17];
+    IPconfig->DNS2Addr.IP3 = buff[18];
+    IPconfig->DNS2Addr.IP4 = buff[19];
+      
     return 0;
 }
 
@@ -477,15 +457,34 @@ void Phone_SetWiredNetwork(int Data_Len,const char *recvbuffer)			//有线网络设置
         if(ModeFlag == 0x00)		//DHCP
         {
             printmsg(ECU_DBG_WIFI,"dynamic IP");
-            unlink("/yuneng/staticIP.con");
+            WritePage(INTERNAL_FLASH_IPCONFIG,"0",1);
             dhcp_reset();
         }else if (ModeFlag == 0x01)		//固定IP
         {
             printmsg(ECU_DBG_WIFI,"static IP");
             //保存网络地址
-            sprintf(buff,"IPAddr=%d.%d.%d.%d\nMSKAddr=%d.%d.%d.%d\nGWAddr=%d.%d.%d.%d\nDNS1Addr=%d.%d.%d.%d\nDNS2Addr=%d.%d.%d.%d\n",IPAddr.IP1,IPAddr.IP2,IPAddr.IP3,IPAddr.IP4,
-                    MSKAddr.IP1,MSKAddr.IP2,MSKAddr.IP3,MSKAddr.IP4,GWAddr.IP1,GWAddr.IP2,GWAddr.IP3,GWAddr.IP4,DNS1Addr.IP1,DNS1Addr.IP2,DNS1Addr.IP3,DNS1Addr.IP4,DNS2Addr.IP1,DNS2Addr.IP2,DNS2Addr.IP3,DNS2Addr.IP4);
-            echo("/yuneng/staticIP.con",buff);
+            buff[0] = '1';
+	   buff[1] = IPAddr.IP1;
+	   buff[2] = IPAddr.IP2;
+	   buff[3] = IPAddr.IP3;
+	   buff[4] = IPAddr.IP4;
+	   buff[5] = MSKAddr.IP1;
+	   buff[6] = MSKAddr.IP2;
+	   buff[7] = MSKAddr.IP3;
+	   buff[8] = MSKAddr.IP4;
+	   buff[9] = GWAddr.IP1;
+	   buff[10] = GWAddr.IP2;
+	   buff[11] = GWAddr.IP3;
+	   buff[12] = GWAddr.IP4;
+	   buff[13] = DNS1Addr.IP1;
+	   buff[14] = DNS1Addr.IP2;
+	   buff[15] = DNS1Addr.IP3;
+	   buff[16] = DNS1Addr.IP4;
+	   buff[17] = DNS2Addr.IP1;
+	   buff[18] = DNS2Addr.IP2;
+	   buff[19] = DNS2Addr.IP3;
+	   buff[20] = DNS2Addr.IP4;
+            WritePage(INTERNAL_FLASH_IPCONFIG,buff,21);
             //设置固定IP
             StaticIP(IPAddr,MSKAddr,GWAddr,DNS1Addr,DNS2Addr);
         }
@@ -1153,24 +1152,20 @@ void process_APKEYEvent(void)
 void phone_server_thread_entry(void* parameter)
 {
     int ret = 0;
-    MyArray array[5];
-    int fileflag = 0;
+    char buff[50] = {0x00};
     IPConfig_t IPconfig;
 
     get_ecuid(ecu.id);
     get_mac((unsigned char*)ecu.MacAddress);			//ECU 有线Mac地址
-    readconnecttime();
     rt_thread_delay(RT_TICK_PER_SECOND*START_TIME_PHONE_SERVER);
     add_Phone_functions();
-
-    //3?ê??ˉIP
-    fileflag = file_get_array(array, 5, "/yuneng/staticIP.con");
-    if(fileflag == 0)
+    ReadPage(INTERNAL_FLASH_IPCONFIG,buff,21);
+    if(buff[0] == '1')
     {
-        getAddr(array, 5,&IPconfig);
+        getAddr(&buff[1],&IPconfig);
         StaticIP(IPconfig.IPAddr,IPconfig.MSKAddr,IPconfig.GWAddr,IPconfig.DNS1Addr,IPconfig.DNS2Addr);
     }
-#if 0
+#if 1
     AT_CWMODE3(1);
     AT_CIPMUX1();
 #else 

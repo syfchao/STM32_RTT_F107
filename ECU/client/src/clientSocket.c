@@ -17,21 +17,6 @@ extern ecu_info ecu;
 extern unsigned char LED_Status;
 
 
-int writeconnecttime(void)			//保存最后一次连接上服务器的时间
-{
-    char connecttime[20]={'\0'};
-    FILE *fp;
-
-    getcurrenttime(connecttime);
-    fp=fopen("/yuneng/con_time.con","w");
-    fprintf(fp,"%s",connecttime);
-    fclose(fp);
-
-    memcpy(ecu.last_ema_time,connecttime,15);
-    print2msg(ECU_DBG_CLIENT,"ecu.last_ema_time:",ecu.last_ema_time);
-    return 0;
-}
-
 void showconnected(void)		//已连接EMA
 {
     FILE *fp;
@@ -111,7 +96,6 @@ int connect_client_socket(int fd_sock)				//通过有线的方式连接服务器
     }
     else{
         //showconnected();
-        //writeconnecttime();
         printmsg(ECU_DBG_CLIENT,"Connect to EMA Client successfully");
         return 1;
     }

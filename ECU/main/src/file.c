@@ -164,11 +164,10 @@ void splitSpace(char *data,char *sourcePath,char *destPath)
 //返回0表示DHCP模式  返回1表示静态IP模式
 int get_DHCP_Status(void)
 {
-    int fd;
-    fd = open("/yuneng/staticIP.con", O_RDONLY, 0);
-    if (fd >= 0)
+    char buff[50] = {0x00};
+    ReadPage(INTERNAL_FLASH_IPCONFIG,buff,50);
+    if (buff[0] == '1')
     {
-        close(fd);
         return 1;
     }else
     {
@@ -1446,7 +1445,7 @@ void addInverter(char *inverter_id)
         write(fd,buff,strlen(buff));
         close(fd);
     }
-    echo("/yuneng/limiteid.con","1");
+    WritePage(INTERNAL_FLASH_LIMITEID,"1",1);
 }
 
 //初始化服务器信息
@@ -1543,7 +1542,7 @@ void UpdateServerInfo(void)
 void key_init(void)
 {
     InitServerInfo();
-    unlink("/yuneng/staticIP.con");
+    WritePage(INTERNAL_FLASH_IPCONFIG,"0",1);
     dhcp_reset();
 }
 
@@ -1564,15 +1563,19 @@ void initPath(void)
     mkdir("/ftp",0x777);
 
     echo("/home/data/ltpower","0.000000");
-    echo("/yuneng/limiteid.con","1");
-    echo("/yuneng/A118.con","1");
+    
+    
 }
 
 void initFileSystem(void)
 {
-	WritePage(INTERNAL_FLASH_CHANNEL,"0x10",4);
-	InitServerInfo();
-	initPath();
+    char area[2] = {0x00};
+    WritePage(INTERNAL_FLASH_CHANNEL,"0x10",4);
+    WritePage(INTERNAL_FLASH_LIMITEID,"1",1);
+    InitServerInfo();
+    WritePage(INTERNAL_FLASH_A118,"1",1);
+    WritePage(INTERNAL_FALSH_AREA,area,2);
+    initPath();
 }
 
 int getTimeZone()

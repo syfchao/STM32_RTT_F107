@@ -9,6 +9,7 @@
 #include "stdlib.h"
 #include "threadlist.h"
 #include "dfs_posix.h"
+#include "InternalFlash.h"
 
 
 extern ecu_info ecu;
@@ -32,7 +33,7 @@ int phone_add_inverter(int num,const char *uidstring)
 
 
     echo("/home/data/id",allbuff);
-    echo("/yuneng/limiteid.con","1");
+    WritePage(INTERNAL_FLASH_LIMITEID,"1",1);
     free(allbuff);
     allbuff = NULL;
     return 0;

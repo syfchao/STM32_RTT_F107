@@ -196,8 +196,6 @@ int settime(char *datetime)
 
 int insertinverter(char *buff)
 {
-
-    FILE *fp;
     char id[16];
     int i;
 
@@ -210,12 +208,7 @@ int insertinverter(char *buff)
         addInverter(id);
     }
 
-    fp = fopen("/yuneng/autoflag.con", "w");
-    fputs("0", fp);
-    fclose(fp);
-    fp = fopen("/yuneng/limiteid.con", "w");
-    fputs("1", fp);
-    fclose(fp);
+    WritePage(INTERNAL_FLASH_LIMITEID,"1",1);
     restartThread(TYPE_MAIN);
 
     return i;
@@ -259,7 +252,6 @@ int getevent(char *eve)
 int clearrecord()
 {
     unlink("/home/data/COLLECT.CON");
-    unlink("/yuneng/AUTOFLAG.CON");
 
     clear_id();
 

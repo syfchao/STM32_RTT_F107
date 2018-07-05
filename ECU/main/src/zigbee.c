@@ -1654,8 +1654,6 @@ int getalldata(inverter_info *firstinverter,int time_linux)		//»ñÈ¡Ã¿¸öÄæ±äÆ÷µÄÊ
     }
 
 
-    write_gfdi_status(firstinverter);
-    write_turn_on_off_status(firstinverter);
 #endif
     save_turn_on_off_changed_result(firstinverter);
     save_gfdi_changed_result(firstinverter);

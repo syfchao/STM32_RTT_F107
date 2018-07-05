@@ -26,6 +26,7 @@
 #include "datetime.h"
 #include "WiFiFileAPI.h"
 #include "usart5.h"
+#include "InternalFlash.h"
 
 /*****************************************************************************/
 /*  Definitions                                                              */
@@ -143,7 +144,7 @@ int updateECU(eNetworkType networkType,eUpdateRequest updateRequest)
         	        WiFiFile_DeleteFile(remote_path);
         	    }
         	}
-        echo("/TMP/ECUUPVER.CON","1");	
+        WritePage(INTERNAL_FLASH_ECUUPVER,"1",1);	
         reboot();
     }
     return ret;

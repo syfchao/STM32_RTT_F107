@@ -46,6 +46,7 @@
 #include "datelist.h"
 #include "ZigBeeTransmission.h"
 #include "ZigBeeChannel.h"
+#include "InternalFlash.h"
 
 /*****************************************************************************/
 /*  Definitions                                                              */
@@ -1402,7 +1403,6 @@ int response_inverter_abnormal_status()
     char da_time[20]={'\0'};
     char *data = NULL;//查询到的数据
     char time[15] = {'\0'};
-    FILE *fp = NULL;
 
     printmsg(ECU_DBG_CONTROL_CLIENT,">>Start Response Abnormal Status");
 
@@ -1495,30 +1495,13 @@ int response_inverter_abnormal_status()
                     {
                         strncpy(da_time, &recv_buffer[72],14);
 
-                        fp=fopen("/yuneng/A118.con","w");
-                        if(fp==NULL)
-                        {
-                            rt_free(recv_buffer);
-                            rt_free(command);
-                            rt_free(send_buffer);
-                            free(data);
-                            data = NULL;
-                            free(save_buffer);
-                            save_buffer = NULL;
-                            return -1;
-                        }
-                        else
-                        {
-                            fputs("1",fp);
-                            fclose(fp);
-
-                            memset(send_buffer,0x00,1024);
-                            msg_ACK(send_buffer, "A118", da_time, 0);
-                            SendToSocketC(control_client_arg.ip,randport(control_client_arg),send_buffer, strlen(send_buffer));
-                            printmsg(ECU_DBG_CONTROL_CLIENT,">>End");
-                            printdecmsg(ECU_DBG_CONTROL_CLIENT,"socked",sockfd);
-                            result=1;break;
-                        }
+                        WritePage(INTERNAL_FLASH_A118,"1",1);
+                        memset(send_buffer,0x00,1024);
+                        msg_ACK(send_buffer, "A118", da_time, 0);
+                        SendToSocketC(control_client_arg.ip,randport(control_client_arg),send_buffer, strlen(send_buffer));
+                        printmsg(ECU_DBG_CONTROL_CLIENT,">>End");
+                        printdecmsg(ECU_DBG_CONTROL_CLIENT,"socked",sockfd);
+                        result=1;break;
                     }
                     //调用函数
                     else if(pfun[cmd_id%100]){
@@ -1616,30 +1599,13 @@ int response_inverter_abnormal_status()
                 {
                     strncpy(da_time, &recv_buffer[72],14);
 
-                    fp=fopen("/yuneng/A118.con","w");
-                    if(fp==NULL)
-                    {
-                        rt_free(recv_buffer);
-                        rt_free(command);
-                        rt_free(send_buffer);
-                        free(data);
-                        data = NULL;
-                        free(save_buffer);
-                        save_buffer = NULL;
-                        return -1;
-                    }
-                    else
-                    {
-                        fputs("1",fp);
-                        fclose(fp);
-
-                        memset(send_buffer,0x00,1024);
-                        msg_ACK(send_buffer, "A118", da_time, 0);
-                        send_socket(sockfd, send_buffer, strlen(send_buffer));
-                        printmsg(ECU_DBG_CONTROL_CLIENT,">>End");
-                        printdecmsg(ECU_DBG_CONTROL_CLIENT,"socked",sockfd);
-                        result=1;break;
-                    }
+                    WritePage(INTERNAL_FLASH_A118,"1",1);
+                    memset(send_buffer,0x00,1024);
+                    msg_ACK(send_buffer, "A118", da_time, 0);
+                    send_socket(sockfd, send_buffer, strlen(send_buffer));
+                    printmsg(ECU_DBG_CONTROL_CLIENT,">>End");
+                    printdecmsg(ECU_DBG_CONTROL_CLIENT,"socked",sockfd);
+                    result=1;break;
                 }
                 //调用函数
                 else if(pfun[cmd_id%100]){
@@ -1749,9 +1715,6 @@ int communication_with_EMA(int next_cmd_id)
                 if(cmd_id == 118){
                     if(one_a118==0){
                         one_a118=1;
-                        //system("rm /etc/yuneng/fill_up_data.conf");
-                        //system("echo '1'>>/etc/yuneng/fill_up_data.conf");
-                        //system("killall main.exe");
                     }
                     strncpy(timestamp, &recv_buffer[34], 14);
                     next_cmd_id = first_time_info(recv_buffer, send_buffer);
@@ -1828,9 +1791,6 @@ int communication_with_EMA(int next_cmd_id)
             if(cmd_id == 118){
                 if(one_a118==0){
                     one_a118=1;
-                    //system("rm /etc/yuneng/fill_up_data.conf");
-                    //system("echo '1'>>/etc/yuneng/fill_up_data.conf");
-                    //system("killall main.exe");
                 }
                 strncpy(timestamp, &recv_buffer[34], 14);
                 next_cmd_id = first_time_info(recv_buffer, send_buffer);
@@ -1993,16 +1953,15 @@ int response_process_result()
 void control_client_thread_entry(void* parameter)
 {
     int result, ecu_time = 0, ecu_flag = 1;
-    char buffer[16] = {'\0'};
-    FILE *fp;
+    char c='0';
     rt_thread_delay(RT_TICK_PER_SECOND*START_TIME_CONTROL_CLIENT);
     //添加功能函数
     add_functions();
 
-
-    //获取ECU的通讯开关flag
-    if(file_get_one(buffer, sizeof(buffer), "/yuneng/ecu_flag.con")){
-        ecu_flag = atoi(buffer);
+    ReadPage(INTERNAL_FLASH_ECU_FLAG,&c,1);
+    if(c == '0')
+    {
+        ecu_flag = 0;
     }
 
     printdecmsg(ECU_DBG_CONTROL_CLIENT,"ecu_flag", ecu_flag);
@@ -2013,39 +1972,27 @@ void control_client_thread_entry(void* parameter)
         //每天一点时向EMA确认逆变器异常状态是否被存储
         check_inverter_abnormal_status_sent(1);
 
-        fp=fopen("/yuneng/A118.con","r");
-        if(fp!=NULL)
+        ReadPage(INTERNAL_FLASH_A118,&c,1);
+        if(c=='1')
         {
-            char c='0';
-            c=fgetc(fp);
-            fclose(fp);
             printf("A118:%c\n",c);
-            if(c=='1')
+            result = communication_with_EMA(118);
+            if(result != -1)
             {
-                result = communication_with_EMA(118);
-                if(result != -1)
-                {
-                    unlink("/yuneng/A118.con");
-                }
-
+                WritePage(INTERNAL_FLASH_A118,"0",1);
             }
+
         }
 
-        fp=fopen("/TMP/ECUUPVER.CON","r");
-        if(fp!=NULL)
-        {
-            char c='0';
-            c=fgetc(fp);
-            fclose(fp);
-            printf("A102:%c\n",c);
-            if(c=='1')
-            {
-                result = communication_with_EMA(102);
-                if(result != -1)
-                {
-                    unlink("/TMP/ECUUPVER.CON");
-                }
 
+        ReadPage(INTERNAL_FLASH_ECUUPVER,&c,1);
+        if(c=='1')
+        {
+            printf("A102:%c\n",c);
+            result = communication_with_EMA(102);
+            if(result != -1)
+            {
+                WritePage(INTERNAL_FLASH_ECUUPVER,"0",1);
             }
         }
 

@@ -4,6 +4,7 @@
 #include "myfile.h"
 #include "rtthread.h"
 #include "mycommand.h"
+#include "InternalFlash.h"
 
 extern rt_mutex_t record_data_lock;
 /* 【A119】EMA设置ECU的通信开关 */
@@ -19,9 +20,9 @@ int set_ecu_flag(const char *recvbuffer, char *sendbuffer)
     ecu_flag = msg_get_int(&recvbuffer[44], 1);
 
     if(ecu_flag == 0)
-        file_set_one("0", "/yuneng/ecu_flag.con");
+        WritePage(INTERNAL_FLASH_ECU_FLAG,"0",1);
     else if(ecu_flag == 1)
-        file_set_one("1", "/yuneng/ecu_flag.con");
+        WritePage(INTERNAL_FLASH_ECU_FLAG,"1",1);
     else
         ack_flag = FORMAT_ERROR;
 

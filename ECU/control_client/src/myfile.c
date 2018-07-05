@@ -66,55 +66,6 @@ int file_set_one(const char *s, const char *filename)
     return 0;
 }
 
-/* 获取(存储多个参数的)配置文件中的值 */
-int file_get_array(MyArray *array, int num, const char *filename)
-{
-    FILE *fp;
-    int count = 0;
-    char buffer[128] = {'\0'};
-    memset(array, 0 ,sizeof(MyArray)*num);
-    fp = fopen(filename, "r");
-    if(fp == NULL){
-        printmsg(ECU_DBG_CONTROL_CLIENT,(char *)filename);
-        return -1;
-    }
-    while(!feof(fp))
-    {
-        if(count >= num)
-        {
-            fclose(fp);
-            return 0;
-        }
-        memset(buffer, 0 ,sizeof(buffer));
-        fgets(buffer, 128, fp);
-        if(!strlen(buffer))continue;
-
-        strncpy(array[count].name, buffer, strcspn(buffer, "="));
-        strncpy(array[count].value, &buffer[strlen(array[count].name)+1], 64);
-        delete_newline(array[count].value);
-        count++;
-    }
-    fclose(fp);
-    return 0;
-}
-
-int file_set_array(const MyArray *array, int num, const char *filename)
-{
-    FILE *fp;
-    int i;
-
-    fp = fopen(filename, "w");
-    if(fp == NULL){
-        printmsg(ECU_DBG_CONTROL_CLIENT,(char *)filename);
-        return -1;
-    }
-    for(i=0; i<num; i++){
-        fprintf(fp, "%s=%s\n", array[i].name, array[i].value);
-    }
-    fclose(fp);
-    return 0;
-}
-
 //清除文件
 int clear_file(char *filename)
 {

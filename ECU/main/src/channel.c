@@ -76,7 +76,7 @@ int channel_need_change()
 int saveChannel_change_flag()
 {
     echo("/tmp/changech.con","1");
-    echo("/yuneng/limiteid.con","1");
+    WritePage(INTERNAL_FLASH_LIMITEID,"1",1);   
     return 0;
 }
 
@@ -146,7 +146,7 @@ int saveECUChannel(int channel)
 
     snprintf(buffer, sizeof(buffer), "0x%02X", channel);
     WritePage(INTERNAL_FLASH_CHANNEL,buffer,5);
-    echo("/yuneng/limiteid.con","1");
+    WritePage(INTERNAL_FLASH_LIMITEID,"1",1);
 
     ecu.channel = channel;
     return 1;

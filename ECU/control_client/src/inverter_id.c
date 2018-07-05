@@ -51,7 +51,10 @@ int ecu_msg(char *sendbuffer, int num, const char *recvbuffer)
     version_number[0] = '3';
     version_number[1] = '\0';
     ReadPage(INTERNAL_FALSH_AREA,area,8);
-
+    if(strlen(area) < 2)
+    {
+        memset(area,0x00,2);
+    }
     if(strlen(version_number)){
         sprintf(version_msg, "%02d%s%s--%s",
                 strlen(version) + strlen(area) + 2 + strlen(version_number),
@@ -108,7 +111,7 @@ int add_id(const char *msg, int num)
         close(fd);
     }
 
-    echo("/yuneng/limiteid.con","1");
+    WritePage(INTERNAL_FLASH_LIMITEID,"1",1);
     return count;
 
 }

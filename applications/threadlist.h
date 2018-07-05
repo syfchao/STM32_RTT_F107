@@ -68,7 +68,7 @@ typedef struct IPConfig
 #define UPDATE_USER 						"zhyf"
 #define UPDATE_PASSWORD					"yuneng"
 
-#define WIFI_SERVER_IP						"192.168.1.19"
+#define WIFI_SERVER_IP						"192.168.1.2"
 #define WIFI_SERVER_PORT1					9220
 #define WIFI_SERVER_PORT2					9220
 #else

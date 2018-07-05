@@ -37,6 +37,7 @@
 #include "client.h"
 #include "ZigBeeChannel.h"
 #include "ZigBeeTransmission.h"
+#include "InternalFlash.h"
 
 /*****************************************************************************/
 /*  Variable Declarations                                                    */
@@ -71,7 +72,6 @@ int init_ecu()
     ecu.zoneflag = 0;				//时区
     printecuinfo(&ecu);
     zb_change_ecu_panid();
-    readconnecttime();
     ecu.idUpdateFlag = 0;
     return 1;
 }
@@ -80,7 +80,6 @@ int init_inverter(inverter_info *inverter)
 {
     int i;
     char flag_limitedid = '0';				//限定ID标志
-    FILE *fp;
     inverter_info *curinverter = inverter;
 
     for(i=0; i<MAXINVERTERCOUNT; i++, curinverter++)
@@ -148,20 +147,10 @@ int init_inverter(inverter_info *inverter)
         }
     }
 
-    fp = fopen("/yuneng/limiteid.con", "r");
-    if(fp)
-    {
-        flag_limitedid = fgetc(fp);
-        fclose(fp);
-    }
-
+    ReadPage(INTERNAL_FLASH_LIMITEID,&flag_limitedid,1);
     if ('1' == flag_limitedid) {
         bind_inverters(); //绑定逆变器
-        fp = fopen("/yuneng/limiteid.con", "w");
-        if (fp) {
-            fputs("0", fp);
-            fclose(fp);
-        }
+        WritePage(INTERNAL_FLASH_LIMITEID,"0",1);
     }
     return 1;
 }
@@ -284,7 +273,6 @@ int init_all(inverter_info *inverter)
     rateOfProgress = 100;
     init_tmpdb(inverter);
     ResponseECUZigbeeChannel(ecu.channel,ecu.panid,0);
-    //read_gfdi_turn_on_off_status(inverter);
     return 0;
 }
 
